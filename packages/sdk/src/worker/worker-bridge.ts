@@ -9,6 +9,8 @@ import type {
   WorkerProgress
 } from "./protocol";
 
+declare const __PPDOCLAYOUT_MODULE_URL__: string | undefined;
+
 export interface WorkerLike {
   onerror: ((event: ErrorEvent) => void) | null;
   onmessage: ((event: MessageEvent<WorkerMessageToMain>) => void) | null;
@@ -57,18 +59,19 @@ interface PendingRequest<T> {
 
 function defaultEnvironment(): WorkerBridgeEnvironment {
   const workerSupported = typeof Worker === "function";
+  const moduleUrlAvailable = typeof __PPDOCLAYOUT_MODULE_URL__ === "string";
   return {
-    ...(workerSupported
+    ...(workerSupported && moduleUrlAvailable
       ? {
           createWorker: () =>
-            new Worker(new URL("./inference.worker.js", import.meta.url), {
+            new Worker(new URL("./inference.worker.js", __PPDOCLAYOUT_MODULE_URL__), {
               name: "pp-doclayoutv3-inference",
               type: "module"
             })
         }
       : {}),
     offscreenCanvas: typeof OffscreenCanvas === "function",
-    worker: workerSupported
+    worker: workerSupported && moduleUrlAvailable
   };
 }
 

@@ -6,6 +6,7 @@ export {
   clearModelCache,
   createDocLayout,
   DEFAULT_MANIFEST_URL,
+  DEFAULT_ORT_WASM_BASE_URL,
   listModelCache,
   probeDocLayoutCapabilities
 } from "./detector";

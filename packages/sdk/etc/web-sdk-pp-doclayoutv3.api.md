@@ -49,6 +49,9 @@ export type DecodableImage = Blob | CanvasImageSource | NormalizedRaster;
 export const DEFAULT_MANIFEST_URL = "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/manifest.json";
 
 // @public (undocumented)
+export const DEFAULT_ORT_WASM_BASE_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
+
+// @public (undocumented)
 export interface DocLayoutCapabilities {
     // (undocumented)
     readonly crossOriginIsolated: boolean;

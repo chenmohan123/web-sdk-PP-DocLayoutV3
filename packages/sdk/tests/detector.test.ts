@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ModelCacheEntry } from "../src/cache/model-cache";
 import {
+  DEFAULT_ORT_WASM_BASE_URL,
   DEFAULT_MANIFEST_URL,
   createDocLayoutWithDependencies,
   type DetectorDependencies,
@@ -101,6 +102,23 @@ describe("createDocLayout", () => {
     expect(deps.fetchManifest).toHaveBeenCalledWith(DEFAULT_MANIFEST_URL, undefined);
     expect(detector.model.id).toBe("pp-doclayoutv3");
     expect(detector.runtime).toMatchObject({ backend: "wasm", precision: "fp32" });
+    expect(vi.mocked(deps.createExecutor).mock.calls[0]?.[0].wasm).toEqual({
+      paths: DEFAULT_ORT_WASM_BASE_URL
+    });
+  });
+
+  it("allows the pinned ORT WASM asset base URL to be overridden", async () => {
+    const deps = dependencies();
+
+    await createDocLayoutWithDependencies(
+      { ort: { wasm: { numThreads: 1, paths: "https://assets.example.test/ort/" } } },
+      deps
+    );
+
+    expect(vi.mocked(deps.createExecutor).mock.calls[0]?.[0].wasm).toEqual({
+      numThreads: 1,
+      paths: "https://assets.example.test/ort/"
+    });
   });
 
   it("loads a custom manifest URL", async () => {

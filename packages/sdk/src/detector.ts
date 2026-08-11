@@ -29,6 +29,9 @@ import type { WorkerProgress } from "./worker/protocol";
 export const DEFAULT_MANIFEST_URL =
   "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/manifest.json";
 
+export const DEFAULT_ORT_WASM_BASE_URL =
+  "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
+
 export type DocLayoutModel =
   string | ModelManifest | Readonly<{ data: ArrayBuffer; manifest: ModelManifest }>;
 
@@ -308,6 +311,10 @@ async function attemptExecutor(
       const sessionStartedAt = dependencies.now();
       let executor: InferenceExecutor;
       try {
+        const wasm = {
+          paths: DEFAULT_ORT_WASM_BASE_URL,
+          ...options.ort?.wasm
+        };
         executor = await dependencies.createExecutor({
           capabilities,
           manifest: resolved.manifest,
@@ -315,7 +322,7 @@ async function attemptExecutor(
           onProgress: (progress) => options.onProgress?.(progress),
           provider: candidate.provider,
           variant,
-          ...(options.ort?.wasm === undefined ? {} : { wasm: options.ort.wasm })
+          wasm
         });
       } finally {
         sessionMs += elapsed(dependencies.now, sessionStartedAt);

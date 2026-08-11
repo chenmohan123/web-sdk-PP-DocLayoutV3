@@ -8,22 +8,25 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.js",
+  "unpkg": "./dist/browser-global.js",
+  "jsdelivr": "./dist/browser-global.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
+      "default": "./dist/index.js"
+    },
+    "./inference.worker.js": "./dist/inference.worker.js"
   },
   "dependencies": {
     "onnxruntime-web": "1.27.0"
   },
   "scripts": {
     "api:report": "api-extractor run",
-    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean && pnpm api:report",
+    "build": "tsup --config tsup.config.ts && pnpm api:report",
     "lint": "eslint src tests",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -36,6 +39,10 @@
     "provenance": true
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "7.58.12"
+    "@microsoft/api-extractor": "7.58.12",
+    "eslint": "9.39.5",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
   }
 }

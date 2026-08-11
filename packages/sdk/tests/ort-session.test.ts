@@ -106,7 +106,8 @@ describe("createOrtSession", () => {
       now: nowSequence(10, 34, 40, 55),
       ort: fake.ort,
       outputs: manifest.outputs,
-      provider: "webgpu"
+      provider: "webgpu",
+      wasm: { paths: "https://cdn.example.test/ort/" }
     });
 
     expect(runtime.sessionCreateMs).toBe(24);
@@ -114,6 +115,7 @@ describe("createOrtSession", () => {
     expect(fake.create.mock.calls[0]?.[1]).toMatchObject({
       executionProviders: [{ name: "webgpu", preferredLayout: "NCHW" }]
     });
+    expect(fake.ort.env.wasm.wasmPaths).toBe("https://cdn.example.test/ort/");
 
     const result = await runtime.run(new Float32Array(3 * 800 * 800), [1, 3, 800, 800]);
 
@@ -226,7 +228,10 @@ describe("createOrtSession", () => {
         outputs: manifest.outputs,
         provider: "webgpu"
       })
-    ).rejects.toMatchObject({ code: "SESSION_CREATE_FAILED" });
+    ).rejects.toMatchObject({
+      code: "SESSION_CREATE_FAILED",
+      details: { causeMessage: "adapter rejected" }
+    });
     expect(fake.create).toHaveBeenCalledOnce();
   });
 

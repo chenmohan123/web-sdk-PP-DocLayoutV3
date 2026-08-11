@@ -5,6 +5,8 @@ node_modules/
 dist/
 coverage/
 packages/sdk/temp/
+playwright-report/
+test-results/
 .env
 .env.*
 .venv*/

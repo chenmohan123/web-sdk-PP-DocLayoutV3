@@ -77,8 +77,10 @@ function nowDefault(): number {
   return typeof performance === "object" ? performance.now() : Date.now();
 }
 
-async function defaultOrt(): Promise<OrtModuleLike> {
-  return (await import("onnxruntime-web")) as unknown as OrtModuleLike;
+async function defaultOrt(provider: ModelBackend): Promise<OrtModuleLike> {
+  return (provider === "webgpu"
+    ? await import("onnxruntime-web/webgpu")
+    : await import("onnxruntime-web")) as unknown as OrtModuleLike;
 }
 
 function abortError(signal: AbortSignal): DocLayoutError {
@@ -109,10 +111,11 @@ function mapRuntimeError(
     : stage === "session-create"
       ? "SESSION_CREATE_FAILED"
       : "INFERENCE_FAILED";
+  const causeMessage = error instanceof Error ? error.message : String(error);
   return new DocLayoutError(
     code,
     `ONNX ${stage} failed for ${provider}`,
-    { provider, stage },
+    { causeMessage, provider, stage },
     { cause: error }
   );
 }
@@ -127,6 +130,7 @@ function sessionOptions(provider: ModelBackend): Readonly<Record<string, unknown
 }
 
 function configureWasm(ort: OrtModuleLike, options: CreateOrtSessionOptions): void {
+  if (options.wasm?.paths !== undefined) ort.env.wasm.wasmPaths = options.wasm.paths;
   if (options.provider !== "wasm") return;
   const hardwareConcurrency = Math.max(
     1,
@@ -139,7 +143,6 @@ function configureWasm(ort: OrtModuleLike, options: CreateOrtSessionOptions): vo
       )
     : 1;
   ort.env.wasm.simd = options.capabilities.wasmSimd;
-  if (options.wasm?.paths !== undefined) ort.env.wasm.wasmPaths = options.wasm.paths;
 }
 
 function copyTensor(name: string, tensor: OrtTensorLike | undefined): PostprocessTensor {
@@ -179,7 +182,7 @@ function disposeOutputs(outputs: Readonly<Record<string, OrtTensorLike | undefin
 }
 
 export async function createOrtSession(options: CreateOrtSessionOptions): Promise<OrtSession> {
-  const ort = options.ort ?? (await defaultOrt());
+  const ort = options.ort ?? (await defaultOrt(options.provider));
   const now = options.now ?? nowDefault;
   configureWasm(ort, options);
 
