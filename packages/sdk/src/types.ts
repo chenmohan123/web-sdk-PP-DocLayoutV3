@@ -54,6 +54,12 @@ export interface PreprocessingConfig {
   }>;
 }
 
+export interface NormalizedRaster {
+  readonly height: number;
+  readonly rgba: Uint8ClampedArray;
+  readonly width: number;
+}
+
 export interface ModelSource {
   readonly files: Readonly<Record<string, string>>;
   readonly license: string;
