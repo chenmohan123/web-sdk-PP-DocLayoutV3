@@ -5,5 +5,6 @@ coverage/
 docs/superpowers/
 **/.pytest_cache/
 models/**/*.onnx
+models/**/manifest.json
 pnpm-lock.yaml
 tools/model-pipeline/artifacts/*.json
