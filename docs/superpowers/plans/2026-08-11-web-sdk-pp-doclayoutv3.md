@@ -173,7 +173,7 @@ Commit: `chore: scaffold SDK workspace`
 def test_contract_contains_required_outputs(model_contract):
     assert model_contract["input"]["name"] == "pixel_values"
     assert model_contract["input"]["shape"] == [1, 3, 800, 800]
-    assert {"logits", "pred_boxes", "polygon_points"} <= set(model_contract["outputs"])
+    assert {"logits", "out_masks", "order_logits", "pred_boxes"} <= set(model_contract["outputs"])
     assert model_contract["parameterCount"] > 0
     assert len(model_contract["labels"]) == 25
 ```
@@ -208,7 +208,7 @@ Commit: `build(model): record official model contract`
 def test_fp32_graph_has_browser_contract(exported_model):
     graph = load_and_check(exported_model)
     assert graph.input_names == ["pixel_values"]
-    assert graph.output_names == ["logits", "pred_boxes", "polygon_points"]
+    assert graph.output_names == ["logits", "pred_boxes", "order_logits", "out_masks"]
     assert graph.input_shape("pixel_values") == [1, 3, 800, 800]
     assert graph.external_data_files == []
 ```
@@ -217,7 +217,7 @@ def test_fp32_graph_has_browser_contract(exported_model):
 
 ```py
 class PPDocLayoutExportWrapper(torch.nn.Module):
-    output_names = ("logits", "pred_boxes", "polygon_points")
+    output_names = ("logits", "pred_boxes", "order_logits", "out_masks")
 
     def __init__(self, model):
         super().__init__()
@@ -455,7 +455,7 @@ Commit: `feat(sdk): decode and preprocess document images`
 
 - [ ] **Step 1: Export a compact official reference output**
 
-Store logits, boxes, polygons, original size, threshold, and expected official postprocessed detections for a deliberately small synthetic output plus one real-image output. The fixture records whether the final class index is background and the exact polygon normalization.
+Store logits, boxes, order logits, masks, original size, threshold, and expected official postprocessed detections for a deliberately small synthetic output plus one real-image output. The fixture records the sigmoid/top-k behavior, reading-order sort, mask-to-polygon algorithm, and exact polygon normalization.
 
 - [ ] **Step 2: Write failing tests**
 
