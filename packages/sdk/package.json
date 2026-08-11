@@ -18,6 +18,9 @@
       "require": "./dist/index.cjs"
     }
   },
+  "dependencies": {
+    "onnxruntime-web": "1.27.0"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean",
     "lint": "eslint src tests",
