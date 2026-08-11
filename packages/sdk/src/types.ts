@@ -15,17 +15,6 @@ export interface DocLayoutCapabilities {
   readonly worker: boolean;
 }
 
-export interface DocLayoutCapabilities {
-  readonly crossOriginIsolated: boolean;
-  readonly diagnostics: readonly string[];
-  readonly wasm: boolean;
-  readonly wasmSimd: boolean;
-  readonly wasmThreads: boolean;
-  readonly webgpu: boolean;
-  readonly webgpuFp16: boolean;
-  readonly worker: boolean;
-}
-
 export interface TensorSpec {
   readonly dtype: TensorDataType;
   readonly name: string;

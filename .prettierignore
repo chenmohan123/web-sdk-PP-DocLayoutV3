@@ -2,6 +2,7 @@
 node_modules/
 dist/
 coverage/
+packages/sdk/etc/*.api.md
 docs/superpowers/
 **/.pytest_cache/
 models/**/*.onnx

@@ -53,11 +53,13 @@ function outputTensors(): Record<string, FakeTensor> {
   );
 }
 
-function fakeOrt(options: {
-  createError?: Error;
-  outputs?: Record<string, FakeTensor>;
-  runError?: Error;
-} = {}): {
+function fakeOrt(
+  options: {
+    createError?: Error;
+    outputs?: Record<string, FakeTensor>;
+    runError?: Error;
+  } = {}
+): {
   readonly create: ReturnType<typeof vi.fn>;
   readonly ort: OrtModuleLike;
   readonly release: ReturnType<typeof vi.fn>;

@@ -8,7 +8,7 @@ import { verifyModelIntegrity } from "./integrity";
 export interface ModelManagerOptions {
   readonly fetch?: typeof fetch;
   readonly memoryCache?: ModelCache;
-  readonly persistentCache?: ModelCache;
+  readonly persistentCache?: ModelCache | null;
   readonly subtle?: SubtleCrypto;
 }
 
@@ -32,7 +32,10 @@ export class ModelManager {
   constructor(options: ModelManagerOptions = {}) {
     this.#fetch = options.fetch;
     this.#memoryCache = options.memoryCache ?? new MemoryModelCache();
-    this.#persistentCache = options.persistentCache ?? defaultPersistentCache();
+    this.#persistentCache =
+      options.persistentCache === null
+        ? undefined
+        : (options.persistentCache ?? defaultPersistentCache());
     this.#subtle = options.subtle;
   }
 

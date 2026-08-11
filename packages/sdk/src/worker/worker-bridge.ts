@@ -30,7 +30,10 @@ export interface InferenceDetectOptions {
 export interface InferenceExecutor {
   readonly mode: "main" | "worker";
   readonly sessionCreateMs: number;
-  detect(raster: NormalizedRaster, options?: InferenceDetectOptions): Promise<WorkerInferenceResult>;
+  detect(
+    raster: NormalizedRaster,
+    options?: InferenceDetectOptions
+  ): Promise<WorkerInferenceResult>;
   dispose(): Promise<void>;
 }
 
@@ -40,7 +43,7 @@ export interface WorkerBridge extends InferenceExecutor {
 
 export interface CreateWorkerBridgeOptions {
   readonly environment?: WorkerBridgeEnvironment;
-  readonly fallback: InferenceExecutor;
+  readonly fallback: InferenceExecutor | (() => Promise<InferenceExecutor>);
   readonly init: WorkerInitPayload;
   readonly onProgress?: (progress: WorkerProgress) => void;
 }
@@ -151,7 +154,10 @@ class WorkerBridgeImplementation implements WorkerBridge {
     return bridge;
   }
 
-  detect(raster: NormalizedRaster, options: InferenceDetectOptions = {}): Promise<WorkerInferenceResult> {
+  detect(
+    raster: NormalizedRaster,
+    options: InferenceDetectOptions = {}
+  ): Promise<WorkerInferenceResult> {
     if (this.disposed) {
       return Promise.reject(
         new DocLayoutError("INFERENCE_FAILED", "Inference worker has been disposed", {
@@ -188,9 +194,7 @@ class WorkerBridgeImplementation implements WorkerBridge {
         ...(options.signal === undefined ? {} : { signal: options.signal })
       });
       options.signal?.addEventListener("abort", onAbort!, { once: true });
-      this.workerInstance.postMessage({ payload, requestId, type: "detect" }, [
-        rgba.buffer
-      ]);
+      this.workerInstance.postMessage({ payload, requestId, type: "detect" }, [rgba.buffer]);
     });
   }
 
@@ -206,11 +210,7 @@ class WorkerBridgeImplementation implements WorkerBridge {
     return Promise.resolve();
   }
 
-  private finishPending(
-    requestId: number,
-    action: "resolve" | "reject",
-    value: unknown
-  ): void {
+  private finishPending(requestId: number, action: "resolve" | "reject", value: unknown): void {
     const pending = this.pending.get(requestId);
     if (pending === undefined) return;
     this.pending.delete(requestId);
@@ -263,11 +263,22 @@ export async function createWorkerBridge(
     !environment.offscreenCanvas ||
     environment.createWorker === undefined
   ) {
-    return options.fallback;
+    return typeof options.fallback === "function" ? options.fallback() : options.fallback;
   }
-  return WorkerBridgeImplementation.create(
-    environment.createWorker(),
-    options.init,
-    options.onProgress
-  );
+  try {
+    return await WorkerBridgeImplementation.create(
+      environment.createWorker(),
+      options.init,
+      options.onProgress
+    );
+  } catch (error) {
+    if (
+      typeof options.fallback === "function" &&
+      error instanceof DocLayoutError &&
+      error.code === "CAPABILITY_UNSUPPORTED"
+    ) {
+      return options.fallback();
+    }
+    throw error;
+  }
 }

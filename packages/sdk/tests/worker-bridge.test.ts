@@ -48,7 +48,7 @@ class FakeWorker implements WorkerLike {
   }
 }
 
-function capabilities(): DocLayoutCapabilities {
+function capabilities(overrides: Partial<DocLayoutCapabilities> = {}): DocLayoutCapabilities {
   return {
     crossOriginIsolated: true,
     diagnostics: [],
@@ -57,7 +57,8 @@ function capabilities(): DocLayoutCapabilities {
     wasmThreads: true,
     webgpu: false,
     webgpuFp16: false,
-    worker: true
+    worker: true,
+    ...overrides
   };
 }
 
@@ -120,8 +121,12 @@ describe("createWorkerBridge", () => {
     const init = worker.posts[0]!;
 
     expect(init.transfer).toHaveLength(1);
-    expect(init.transfer[0]).toBe((init.message as { payload: { modelBytes: ArrayBuffer } }).payload.modelBytes);
-    expect((init.message as { payload: { modelBytes: ArrayBuffer } }).payload.modelBytes.byteLength).toBe(3);
+    expect(init.transfer[0]).toBe(
+      (init.message as { payload: { modelBytes: ArrayBuffer } }).payload.modelBytes
+    );
+    expect(
+      (init.message as { payload: { modelBytes: ArrayBuffer } }).payload.modelBytes.byteLength
+    ).toBe(3);
 
     const pending = bridge.detect(raster(), { threshold: 0.5 });
     const request = worker.posts[1]!;
@@ -178,7 +183,11 @@ describe("createWorkerBridge", () => {
       code: "ABORTED",
       details: { reason: "cancelled" }
     });
-    expect(worker.posts[2]?.message).toMatchObject({ requestId: 3, targetRequestId: 2, type: "abort" });
+    expect(worker.posts[2]?.message).toMatchObject({
+      requestId: 3,
+      targetRequestId: 2,
+      type: "abort"
+    });
     worker.emit({
       payload: {
         detections: [],
@@ -218,6 +227,37 @@ describe("createWorkerBridge", () => {
     });
 
     await expect(pending).rejects.toMatchObject({ code: "SESSION_CREATE_FAILED" });
+    expect(worker.terminate).toHaveBeenCalledOnce();
+  });
+
+  it("uses a lazy main-thread fallback when the worker lacks the selected capability", async () => {
+    const worker = new FakeWorker();
+    const fallback = fallbackExecutor();
+    const createFallback = vi.fn(() => Promise.resolve(fallback));
+    const pending = createWorkerBridge({
+      environment: bridgeEnvironment(worker),
+      fallback: createFallback,
+      init: {
+        capabilities: capabilities({ webgpu: true }),
+        manifest,
+        modelBytes: new ArrayBuffer(1),
+        provider: "webgpu"
+      }
+    });
+
+    worker.emit({
+      error: {
+        code: "CAPABILITY_UNSUPPORTED",
+        details: { stage: "worker-init" },
+        message: "worker has no WebGPU adapter",
+        name: "DocLayoutError"
+      },
+      requestId: 1,
+      type: "error"
+    });
+
+    await expect(pending).resolves.toBe(fallback);
+    expect(createFallback).toHaveBeenCalledOnce();
     expect(worker.terminate).toHaveBeenCalledOnce();
   });
 

@@ -22,7 +22,8 @@
     "onnxruntime-web": "1.27.0"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean",
+    "api:report": "api-extractor run",
+    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean && pnpm api:report",
     "lint": "eslint src tests",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -33,5 +34,8 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "7.58.12"
   }
 }

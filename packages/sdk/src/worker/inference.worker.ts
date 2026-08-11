@@ -47,7 +47,9 @@ function serializeError(error: unknown): SerializedWorkerError {
   };
 }
 
-async function initialize(message: Extract<WorkerMessageToWorker, { type: "init" }>): Promise<void> {
+async function initialize(
+  message: Extract<WorkerMessageToWorker, { type: "init" }>
+): Promise<void> {
   manifest = parseModelManifest(message.payload.manifest);
   const capabilities = await probeCapabilities();
   if (message.payload.provider === "webgpu" && !capabilities.webgpu) {
@@ -93,9 +95,7 @@ async function detect(message: Extract<WorkerMessageToWorker, { type: "detect" }
       inputSize: manifest.preprocessing.size,
       labels: manifest.labels,
       targetSize: input.originalSize,
-      ...(message.payload.threshold === undefined
-        ? {}
-        : { threshold: message.payload.threshold })
+      ...(message.payload.threshold === undefined ? {} : { threshold: message.payload.threshold })
     });
     const postprocessMs = performance.now() - postprocessStartedAt;
     progress(message.requestId, "postprocess", "complete");

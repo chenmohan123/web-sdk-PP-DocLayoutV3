@@ -109,7 +109,12 @@ function mapRuntimeError(
     : stage === "session-create"
       ? "SESSION_CREATE_FAILED"
       : "INFERENCE_FAILED";
-  return new DocLayoutError(code, `ONNX ${stage} failed for ${provider}`, { provider, stage }, { cause: error });
+  return new DocLayoutError(
+    code,
+    `ONNX ${stage} failed for ${provider}`,
+    { provider, stage },
+    { cause: error }
+  );
 }
 
 function sessionOptions(provider: ModelBackend): Readonly<Record<string, unknown>> {
@@ -181,7 +186,10 @@ export async function createOrtSession(options: CreateOrtSessionOptions): Promis
   const startedAt = now();
   let session: OrtInferenceSessionLike;
   try {
-    session = await ort.InferenceSession.create(options.modelBytes, sessionOptions(options.provider));
+    session = await ort.InferenceSession.create(
+      options.modelBytes,
+      sessionOptions(options.provider)
+    );
   } catch (error) {
     throw mapRuntimeError(error, "session-create", options.provider);
   }
