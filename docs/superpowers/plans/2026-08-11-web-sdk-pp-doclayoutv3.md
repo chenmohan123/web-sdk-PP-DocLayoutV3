@@ -459,7 +459,7 @@ Store logits, boxes, order logits, masks, original size, threshold, and expected
 
 - [ ] **Step 2: Write failing tests**
 
-Test stable softmax, background exclusion, threshold boundary, center-box conversion, non-square coordinate scaling, polygon scaling, clipping rules matching the official processor, duplicated label names with distinct IDs, and reading order preservation.
+Test stable sigmoid and global top-k selection across all classes, threshold boundary, center-box conversion, non-square coordinate scaling, polygon scaling, clipping rules matching the official processor, duplicated label names with distinct IDs, and reading order preservation. PP-DocLayoutV3 has no background exclusion in the official processor.
 
 - [ ] **Step 3: Implement only the evidenced official algorithm**
 
