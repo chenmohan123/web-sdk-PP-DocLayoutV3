@@ -4,6 +4,28 @@ export type ModelPrecision = "fp32" | "fp16" | "int8";
 
 export type TensorDataType = "float32";
 
+export interface DocLayoutCapabilities {
+  readonly crossOriginIsolated: boolean;
+  readonly diagnostics: readonly string[];
+  readonly wasm: boolean;
+  readonly wasmSimd: boolean;
+  readonly wasmThreads: boolean;
+  readonly webgpu: boolean;
+  readonly webgpuFp16: boolean;
+  readonly worker: boolean;
+}
+
+export interface DocLayoutCapabilities {
+  readonly crossOriginIsolated: boolean;
+  readonly diagnostics: readonly string[];
+  readonly wasm: boolean;
+  readonly wasmSimd: boolean;
+  readonly wasmThreads: boolean;
+  readonly webgpu: boolean;
+  readonly webgpuFp16: boolean;
+  readonly worker: boolean;
+}
+
 export interface TensorSpec {
   readonly dtype: TensorDataType;
   readonly name: string;
