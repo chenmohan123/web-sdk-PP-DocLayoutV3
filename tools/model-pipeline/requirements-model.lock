@@ -28,6 +28,7 @@ onnx-ir==0.2.1
 onnxconverter-common==1.16.0
 onnxruntime==1.28.0
 onnxscript==0.7.1
+opencv-python-headless==5.0.0.93
 packaging==26.3
 pillow==12.3.0
 pluggy==1.6.0

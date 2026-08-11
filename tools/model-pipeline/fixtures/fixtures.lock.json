@@ -1,0 +1,71 @@
+{
+  "license": {
+    "name": "Apache-2.0",
+    "url": "https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/LICENSE"
+  },
+  "fixtures": [
+    {
+      "filename": "curved-document.jpg",
+      "width": 900,
+      "height": 1273,
+      "sha256": "fce39d864ff7b0612f7073415c2a7c656f7790a26f96d539831f1bb1a994a069",
+      "sourceUrl": "https://paddle-model-ecology.bj.bcebos.com/paddlex/imgs/demo_image/layout_demo.jpg",
+      "derivedFrom": "layout-demo.jpg",
+      "transform": "ffmpeg scale=900:-1,lenscorrection=cx=0.5:cy=0.5:k1=-0.22:k2=0.04",
+      "coverage": ["curve", "Chinese"]
+    },
+    {
+      "filename": "doc-formula.png",
+      "width": 816,
+      "height": 1056,
+      "sha256": "6b07d28527dc9e930804fa73df562f1a81599c6b8a1a8bbc2a80742fa9f26e80",
+      "sourceUrl": "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/tests/test_files/doc_with_formula.png",
+      "coverage": ["English", "formula"]
+    },
+    {
+      "filename": "image-layout.jpg",
+      "width": 1659,
+      "height": 757,
+      "sha256": "cfebd4e0716da8ef01ad29c6f5bf7ed0dcc7d3a07bd38e32219c3b10645798de",
+      "sourceUrl": "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/docs/version2.x/ppstructure/model_train/images/layout.jpg",
+      "coverage": ["image", "chart", "Chinese", "English"]
+    },
+    {
+      "filename": "layout-demo.jpg",
+      "width": 1654,
+      "height": 2339,
+      "sha256": "785b7d19f158dcb636342dd3378ed3a4cddb7333d2d71688f0baa5c25a88ad51",
+      "sourceUrl": "https://paddle-model-ecology.bj.bcebos.com/paddlex/imgs/demo_image/layout_demo.jpg",
+      "sourceModelCard": "https://huggingface.co/PaddlePaddle/PP-DocLayoutV3_safetensors",
+      "coverage": ["Chinese", "reading-order"]
+    },
+    {
+      "filename": "screen-photo.jpg",
+      "width": 1000,
+      "height": 1400,
+      "sha256": "f27a8ad40192f2bff4bcc3605beaddf246bc35b07355e688defde1a2de333aa1",
+      "sourceUrl": "https://paddle-model-ecology.bj.bcebos.com/paddlex/imgs/demo_image/layout_demo.jpg",
+      "derivedFrom": "layout-demo.jpg",
+      "transform": "ffmpeg scale=900:-1,noise=alls=5:allf=t+u,eq=contrast=0.85:brightness=0.02:saturation=1.2,pad=1000:1400:50:50:black",
+      "coverage": ["screen-photo-style", "Chinese"]
+    },
+    {
+      "filename": "skew-document.jpg",
+      "width": 1068,
+      "height": 1386,
+      "sha256": "4ae0d5bebbe152a9cca8add806e376b3eb3314c3a55d6b7ccba70d9c4de97a1e",
+      "sourceUrl": "https://paddle-model-ecology.bj.bcebos.com/paddlex/imgs/demo_image/layout_demo.jpg",
+      "derivedFrom": "layout-demo.jpg",
+      "transform": "ffmpeg scale=900:-1,rotate=8*PI/180:ow=rotw(8*PI/180):oh=roth(8*PI/180):c=white",
+      "coverage": ["skew", "Chinese"]
+    },
+    {
+      "filename": "table.png",
+      "width": 550,
+      "height": 345,
+      "sha256": "6d50148ceccb2d5cecc50b084b5105e3167f2d55a8899b29e04c3ebe46e88fa8",
+      "sourceUrl": "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/tests/test_files/medal_table.png",
+      "coverage": ["Chinese", "table"]
+    }
+  ]
+}

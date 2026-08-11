@@ -5,6 +5,7 @@ onnx
 onnxconverter-common
 onnxruntime
 onnxscript
+opencv-python-headless
 pillow
 pytest
 pyyaml

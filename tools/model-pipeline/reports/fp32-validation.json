@@ -1,0 +1,267 @@
+{
+  "environment": {
+    "numpy": "2.4.6",
+    "onnxruntime": "1.28.0",
+    "opencv-python-headless": "5.0.0.93",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.15",
+    "torch": "2.13.0+cpu",
+    "transformers": "5.15.0"
+  },
+  "fixtures": [
+    {
+      "detectionCountOfficial": 12,
+      "detectionCountOnnx": 12,
+      "filename": "curved-document.jpg",
+      "height": 1273,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.00020837783813476562,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.6689300537109375e-6,
+      "pass": true,
+      "rawOutputs": {
+        "logits": {
+          "maxAbsoluteError": 8.106231689453125e-5,
+          "meanAbsoluteError": 3.7922859191894533e-6
+        },
+        "order_logits": {
+          "maxAbsoluteError": 0.097137451171875,
+          "meanAbsoluteError": 0.001873767090588808
+        },
+        "out_masks": {
+          "maxAbsoluteError": 0.010284423828125,
+          "meanAbsoluteError": 0.00013286317463235018
+        },
+        "pred_boxes": {
+          "maxAbsoluteError": 3.91155481338501e-6,
+          "meanAbsoluteError": 1.8624359806077944e-7
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "fce39d864ff7b0612f7073415c2a7c656f7790a26f96d539831f1bb1a994a069",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 900
+    },
+    {
+      "detectionCountOfficial": 59,
+      "detectionCountOnnx": 59,
+      "filename": "doc-formula.png",
+      "height": 1056,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.00030517578125,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.8477439880371094e-6,
+      "pass": true,
+      "rawOutputs": {
+        "logits": {
+          "maxAbsoluteError": 0.0023474693298339844,
+          "meanAbsoluteError": 2.747516632080078e-5
+        },
+        "order_logits": {
+          "maxAbsoluteError": 3.18212890625,
+          "meanAbsoluteError": 0.019428008205360836
+        },
+        "out_masks": {
+          "maxAbsoluteError": 3.081787109375,
+          "meanAbsoluteError": 0.001742398707617561
+        },
+        "pred_boxes": {
+          "maxAbsoluteError": 7.577240467071533e-5,
+          "meanAbsoluteError": 1.0813654557750852e-6
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "6b07d28527dc9e930804fa73df562f1a81599c6b8a1a8bbc2a80742fa9f26e80",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 816
+    },
+    {
+      "detectionCountOfficial": 44,
+      "detectionCountOnnx": 44,
+      "filename": "image-layout.jpg",
+      "height": 757,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.00048828125,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.3113021850585938e-6,
+      "pass": true,
+      "rawOutputs": {
+        "logits": {
+          "maxAbsoluteError": 0.00033664703369140625,
+          "meanAbsoluteError": 5.851872762044271e-6
+        },
+        "order_logits": {
+          "maxAbsoluteError": 0.228424072265625,
+          "meanAbsoluteError": 0.0029559455828534233
+        },
+        "out_masks": {
+          "maxAbsoluteError": 0.0294189453125,
+          "meanAbsoluteError": 0.0003000848431515266
+        },
+        "pred_boxes": {
+          "maxAbsoluteError": 1.1861324310302734e-5,
+          "meanAbsoluteError": 2.690425185392087e-7
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "cfebd4e0716da8ef01ad29c6f5bf7ed0dcc7d3a07bd38e32219c3b10645798de",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 1659
+    },
+    {
+      "detectionCountOfficial": 13,
+      "detectionCountOnnx": 13,
+      "filename": "layout-demo.jpg",
+      "height": 2339,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.000244140625,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.7285346984863281e-6,
+      "pass": true,
+      "rawOutputs": {
+        "logits": {
+          "maxAbsoluteError": 0.0007905960083007812,
+          "meanAbsoluteError": 6.219291687011719e-6
+        },
+        "order_logits": {
+          "maxAbsoluteError": 1.052978515625,
+          "meanAbsoluteError": 0.003562742368959718
+        },
+        "out_masks": {
+          "maxAbsoluteError": 0.2666015625,
+          "meanAbsoluteError": 0.00016076268626601803
+        },
+        "pred_boxes": {
+          "maxAbsoluteError": 1.233816146850586e-5,
+          "meanAbsoluteError": 2.7908225699017443e-7
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "785b7d19f158dcb636342dd3378ed3a4cddb7333d2d71688f0baa5c25a88ad51",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 1654
+    },
+    {
+      "detectionCountOfficial": 13,
+      "detectionCountOnnx": 13,
+      "filename": "screen-photo.jpg",
+      "height": 1400,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.000244140625,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 5.960464477539062e-7,
+      "pass": true,
+      "rawOutputs": {
+        "logits": {
+          "maxAbsoluteError": 0.0027570724487304688,
+          "meanAbsoluteError": 6.937885284423828e-6
+        },
+        "order_logits": {
+          "maxAbsoluteError": 2.539306640625,
+          "meanAbsoluteError": 0.005290895707160234
+        },
+        "out_masks": {
+          "maxAbsoluteError": 0.418701171875,
+          "meanAbsoluteError": 0.00020607864729189684
+        },
+        "pred_boxes": {
+          "maxAbsoluteError": 3.209710121154785e-5,
+          "meanAbsoluteError": 3.366195952973309e-7
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "f27a8ad40192f2bff4bcc3605beaddf246bc35b07355e688defde1a2de333aa1",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 1000
+    },
+    {
+      "detectionCountOfficial": 13,
+      "detectionCountOnnx": 13,
+      "filename": "skew-document.jpg",
+      "height": 1386,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.000244140625,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.1920928955078125e-6,
+      "pass": true,
+      "rawOutputs": {
+        "logits": {
+          "maxAbsoluteError": 0.00010013580322265625,
+          "meanAbsoluteError": 3.2663663228352865e-6
+        },
+        "order_logits": {
+          "maxAbsoluteError": 0.0972900390625,
+          "meanAbsoluteError": 0.00174774602552255
+        },
+        "out_masks": {
+          "maxAbsoluteError": 0.032958984375,
+          "meanAbsoluteError": 9.47936755959001e-5
+        },
+        "pred_boxes": {
+          "maxAbsoluteError": 1.329183578491211e-5,
+          "meanAbsoluteError": 2.4794407484781306e-7
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "4ae0d5bebbe152a9cca8add806e376b3eb3314c3a55d6b7ccba70d9c4de97a1e",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 1068
+    },
+    {
+      "detectionCountOfficial": 1,
+      "detectionCountOnnx": 1,
+      "filename": "table.png",
+      "height": 345,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 6.103515625e-5,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.1920928955078125e-7,
+      "pass": true,
+      "rawOutputs": {
+        "logits": {
+          "maxAbsoluteError": 0.00014162063598632812,
+          "meanAbsoluteError": 4.482650756835938e-6
+        },
+        "order_logits": {
+          "maxAbsoluteError": 0.04595947265625,
+          "meanAbsoluteError": 0.001340139802814358
+        },
+        "out_masks": {
+          "maxAbsoluteError": 0.003139495849609375,
+          "meanAbsoluteError": 6.717473692973993e-5
+        },
+        "pred_boxes": {
+          "maxAbsoluteError": 1.5497207641601562e-5,
+          "meanAbsoluteError": 2.650154033290164e-7
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "6d50148ceccb2d5cecc50b084b5105e3167f2d55a8899b29e04c3ebe46e88fa8",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 550
+    }
+  ],
+  "overallPass": true,
+  "paddleReference": {
+    "reason": "PaddlePaddle is not installed in the isolated Python 3.11 environment",
+    "status": "unavailable"
+  },
+  "schemaVersion": 1,
+  "sourceHashes": {
+    "modelSafetensors": "5ea422c6cc5fe759a47e1357c35639b58173508e025a3131cbe4b6ac59e2b85e",
+    "onnx": "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b"
+  },
+  "threshold": 0.5,
+  "thresholds": {
+    "boxCoordinateDeltaPixels": 1.0,
+    "polygonCoordinateDeltaPixels": 1.5,
+    "scoreDelta": 0.001
+  }
+}
