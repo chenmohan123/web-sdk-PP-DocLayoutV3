@@ -184,8 +184,18 @@ test("records complete real-model timings", async ({ browser, page }) => {
         backend === "webgpu"
           ? await navigator.gpu?.requestAdapter({ powerPreference: "high-performance" })
           : undefined;
+      const adapterInfo =
+        adapter === undefined
+          ? null
+          : {
+              architecture: adapter.info.architecture || null,
+              description: adapter.info.description || null,
+              device: adapter.info.device || null,
+              shaderF16: adapter.features.has("shader-f16"),
+              vendor: adapter.info.vendor || null
+            };
       return {
-        adapter: adapter?.info ?? null,
+        adapter: adapterInfo,
         browser: navigator.userAgent,
         coldLoad,
         detection,
@@ -222,6 +232,7 @@ test("records complete real-model timings", async ({ browser, page }) => {
     }).trim(),
     environment: {
       browser: { name: "Chromium", version: browser.version(), userAgent: result.browser },
+      capabilities: result.runtime.capabilities,
       cpu: cpus()[0]?.model ?? "unknown",
       hardware:
         backend === "webgpu"

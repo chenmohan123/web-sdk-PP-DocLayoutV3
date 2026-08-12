@@ -39,6 +39,9 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(benchmark, /iou:\s*0\.95/);
     assert.match(benchmark, /maxScoreDelta:\s*0\.02/);
     assert.match(benchmark, /meanPolygonPointDistancePixels:\s*2/);
+    assert.match(benchmark, /architecture:\s*adapter\.info\.architecture/);
+    assert.match(benchmark, /vendor:\s*adapter\.info\.vendor/);
+    assert.match(benchmark, /capabilities:\s*result\.runtime\.capabilities/);
   });
 
   test("keeps package, changelog, and benchmark release versions aligned", () => {
