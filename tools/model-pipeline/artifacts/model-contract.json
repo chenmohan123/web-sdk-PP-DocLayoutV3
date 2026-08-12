@@ -1,0 +1,200 @@
+{
+  "architecture": "PPDocLayoutV3ForObjectDetection",
+  "input": {
+    "dtype": "float32",
+    "name": "pixel_values",
+    "shape": [
+      1,
+      3,
+      800,
+      800
+    ]
+  },
+  "labels": [
+    "abstract",
+    "algorithm",
+    "aside_text",
+    "chart",
+    "content",
+    "formula",
+    "doc_title",
+    "figure_title",
+    "footer",
+    "footer",
+    "footnote",
+    "formula_number",
+    "header",
+    "header",
+    "image",
+    "formula",
+    "number",
+    "paragraph_title",
+    "reference",
+    "reference_content",
+    "seal",
+    "table",
+    "text",
+    "text",
+    "vision_footnote"
+  ],
+  "modelType": "pp_doclayout_v3",
+  "outputs": {
+    "enc_outputs_class": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        13125,
+        25
+      ]
+    },
+    "enc_outputs_coord_logits": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        13125,
+        4
+      ]
+    },
+    "enc_topk_bboxes": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        300,
+        4
+      ]
+    },
+    "enc_topk_logits": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        300,
+        25
+      ]
+    },
+    "encoder_last_hidden_state": {
+      "pythonType": "list"
+    },
+    "init_reference_points": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        300,
+        4
+      ]
+    },
+    "intermediate_hidden_states": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        6,
+        300,
+        256
+      ]
+    },
+    "intermediate_logits": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        6,
+        300,
+        25
+      ]
+    },
+    "intermediate_reference_points": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        6,
+        300,
+        4
+      ]
+    },
+    "last_hidden_state": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        300,
+        256
+      ]
+    },
+    "logits": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        300,
+        25
+      ]
+    },
+    "order_logits": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        300,
+        300
+      ]
+    },
+    "out_masks": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        300,
+        200,
+        200
+      ]
+    },
+    "pred_boxes": {
+      "dtype": "float32",
+      "shape": [
+        1,
+        300,
+        4
+      ]
+    }
+  },
+  "parameterCount": 33175165,
+  "preprocessor": {
+    "do_normalize": true,
+    "do_rescale": true,
+    "do_resize": true,
+    "image_mean": [
+      0,
+      0,
+      0
+    ],
+    "image_std": [
+      1,
+      1,
+      1
+    ],
+    "resample": 3,
+    "rescale_factor": 0.00392156862745098,
+    "size": {
+      "height": 800,
+      "longest_edge": null,
+      "max_height": null,
+      "max_width": null,
+      "shortest_edge": null,
+      "width": 800
+    }
+  },
+  "source": {
+    "files": {
+      "config.json": "4aeed1ded82e4d18a3801a2f771ff31648ba302d1e736cafb065d666b1d3d131",
+      "inference.yml": "aa6afd4938b83e97a14a9d7da39deecfc16ad0f8be103316fa578cc3b2a89f09",
+      "model.safetensors": "5ea422c6cc5fe759a47e1357c35639b58173508e025a3131cbe4b6ac59e2b85e",
+      "preprocessor_config.json": "3b9074dd30b642c406309e21f030b496a948a6baedb02dfb72d6d1b4ef03c47b"
+    },
+    "pathName": "PP-DocLayoutV3_safetensors"
+  },
+  "trainableParameterCount": 33175165,
+  "versions": {
+    "numpy": "2.4.6",
+    "onnx": "1.22.0",
+    "onnxruntime": "1.28.0",
+    "onnxscript": "0.7.1",
+    "safetensors": "0.8.0",
+    "torch": "2.13.0+cpu",
+    "torchvision": "0.28.0+cpu",
+    "transformers": "5.15.0"
+  }
+}

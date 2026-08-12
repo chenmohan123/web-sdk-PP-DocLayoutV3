@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>微信 H5/WebView 示例</title>
+  </head>
+  <body>
+    <main>
+      <h1>微信 H5/WebView 示例</h1>
+      <p>用于公众号网页或小程序 web-view，不支持微信小程序原生推理。</p>
+      <input id="image" type="file" accept="image/*" /><button id="detect">检测</button>
+      <p id="status">等待微信 WebView 就绪</p>
+      <progress id="progress" max="100" value="0"></progress>
+      <pre id="output"></pre>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

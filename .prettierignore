@@ -1,0 +1,13 @@
+.git/
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+packages/sdk/etc/*.api.md
+docs/superpowers/
+**/.pytest_cache/
+models/**/*.onnx
+models/**/manifest.json
+pnpm-lock.yaml
+tools/model-pipeline/artifacts/*.json

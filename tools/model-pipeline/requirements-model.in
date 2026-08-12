@@ -1,0 +1,15 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+numpy
+onnx
+onnxconverter-common
+onnxruntime
+onnxscript
+opencv-python-headless
+pillow
+pytest
+pyyaml
+safetensors
+torch==2.13.0+cpu
+torchvision==0.28.0+cpu
+transformers==5.15.0

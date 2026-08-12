@@ -151,14 +151,19 @@ manifest 是 SDK 与模型之间的稳定协议，至少包含：
   "sdk": { "minVersion": "1.0.0" },
   "source": { "framework": "transformers", "license": "Apache-2.0" },
   "input": { "name": "pixel_values", "shape": [1, 3, 800, 800] },
-  "outputs": { "logits": "logits", "boxes": "pred_boxes", "polygons": "polygon_points" },
+  "outputs": {
+    "logits": "logits",
+    "boxes": "pred_boxes",
+    "order": "order_logits",
+    "masks": "out_masks"
+  },
   "preprocess": { "width": 800, "height": 800, "rescale": 0.00392156862745098 },
   "labels": ["abstract", "algorithm"],
   "variants": []
 }
 ```
 
-每个变体必须声明 `precision`、推荐后端、URL、字节数、SHA-256、ONNX opset 和验证摘要。manifest 的实际输出名以转换产物为准，不能为了匹配示例而改写模型语义。
+每个变体必须声明 `precision`、推荐后端、URL、字节数、SHA-256、ONNX opset 和验证摘要。manifest 的实际输出名以转换产物为准，不能为了匹配示例而改写模型语义。`polygon_points` 不是原始模型张量；SDK 必须按照官方 processor，使用 `out_masks`、box 和原图尺寸派生多边形。
 
 ## 8. 模型转换与验证
 
