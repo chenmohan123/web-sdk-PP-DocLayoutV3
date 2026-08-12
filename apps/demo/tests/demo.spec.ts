@@ -91,8 +91,31 @@ test("stacks the result workflow on a narrow viewport without horizontal overflo
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?fixture=1");
   await expect(page.getByTestId("demo-shell")).toBeVisible();
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
-  expect(overflow).toBe(false);
+  const overflow = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    elements: [...document.querySelectorAll<HTMLElement>("body *")]
+      .map((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          bounds: {
+            left: Math.round(bounds.left * 100) / 100,
+            right: Math.round(bounds.right * 100) / 100,
+            width: Math.round(bounds.width * 100) / 100
+          },
+          className: element.className,
+          tagName: element.tagName
+        };
+      })
+      .filter(({ bounds }) => bounds.left < 0 || bounds.right > innerWidth),
+    scrollWidth: document.documentElement.scrollWidth,
+    viewportWidth: innerWidth
+  }));
+  expect(overflow, JSON.stringify(overflow, null, 2)).toMatchObject({
+    clientWidth: 390,
+    elements: [],
+    scrollWidth: 390,
+    viewportWidth: 390
+  });
   await expect(page.getByTestId("controls")).toBeVisible();
   await expect(page.getByTestId("result-panel")).toBeVisible();
   await expect(page.getByTestId("details-panel")).toBeVisible();
