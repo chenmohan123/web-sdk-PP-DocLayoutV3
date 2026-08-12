@@ -1,0 +1,112 @@
+[
+  {
+    "code": "CAPABILITY_UNSUPPORTED",
+    "zh-CN": {
+      "description": "当前浏览器不具备所需的 WebGPU 或 WASM 能力。",
+      "remedy": "升级浏览器，改用 WASM，或检查安全上下文。"
+    },
+    "en": {
+      "description": "The browser lacks the required WebGPU or WASM capability.",
+      "remedy": "Upgrade the browser, select WASM, or check the secure context."
+    }
+  },
+  {
+    "code": "MANIFEST_INVALID",
+    "zh-CN": {
+      "description": "模型清单结构、版本或字段无效。",
+      "remedy": "按模型清单契约修正 JSON，并检查 minSdkVersion。"
+    },
+    "en": {
+      "description": "The model manifest has an invalid schema, version, or field.",
+      "remedy": "Fix the JSON against the manifest contract and check minSdkVersion."
+    }
+  },
+  {
+    "code": "MODEL_INCOMPATIBLE",
+    "zh-CN": {
+      "description": "没有与所选后端和精度兼容的模型变体。",
+      "remedy": "允许自动回退，或提供兼容的 FP32/FP16 变体。"
+    },
+    "en": {
+      "description": "No model variant matches the selected backend and precision.",
+      "remedy": "Allow fallback or provide a compatible FP32/FP16 variant."
+    }
+  },
+  {
+    "code": "MODEL_DOWNLOAD_FAILED",
+    "zh-CN": {
+      "description": "模型或清单下载失败。",
+      "remedy": "检查 URL、网络、HTTPS、CORS 和响应状态。"
+    },
+    "en": {
+      "description": "Downloading the model or manifest failed.",
+      "remedy": "Check the URL, network, HTTPS, CORS, and response status."
+    }
+  },
+  {
+    "code": "MODEL_INTEGRITY_FAILED",
+    "zh-CN": {
+      "description": "模型大小或 SHA-256 与清单不一致。",
+      "remedy": "清除缓存并从可信固定版本地址重新下载。"
+    },
+    "en": {
+      "description": "The model size or SHA-256 does not match the manifest.",
+      "remedy": "Clear the cache and download again from a trusted immutable URL."
+    }
+  },
+  {
+    "code": "IMAGE_INVALID",
+    "zh-CN": {
+      "description": "图片无法解码或输入格式无效。",
+      "remedy": "使用有效的 PNG、JPEG、WebP、Blob 或 CanvasImageSource。"
+    },
+    "en": {
+      "description": "The image cannot be decoded or has an invalid input format.",
+      "remedy": "Use a valid PNG, JPEG, WebP, Blob, or CanvasImageSource."
+    }
+  },
+  {
+    "code": "SESSION_CREATE_FAILED",
+    "zh-CN": {
+      "description": "ONNX Runtime 会话创建失败。",
+      "remedy": "检查模型算子、WASM 资源路径，并尝试允许回退。"
+    },
+    "en": {
+      "description": "Creating the ONNX Runtime session failed.",
+      "remedy": "Check model operators and WASM asset paths, then allow fallback."
+    }
+  },
+  {
+    "code": "INFERENCE_FAILED",
+    "zh-CN": {
+      "description": "推理或已释放检测器上的操作失败。",
+      "remedy": "检查 details、输入尺寸和生命周期，并重新创建检测器。"
+    },
+    "en": {
+      "description": "Inference failed, or an operation used a disposed detector.",
+      "remedy": "Inspect details, input dimensions, and lifecycle; recreate the detector."
+    }
+  },
+  {
+    "code": "OUT_OF_MEMORY",
+    "zh-CN": {
+      "description": "浏览器内存不足。",
+      "remedy": "释放旧检测器、关闭其他页面、使用 FP16 或在桌面端运行。"
+    },
+    "en": {
+      "description": "The browser ran out of memory.",
+      "remedy": "Dispose old detectors, close other tabs, use FP16, or run on desktop."
+    }
+  },
+  {
+    "code": "ABORTED",
+    "zh-CN": {
+      "description": "加载或检测被 AbortSignal 取消。",
+      "remedy": "仅在需要时重试，并为新操作创建新的 AbortController。"
+    },
+    "en": {
+      "description": "Loading or detection was cancelled by an AbortSignal.",
+      "remedy": "Retry only when needed and create a new AbortController for the next operation."
+    }
+  }
+]
