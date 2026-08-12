@@ -25,6 +25,16 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(workflow, /benchmark\.spec\.ts/);
     assert.match(workflow, /upload-artifact@v4/);
     assert.match(workflow, /responsive-screenshots/);
+    assert.match(
+      workflow,
+      /pnpm --filter web-sdk-pp-doclayoutv3 build[\s\S]+pnpm --filter demo test/
+    );
+    const benchmark = readFileSync(join(repositoryRoot, "tests/browser/benchmark.spec.ts"), "utf8");
+    assert.match(benchmark, /causeMessage/);
+    assert.match(benchmark, /capabilities/);
+    assert.match(benchmark, /\.mjs["']:\s*["']text\/javascript/);
+    assert.match(benchmark, /channel:\s*["']chrome["']/);
+    assert.match(benchmark, /Cross-Origin-Embedder-Policy/);
   });
 
   test("keeps package, changelog, and benchmark release versions aligned", () => {

@@ -25,6 +25,8 @@ const outputRoot = join(repositoryRoot, "test-results/benchmark");
 let origin = "";
 let server: Server;
 
+test.use(mode === "webgpu-fp16" ? { channel: "chrome" } : {});
+
 function runPnpm(args: readonly string[]): void {
   const command = process.platform === "win32" ? (process.env.ComSpec ?? "cmd.exe") : "pnpm";
   const commandArgs = process.platform === "win32" ? ["/d", "/s", "/c", "pnpm", ...args] : args;
@@ -44,6 +46,7 @@ function contentType(path: string): string {
   return (
     {
       ".js": "text/javascript; charset=utf-8",
+      ".mjs": "text/javascript; charset=utf-8",
       ".onnx": "application/octet-stream",
       ".png": "image/png",
       ".wasm": "application/wasm"
@@ -55,6 +58,8 @@ test.beforeAll(async () => {
   test.skip(!["wasm-fp32", "webgpu-fp16"].includes(mode ?? ""), "Set benchmark mode");
   runPnpm(["--filter", "web-sdk-pp-doclayoutv3", "build"]);
   server = createServer((request, response) => {
+    response.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+    response.setHeader("Cross-Origin-Opener-Policy", "same-origin");
     if (request.url === "/") {
       response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       response.end(
@@ -109,7 +114,27 @@ test("records complete real-model timings", async ({ browser, page }) => {
         precision
       } as const;
       await window.PPDocLayout!.clearModelCache();
-      const cold = await window.PPDocLayout!.createDocLayout(options);
+      let cold;
+      try {
+        cold = await window.PPDocLayout!.createDocLayout(options);
+      } catch (error) {
+        const capabilities = await window.PPDocLayout!.probeDocLayoutCapabilities();
+        const failure = error as Error & {
+          cause?: unknown;
+          code?: string;
+          details?: { causeMessage?: string };
+        };
+        throw new Error(
+          JSON.stringify({
+            capabilities,
+            cause: failure.cause instanceof Error ? failure.cause.message : failure.cause,
+            code: failure.code,
+            details: failure.details,
+            message: failure.message,
+            name: failure.name
+          })
+        );
+      }
       const image = await (await fetch(`${browserOrigin}/fixtures/table.png`)).blob();
       const detection = await cold.detect(image, { threshold: 0.5 });
       const coldLoad = cold.loadTimings;
