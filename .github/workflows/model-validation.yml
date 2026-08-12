@@ -1,0 +1,72 @@
+name: Model validation and assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_assets:
+        description: Upload verified model assets to v1.0.0-models
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-models:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.16.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verify model hashes and validation reports
+        run: node scripts/verify-release.mjs --models
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pp-doclayoutv3-model-validation
+          if-no-files-found: error
+          path: |
+            models/pp-doclayoutv3/1.0.0/manifest.json
+            tools/model-pipeline/reports/browser-evidence.json
+            tools/model-pipeline/reports/fp32-validation.json
+            tools/model-pipeline/reports/variant-validation.json
+
+  upload-model-assets:
+    if: inputs.upload_assets
+    needs: validate-models
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.16.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/verify-release.mjs --models
+      - name: Upload assets to the existing model release
+        run: >-
+          gh release upload v1.0.0-models
+          models/pp-doclayoutv3/1.0.0/manifest.json
+          models/pp-doclayoutv3/1.0.0/model-fp16.onnx
+          models/pp-doclayoutv3/1.0.0/model-fp32.onnx
+          tools/model-pipeline/reports/browser-evidence.json
+          tools/model-pipeline/reports/fp32-validation.json
+          tools/model-pipeline/reports/variant-validation.json
+          --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

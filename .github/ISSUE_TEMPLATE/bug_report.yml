@@ -1,0 +1,72 @@
+name: Bug report / 缺陷报告
+description: Report a reproducible SDK or demo problem / 报告可复现的 SDK 或 Demo 问题
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        默认不要上传原始文档图片。请使用脱敏样例或仅提供结构化诊断信息。
+        Do not upload original document images by default. Use a sanitized sample or structured diagnostics.
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题描述 / Summary
+      description: 实际行为、预期行为和最小复现步骤 / Actual behavior, expected behavior, and minimal reproduction steps
+    validations:
+      required: true
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK 版本 / SDK version
+      placeholder: web-sdk-pp-doclayoutv3@1.0.0
+    validations:
+      required: true
+  - type: input
+    id: model-version
+    attributes:
+      label: 模型版本 / Model version
+      placeholder: pp-doclayoutv3 1.0.0, manifest URL, or custom model revision
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器 / Browser
+      placeholder: Chrome 151.0.0.0
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 设备与系统 / Device and OS
+      placeholder: Windows 11, Intel CPU, NVIDIA RTX 5070 Ti
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: 后端 / Backend
+      options: [auto, webgpu, wasm]
+    validations:
+      required: true
+  - type: dropdown
+    id: precision
+    attributes:
+      label: 精度 / Precision
+      options: [auto, fp16, fp32]
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: 已脱敏诊断 / Sanitized diagnostics
+      description: 错误代码、调用栈、能力探测、模型哈希及耗时；请移除图片、URL 查询参数、令牌和个人数据 / Error code, stack, capabilities, hashes, and timings; remove images, URL query strings, tokens, and personal data
+      render: json
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 隐私确认 / Privacy confirmation
+      options:
+        - label: 我已移除文档内容、个人信息、令牌和私有 URL / I removed document content, personal data, tokens, and private URLs
+          required: true

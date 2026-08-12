@@ -13,10 +13,11 @@
     "format:check": "prettier --check .",
     "lint": "pnpm -r --if-present lint",
     "model:test": "python -m pytest tools/model-pipeline",
+    "release:test": "node --test scripts/verify-release.test.mjs",
     "test": "pnpm -r --if-present test",
     "test:browser": "playwright test",
     "typecheck": "pnpm -r --if-present typecheck",
-    "verify": "pnpm format:check && pnpm docs:test && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "verify": "pnpm format:check && pnpm docs:test && pnpm release:test && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

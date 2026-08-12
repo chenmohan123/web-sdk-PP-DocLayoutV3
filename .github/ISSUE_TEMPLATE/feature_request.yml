@@ -1,0 +1,78 @@
+name: Feature request / 功能建议
+description: Propose a focused SDK or integration improvement / 提议明确的 SDK 或集成改进
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: use-case
+    attributes:
+      label: 使用场景 / Use case
+      description: 请说明要解决的工作流问题，不要默认附带文档图片 / Describe the workflow problem; do not attach document images by default
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案 / Proposed behavior
+    validations:
+      required: true
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK 版本 / SDK version
+      placeholder: web-sdk-pp-doclayoutv3@1.0.0
+    validations:
+      required: true
+  - type: input
+    id: model-version
+    attributes:
+      label: 模型版本 / Model version
+      placeholder: pp-doclayoutv3 1.0.0 or custom model revision
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器 / Browser
+      placeholder: Chrome 151 or WeChat WebView 8.0
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 设备与系统 / Device and OS
+      placeholder: iPhone 15, iOS 18
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: 目标后端 / Target backend
+      options: [auto, webgpu, wasm, not-applicable]
+    validations:
+      required: true
+  - type: dropdown
+    id: precision
+    attributes:
+      label: 目标精度 / Target precision
+      options: [auto, fp16, fp32, not-applicable]
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 已尝试方案 / Alternatives tried
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: 已脱敏诊断 / Sanitized diagnostics
+      description: 可选的能力探测和性能数据；请移除图片、URL 查询参数、令牌和个人数据 / Optional capability and performance data; remove images, URL query strings, tokens, and personal data
+      render: json
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: 支持边界 / Support boundary
+      options:
+        - label: 我理解微信支持范围是 H5/WebView，不是原生小程序推理 / I understand WeChat support means H5/WebView, not native mini-program inference
+        - label: 我已移除文档内容、个人信息、令牌和私有 URL / I removed document content, personal data, tokens, and private URLs
+          required: true
