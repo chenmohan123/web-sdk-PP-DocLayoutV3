@@ -92,6 +92,14 @@ test("stacks the result workflow on a narrow viewport without horizontal overflo
   await page.goto("/?fixture=1");
   await expect(page.getByTestId("demo-shell")).toBeVisible();
   const overflow = await page.evaluate(() => ({
+    containers: [...document.querySelectorAll<HTMLElement>("html, body, body *")]
+      .filter((element) => element.scrollWidth > element.clientWidth)
+      .map((element) => ({
+        className: element.className,
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        tagName: element.tagName
+      })),
     clientWidth: document.documentElement.clientWidth,
     elements: [...document.querySelectorAll<HTMLElement>("body *")]
       .map((element) => {
@@ -110,6 +118,7 @@ test("stacks the result workflow on a narrow viewport without horizontal overflo
     scrollWidth: document.documentElement.scrollWidth,
     viewportWidth: innerWidth
   }));
+  await page.screenshot({ path: testInfo.outputPath("mobile.png"), fullPage: true });
   expect(overflow, JSON.stringify(overflow, null, 2)).toMatchObject({
     clientWidth: 390,
     elements: [],
@@ -119,7 +128,6 @@ test("stacks the result workflow on a narrow viewport without horizontal overflo
   await expect(page.getByTestId("controls")).toBeVisible();
   await expect(page.getByTestId("result-panel")).toBeVisible();
   await expect(page.getByTestId("details-panel")).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath("mobile.png"), fullPage: true });
 });
 
 for (const viewport of [

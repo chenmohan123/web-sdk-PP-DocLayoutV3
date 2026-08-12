@@ -16,7 +16,6 @@
 body {
   margin: 0;
   min-width: 320px;
-  overflow-x: hidden;
 }
 button,
 input,
@@ -148,6 +147,7 @@ button {
 .control-group {
   display: grid;
   gap: 7px;
+  min-width: 0;
 }
 .control-label,
 .threshold-control span {
@@ -162,6 +162,7 @@ button {
   background: #dfe7e4;
   border-radius: 7px;
   padding: 3px;
+  min-width: 0;
 }
 .segmented button,
 .overlay-toggle button {
@@ -475,7 +476,7 @@ button {
   }
   .control-band {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 14px 10px;
   }
   .threshold-control {
