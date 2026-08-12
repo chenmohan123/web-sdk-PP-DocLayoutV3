@@ -27,6 +27,39 @@ let server: Server;
 
 test.use(mode === "webgpu-fp16" ? { channel: "chrome" } : {});
 
+const parityThresholds = {
+  iou: 0.95,
+  maxScoreDelta: 0.02,
+  meanPolygonPointDistancePixels: 2
+} as const;
+
+function boxIou(actual: { xMin: number; xMax: number; yMin: number; yMax: number }): number {
+  const [xMin, yMin, xMax, yMax] = reference.realImage.expected.boxes[0]!;
+  const intersectionWidth = Math.max(
+    0,
+    Math.min(actual.xMax, xMax!) - Math.max(actual.xMin, xMin!)
+  );
+  const intersectionHeight = Math.max(
+    0,
+    Math.min(actual.yMax, yMax!) - Math.max(actual.yMin, yMin!)
+  );
+  const intersection = intersectionWidth * intersectionHeight;
+  const actualArea = (actual.xMax - actual.xMin) * (actual.yMax - actual.yMin);
+  const expectedArea = (xMax! - xMin!) * (yMax! - yMin!);
+  return intersection / (actualArea + expectedArea - intersection);
+}
+
+function meanPolygonPointDistance(actual: readonly { x: number; y: number }[]): number {
+  const expected = reference.realImage.expected.polygons[0]!;
+  if (actual.length !== expected.length) return Number.POSITIVE_INFINITY;
+  return (
+    actual.reduce((sum, point, index) => {
+      const [x, y] = expected[index]!;
+      return sum + Math.hypot(point.x - x, point.y - y);
+    }, 0) / actual.length
+  );
+}
+
 function runPnpm(args: readonly string[]): void {
   const command = process.platform === "win32" ? (process.env.ComSpec ?? "cmd.exe") : "pnpm";
   const commandArgs = process.platform === "win32" ? ["/d", "/s", "/c", "pnpm", ...args] : args;
@@ -164,10 +197,18 @@ test("records complete real-model timings", async ({ browser, page }) => {
     { backend, manifest, origin, precision }
   );
   expect(result.runtime).toMatchObject({ backend, precision });
-  expect(result.detection.detections.length).toBeGreaterThan(0);
-  expect(result.detection.detections[0]?.box.xMin).toBeCloseTo(
-    reference.realImage.expected.boxes[0]![0]!,
-    1
+  expect(result.detection.detections).toHaveLength(reference.realImage.expected.scores.length);
+  const firstDetection = result.detection.detections[0]!;
+  expect(firstDetection.labelId).toBe(reference.realImage.expected.labels[0]);
+  const parity = {
+    iou: boxIou(firstDetection.box),
+    maxScoreDelta: Math.abs(firstDetection.score - reference.realImage.expected.scores[0]!),
+    meanPolygonPointDistancePixels: meanPolygonPointDistance(firstDetection.polygon)
+  };
+  expect(parity.iou).toBeGreaterThanOrEqual(parityThresholds.iou);
+  expect(parity.maxScoreDelta).toBeLessThanOrEqual(parityThresholds.maxScoreDelta);
+  expect(parity.meanPolygonPointDistancePixels).toBeLessThanOrEqual(
+    parityThresholds.meanPolygonPointDistancePixels
   );
 
   const report = {
@@ -199,6 +240,8 @@ test("records complete real-model timings", async ({ browser, page }) => {
     detection: {
       count: result.detection.detections.length,
       parity: "passed",
+      parityMetrics: parity,
+      parityThresholds,
       timings: result.detection.timings
     },
     adapter: result.adapter,
