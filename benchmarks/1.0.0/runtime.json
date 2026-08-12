@@ -1,21 +1,51 @@
 {
   "schemaVersion": 1,
   "release": "1.0.0",
-  "releaseReady": false,
-  "generatedAt": "2026-08-12T00:00:00.000Z",
-  "sdkCommit": "eac5a25",
-  "notes": "Evidence inventory for the release candidate. Full cold/warm stage timing collection remains a release gate.",
+  "releaseReady": true,
+  "generatedAt": "2026-08-12T15:56:01.225Z",
+  "sdkCommit": "c6192d31196f01083ec6ad82ee3dedf1458edf79",
+  "notes": "Real-model browser benchmarks collected through the public SDK API. Timings are single-run environment measurements, not generalized throughput claims.",
+  "githubActions": {
+    "runId": 31614796054,
+    "url": "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/actions/runs/31614796054"
+  },
+  "responsiveScreenshots": {
+    "status": "passed",
+    "viewports": [390, 768, 1440, 1920],
+    "artifact": "responsive-screenshots"
+  },
   "modes": [
     {
       "id": "wasm-fp32",
-      "status": "evidence-only",
+      "status": "passed",
+      "generatedAt": "2026-08-12T15:55:14.063Z",
+      "sdkCommit": "c6192d31196f01083ec6ad82ee3dedf1458edf79",
       "environment": {
         "browser": {
-          "userAgent": "Playwright Chromium real-model WASM validation; see tests/browser/runtime.spec.ts"
+          "name": "Chromium",
+          "version": "151.0.7922.34",
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36"
         },
-        "os": "Windows 10 build 26200",
-        "cpu": "CPUExecutionProvider",
-        "hardware": "CPUExecutionProvider"
+        "capabilities": {
+          "crossOriginIsolated": true,
+          "diagnostics": [
+            "webgpu: unavailable because no adapter was returned",
+            "webgpu-fp16: shader-f16 is unavailable",
+            "wasm: supported",
+            "wasm-simd: supported",
+            "wasm-threads: supported",
+            "worker: unavailable in this environment"
+          ],
+          "wasm": true,
+          "wasmSimd": true,
+          "wasmThreads": true,
+          "webgpu": false,
+          "webgpuFp16": false,
+          "worker": false
+        },
+        "cpu": "AMD EPYC 9V74 80-Core Processor",
+        "hardware": "AMD EPYC 9V74 80-Core Processor",
+        "os": "linux 6.17.0-1020-azure"
       },
       "ort": { "version": "1.27.0" },
       "model": {
@@ -23,23 +53,82 @@
         "precision": "fp32",
         "sha256": "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b"
       },
+      "coldLoad": {
+        "capabilitiesMs": 3.0350000000034925,
+        "manifestMs": 0.8099999999976717,
+        "modelMs": 653.6699999999983,
+        "sessionMs": 1426.9349999999977,
+        "totalMs": 2084.8300000000017
+      },
+      "warmLoad": {
+        "capabilitiesMs": 16.27500000000873,
+        "manifestMs": 0.15499999999883585,
+        "modelMs": 186.54499999999825,
+        "sessionMs": 510.3399999999965,
+        "totalMs": 713.4100000000035
+      },
+      "detection": {
+        "count": 1,
+        "parity": "passed",
+        "parityMetrics": {
+          "iou": 0.9999961699392192,
+          "maxScoreDelta": 0.000013727193068024945,
+          "meanPolygonPointDistancePixels": 0
+        },
+        "parityThresholds": {
+          "iou": 0.95,
+          "maxScoreDelta": 0.02,
+          "meanPolygonPointDistancePixels": 2
+        },
+        "timings": {
+          "decodeMs": 24.07499999999709,
+          "inferenceMs": 7603.350000000006,
+          "postprocessMs": 30.195000000006985,
+          "preprocessMs": 315.90999999998894,
+          "totalMs": 7980.125
+        }
+      },
+      "adapter": null,
+      "peakMemory": {
+        "bytes": null,
+        "reason": "Chromium does not expose reliable per-inference peak memory."
+      },
       "evidence": [
-        "tools/model-pipeline/reports/fp32-validation.json",
-        "tests/browser/runtime.spec.ts"
-      ],
-      "timings": null,
-      "detection": { "parity": "passed", "fixtures": 7 }
+        "GitHub Actions run 31614796054 / benchmark-wasm-fp32",
+        "tools/model-pipeline/reports/fp32-validation.json"
+      ]
     },
     {
       "id": "webgpu-fp16",
       "status": "passed",
+      "generatedAt": "2026-08-12T15:56:01.225Z",
+      "sdkCommit": "c6192d31196f01083ec6ad82ee3dedf1458edf79",
       "environment": {
         "browser": {
-          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151.0.0.0 Safari/537.36"
+          "name": "Chromium",
+          "version": "151.0.7922.109",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36"
         },
-        "os": "Windows 10",
-        "cpu": "Intel Core i5-10400F",
-        "hardware": "NVIDIA Blackwell WebGPU adapter"
+        "capabilities": {
+          "crossOriginIsolated": true,
+          "diagnostics": [
+            "webgpu: supported by an acquired adapter",
+            "webgpu-fp16: shader-f16 is supported",
+            "wasm: supported",
+            "wasm-simd: supported",
+            "wasm-threads: supported",
+            "worker: supported"
+          ],
+          "wasm": true,
+          "wasmSimd": true,
+          "wasmThreads": true,
+          "webgpu": true,
+          "webgpuFp16": true,
+          "worker": true
+        },
+        "cpu": "Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz",
+        "hardware": "NVIDIA Blackwell",
+        "os": "win32 10.0.26200"
       },
       "ort": { "version": "1.27.0" },
       "model": {
@@ -47,13 +136,60 @@
         "precision": "fp16",
         "sha256": "463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2"
       },
+      "coldLoad": {
+        "capabilitiesMs": 128.07500000298023,
+        "manifestMs": 1.800000011920929,
+        "modelMs": 1028.4650000035763,
+        "sessionMs": 1835.859999999404,
+        "totalMs": 2994.844999998808
+      },
+      "warmLoad": {
+        "capabilitiesMs": 0.6200000047683716,
+        "manifestMs": 0.15000000596046448,
+        "modelMs": 256.67000000178814,
+        "sessionMs": 1100.375,
+        "totalMs": 1357.8850000053644
+      },
+      "detection": {
+        "count": 1,
+        "parity": "passed",
+        "parityMetrics": {
+          "iou": 0.9985997812926164,
+          "maxScoreDelta": 0.00034537155882430337,
+          "meanPolygonPointDistancePixels": 0.5
+        },
+        "parityThresholds": {
+          "iou": 0.95,
+          "maxScoreDelta": 0.02,
+          "meanPolygonPointDistancePixels": 2
+        },
+        "timings": {
+          "decodeMs": 4.310000002384186,
+          "inferenceMs": 2571.744999989867,
+          "postprocessMs": 33.91000001132488,
+          "preprocessMs": 104.42000000178814,
+          "totalMs": 2727.079999998212
+        }
+      },
+      "adapter": {
+        "architecture": "blackwell",
+        "description": null,
+        "device": null,
+        "shaderF16": true,
+        "vendor": "nvidia"
+      },
+      "peakMemory": {
+        "bytes": null,
+        "reason": "Chromium does not expose reliable per-inference peak memory."
+      },
       "evidence": [
+        "GitHub Actions run 31614796054 / benchmark-webgpu-fp16",
         "tools/model-pipeline/reports/browser-evidence.json",
         "tools/model-pipeline/reports/variant-validation.json"
-      ],
-      "timings": { "downloadMs": 439.99, "sessionCreateMs": 1785.025, "inferenceMs": 681.995 },
-      "detection": { "parity": "passed", "outputsFinite": true }
+      ]
     }
   ],
-  "unsupported": { "int8": "CPU precision acceptance failed; not an accepted release variant." }
+  "unsupported": {
+    "int8": "CPU precision acceptance failed; not an accepted release variant."
+  }
 }

@@ -62,7 +62,7 @@ describe("1.0.0 benchmark release contract", () => {
       ["wasm-fp32", "webgpu-fp16"]
     );
     for (const mode of report.modes) {
-      assert.ok(["passed", "evidence-only"].includes(mode.status));
+      assert.equal(mode.status, "passed");
       assert.match(mode.model.sha256, /^[a-f0-9]{64}$/);
       assert.ok(Number.isSafeInteger(mode.model.bytes) && mode.model.bytes > 0);
       assert.equal(mode.ort.version, "1.27.0");
@@ -72,8 +72,19 @@ describe("1.0.0 benchmark release contract", () => {
       assert.ok(mode.environment.hardware);
       assert.ok(Array.isArray(mode.evidence));
       assert.ok(mode.evidence.length > 0);
+      assert.ok(mode.environment.capabilities);
+      assert.ok(Number.isFinite(mode.coldLoad.totalMs));
+      assert.ok(Number.isFinite(mode.warmLoad.totalMs));
+      assert.ok(Number.isFinite(mode.detection.timings.totalMs));
+      assert.equal(mode.detection.parity, "passed");
+      assert.ok(mode.detection.parityMetrics.iou >= mode.detection.parityThresholds.iou);
+      assert.equal(mode.peakMemory.bytes, null);
+      assert.ok(mode.peakMemory.reason);
     }
-    assert.equal(report.releaseReady, false);
+    assert.equal(report.releaseReady, true);
+    assert.equal(report.githubActions.runId, 31614796054);
+    assert.match(report.githubActions.url, /actions\/runs\/31614796054$/);
+    assert.deepEqual(report.responsiveScreenshots.viewports, [390, 768, 1440, 1920]);
   });
 
   test("documents evidence provenance and unsupported variants", () => {
