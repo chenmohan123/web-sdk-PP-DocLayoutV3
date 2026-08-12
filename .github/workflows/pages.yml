@@ -29,6 +29,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web-sdk-pp-doclayoutv3 build
       - run: pnpm --filter demo exec vite build --base /web-sdk-PP-DocLayoutV3/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

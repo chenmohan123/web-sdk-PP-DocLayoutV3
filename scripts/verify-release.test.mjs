@@ -41,6 +41,7 @@ describe("release workflow contract", () => {
   test("builds Pages assets with the repository base path", () => {
     const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-pages-"));
     try {
+      const sdkBuildArgs = ["--filter", "web-sdk-pp-doclayoutv3", "build"];
       const args = [
         "--filter",
         "demo",
@@ -54,11 +55,20 @@ describe("release workflow contract", () => {
         "--emptyOutDir"
       ];
       if (process.platform === "win32") {
+        execFileSync(
+          process.env.ComSpec ?? "cmd.exe",
+          ["/d", "/s", "/c", "pnpm", ...sdkBuildArgs],
+          {
+            cwd: repositoryRoot,
+            stdio: "pipe"
+          }
+        );
         execFileSync(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", "pnpm", ...args], {
           cwd: repositoryRoot,
           stdio: "pipe"
         });
       } else {
+        execFileSync("pnpm", sdkBuildArgs, { cwd: repositoryRoot, stdio: "pipe" });
         execFileSync("pnpm", args, { cwd: repositoryRoot, stdio: "pipe" });
       }
 

@@ -91,6 +91,11 @@ function verifyStaticContract() {
   );
   requireMatch(
     pages,
+    /pnpm --filter web-sdk-pp-doclayoutv3 build[\s\S]*pnpm --filter demo exec vite build/,
+    "Pages must build the SDK before the Demo"
+  );
+  requireMatch(
+    pages,
     /pnpm --filter demo exec vite build --base \/web-sdk-PP-DocLayoutV3\//,
     "Pages must build with the repository base path"
   );
