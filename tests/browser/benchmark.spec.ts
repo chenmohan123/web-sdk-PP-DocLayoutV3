@@ -63,7 +63,9 @@ test.beforeAll(async () => {
     if (request.url === "/") {
       response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       response.end(
-        '<!doctype html><script>globalThis.Worker=undefined;</script><script src="/dist/browser-global.js"></script>'
+        `<!doctype html>${
+          mode === "wasm-fp32" ? "<script>globalThis.Worker=undefined;</script>" : ""
+        }<script src="/dist/browser-global.js"></script>`
       );
       return;
     }

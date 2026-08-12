@@ -35,6 +35,7 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(benchmark, /\.mjs["']:\s*["']text\/javascript/);
     assert.match(benchmark, /channel:\s*["']chrome["']/);
     assert.match(benchmark, /Cross-Origin-Embedder-Policy/);
+    assert.match(benchmark, /mode === ["']wasm-fp32["'][\s\S]+globalThis\.Worker=undefined/);
   });
 
   test("keeps package, changelog, and benchmark release versions aligned", () => {
