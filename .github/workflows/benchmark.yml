@@ -1,0 +1,74 @@
+name: Release benchmarks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wasm-fp32:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.16.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test tests/browser/benchmark.spec.ts
+        env:
+          PPDOCLAYOUT_BENCHMARK_MODE: wasm-fp32
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-wasm-fp32
+          path: test-results/benchmark/wasm-fp32.json
+
+  webgpu-fp16:
+    runs-on: [self-hosted, windows, x64, webgpu-hardware]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.16.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install chromium
+      - run: pnpm exec playwright test tests/browser/benchmark.spec.ts
+        env:
+          PPDOCLAYOUT_BENCHMARK_MODE: webgpu-fp16
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-webgpu-fp16
+          path: test-results/benchmark/webgpu-fp16.json
+
+  responsive-screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.16.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter demo test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: responsive-screenshots
+          path: apps/demo/test-results/**/*.png

@@ -14,6 +14,17 @@ function readJson(name) {
 }
 
 describe("1.0.0 benchmark release contract", () => {
+  test("provides a manual hardware benchmark workflow", () => {
+    const workflow = readFileSync(join(repositoryRoot, ".github/workflows/benchmark.yml"), "utf8");
+    assert.match(workflow, /workflow_dispatch:/);
+    assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?wasm-fp32/);
+    assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?webgpu-fp16/);
+    assert.match(workflow, /runs-on:\s*\[self-hosted, windows, x64, webgpu-hardware\]/);
+    assert.match(workflow, /benchmark\.spec\.ts/);
+    assert.match(workflow, /upload-artifact@v4/);
+    assert.match(workflow, /responsive-screenshots/);
+  });
+
   test("keeps package, changelog, and benchmark release versions aligned", () => {
     const packageMetadata = JSON.parse(
       readFileSync(join(repositoryRoot, "packages/sdk/package.json"), "utf8")
