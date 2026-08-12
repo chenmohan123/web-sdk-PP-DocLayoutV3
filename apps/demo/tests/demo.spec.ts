@@ -131,14 +131,21 @@ test("stacks the result workflow on a narrow viewport without horizontal overflo
 });
 
 for (const viewport of [
+  { width: 768, height: 1024 },
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 }
 ]) {
-  test(`has no horizontal overflow at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+  test(`has no horizontal overflow at ${viewport.width}x${viewport.height}`, async ({
+    page
+  }, testInfo) => {
     await page.setViewportSize(viewport);
     await page.goto("/?fixture=1");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true
     );
+    await page.screenshot({
+      path: testInfo.outputPath(`${viewport.width}x${viewport.height}.png`),
+      fullPage: true
+    });
   });
 }

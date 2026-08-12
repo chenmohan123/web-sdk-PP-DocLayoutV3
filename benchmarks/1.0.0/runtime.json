@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "release": "1.0.0",
+  "releaseReady": false,
+  "generatedAt": "2026-08-12T00:00:00.000Z",
+  "sdkCommit": "eac5a25",
+  "notes": "Evidence inventory for the release candidate. Full cold/warm stage timing collection remains a release gate.",
+  "modes": [
+    {
+      "id": "wasm-fp32",
+      "status": "evidence-only",
+      "environment": {
+        "browser": {
+          "userAgent": "Playwright Chromium real-model WASM validation; see tests/browser/runtime.spec.ts"
+        },
+        "os": "Windows 10 build 26200",
+        "cpu": "CPUExecutionProvider",
+        "hardware": "CPUExecutionProvider"
+      },
+      "ort": { "version": "1.27.0" },
+      "model": {
+        "bytes": 143216104,
+        "precision": "fp32",
+        "sha256": "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b"
+      },
+      "evidence": [
+        "tools/model-pipeline/reports/fp32-validation.json",
+        "tests/browser/runtime.spec.ts"
+      ],
+      "timings": null,
+      "detection": { "parity": "passed", "fixtures": 7 }
+    },
+    {
+      "id": "webgpu-fp16",
+      "status": "passed",
+      "environment": {
+        "browser": {
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151.0.0.0 Safari/537.36"
+        },
+        "os": "Windows 10",
+        "cpu": "Intel Core i5-10400F",
+        "hardware": "NVIDIA Blackwell WebGPU adapter"
+      },
+      "ort": { "version": "1.27.0" },
+      "model": {
+        "bytes": 74279796,
+        "precision": "fp16",
+        "sha256": "463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2"
+      },
+      "evidence": [
+        "tools/model-pipeline/reports/browser-evidence.json",
+        "tools/model-pipeline/reports/variant-validation.json"
+      ],
+      "timings": { "downloadMs": 439.99, "sessionCreateMs": 1785.025, "inferenceMs": 681.995 },
+      "detection": { "parity": "passed", "outputsFinite": true }
+    }
+  ],
+  "unsupported": { "int8": "CPU precision acceptance failed; not an accepted release variant." }
+}

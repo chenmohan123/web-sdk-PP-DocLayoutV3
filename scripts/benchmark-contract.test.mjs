@@ -1,0 +1,56 @@
+import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, test } from "node:test";
+
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const benchmarkRoot = join(repositoryRoot, "benchmarks/1.0.0");
+
+function readJson(name) {
+  const path = join(benchmarkRoot, name);
+  assert.ok(existsSync(path), `missing benchmark artifact: benchmarks/1.0.0/${name}`);
+  return JSON.parse(readFileSync(path, "utf8"));
+}
+
+describe("1.0.0 benchmark release contract", () => {
+  test("keeps package, changelog, and benchmark release versions aligned", () => {
+    const packageMetadata = JSON.parse(
+      readFileSync(join(repositoryRoot, "packages/sdk/package.json"), "utf8")
+    );
+    const changelog = readFileSync(join(repositoryRoot, "CHANGELOG.md"), "utf8");
+    assert.equal(packageMetadata.version, "1.0.0");
+    assert.match(changelog, /^## 1\.0\.0/m);
+  });
+
+  test("publishes an auditable report for every accepted variant", () => {
+    const report = readJson("runtime.json");
+    assert.equal(report.schemaVersion, 1);
+    assert.equal(report.release, "1.0.0");
+    assert.deepEqual(
+      report.modes.map(({ id }) => id),
+      ["wasm-fp32", "webgpu-fp16"]
+    );
+    for (const mode of report.modes) {
+      assert.ok(["passed", "evidence-only"].includes(mode.status));
+      assert.match(mode.model.sha256, /^[a-f0-9]{64}$/);
+      assert.ok(Number.isSafeInteger(mode.model.bytes) && mode.model.bytes > 0);
+      assert.equal(mode.ort.version, "1.27.0");
+      assert.ok(mode.environment.browser.userAgent);
+      assert.ok(mode.environment.os);
+      assert.ok(mode.environment.cpu);
+      assert.ok(mode.environment.hardware);
+      assert.ok(Array.isArray(mode.evidence));
+      assert.ok(mode.evidence.length > 0);
+    }
+    assert.equal(report.releaseReady, false);
+  });
+
+  test("documents evidence provenance and unsupported variants", () => {
+    const readme = readFileSync(join(benchmarkRoot, "README.md"), "utf8");
+    assert.match(readme, /真实|real/i);
+    assert.match(readme, /INT8/);
+    assert.match(readme, /不支持|unsupported/i);
+    assert.match(readme, /runtime\.json/);
+  });
+});

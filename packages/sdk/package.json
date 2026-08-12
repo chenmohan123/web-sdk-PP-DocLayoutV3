@@ -1,6 +1,6 @@
 {
   "name": "web-sdk-pp-doclayoutv3",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Browser-first PP-DocLayoutV3 layout detection SDK powered by ONNX Runtime Web",
   "license": "Apache-2.0",
   "type": "module",
