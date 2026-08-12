@@ -69,7 +69,7 @@ function verifyStaticContract() {
     /pull_request:\s*\n\s+branches:\s*\[develop, main\]/,
     "CI must run on develop and main pull requests"
   );
-  requireMatch(ci, /pnpm verify/, "CI must run pnpm verify");
+  requireMatch(ci, /pnpm run verify/, "CI must run the workspace verify script");
   requireMatch(
     ci,
     /tests\/browser\/package\.spec\.ts/,
@@ -227,7 +227,7 @@ const manifest = verifyStaticContract();
 if (mode !== "--static") await verifyModels(manifest);
 if (mode === "--release") verifyTag(value);
 if (mode === undefined || mode === "--release") {
-  runPnpm(["verify"]);
+  runPnpm(["run", "verify"]);
   runPnpm(["exec", "playwright", "test", "tests/browser/package.spec.ts"]);
 }
 

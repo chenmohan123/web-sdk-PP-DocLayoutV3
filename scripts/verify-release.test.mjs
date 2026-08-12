@@ -27,6 +27,14 @@ describe("release workflow contract", () => {
     assert.match(ci, /^\s*- uses: actions\/checkout@v4$/m);
   });
 
+  test("runs the workspace verify script without invoking pnpm's built-in verify command", () => {
+    const ci = readFileSync(resolve(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
+    const verifier = readFileSync(resolve(repositoryRoot, "scripts/verify-release.mjs"), "utf8");
+
+    assert.match(ci, /^\s*- run: pnpm run verify$/m);
+    assert.match(verifier, /runPnpm\(\["run", "verify"\]\)/);
+  });
+
   test("rejects a release tag that does not match the SDK package version", () => {
     const result = spawnSync(
       process.execPath,
