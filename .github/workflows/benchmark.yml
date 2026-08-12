@@ -1,6 +1,12 @@
 name: Release benchmarks
 
 on:
+  push:
+    branches: [develop]
+    paths:
+      - .github/workflows/benchmark.yml
+      - scripts/benchmark-contract.test.mjs
+      - tests/browser/benchmark.spec.ts
   workflow_dispatch:
 
 permissions:
