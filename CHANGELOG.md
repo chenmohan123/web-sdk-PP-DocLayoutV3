@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2
+
+- Added separate model download, cache read, integrity verification, and Session creation timings through `detector.loadTimings`.
+- Added `modelSource` metadata for network, persistent cache, memory cache, and custom in-memory models.
+- Added official PaddleOCR sample documents to the Demo and fixed sample loading under the GitHub Pages base path.
+- Published the SDK with bilingual README documentation for the detailed load timing fields.
+
 ## 1.0.1
 
 - Added Chinese-first bilingual npm package documentation.

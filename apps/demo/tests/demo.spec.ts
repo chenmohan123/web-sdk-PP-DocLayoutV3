@@ -9,7 +9,7 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   await page.goto("/?fixture=1");
 
   await expect(page.getByRole("heading", { name: "PP-DocLayoutV3" })).toBeVisible();
-  await expect(page.getByText("SDK 1.0.1", { exact: true })).toBeVisible();
+  await expect(page.getByText("SDK 1.0.2", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "English", exact: true })).toBeVisible();
   await expect(page.getByRole("group", { name: "运行后端" })).toBeVisible();
   await expect(page.getByRole("group", { name: "模型精度" })).toBeVisible();
