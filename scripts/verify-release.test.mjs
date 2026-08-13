@@ -91,8 +91,11 @@ describe("release workflow contract", () => {
 
   test("recognizes standard list-form GitHub Action steps", () => {
     const ci = readFileSync(resolve(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
+    const pages = readFileSync(resolve(repositoryRoot, ".github/workflows/pages.yml"), "utf8");
 
     assert.match(ci, /^\s*- uses: actions\/checkout@v4$/m);
+    assert.match(pages, /^\s*- uses: actions\/configure-pages@v6\r?$/m);
+    assert.match(pages, /^\s*- uses: actions\/upload-pages-artifact@v5\r?$/m);
   });
 
   test("runs the workspace verify script without invoking pnpm's built-in verify command", () => {
