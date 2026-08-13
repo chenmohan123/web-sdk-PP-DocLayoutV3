@@ -44,12 +44,10 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(benchmark, /capabilities:\s*result\.runtime\.capabilities/);
   });
 
-  test("keeps package, changelog, and benchmark release versions aligned", () => {
-    const packageMetadata = JSON.parse(
-      readFileSync(join(repositoryRoot, "packages/sdk/package.json"), "utf8")
-    );
+  test("keeps the historical benchmark aligned with its changelog release", () => {
     const changelog = readFileSync(join(repositoryRoot, "CHANGELOG.md"), "utf8");
-    assert.equal(packageMetadata.version, "1.0.0");
+    const report = readJson("runtime.json");
+    assert.equal(report.release, "1.0.0");
     assert.match(changelog, /^## 1\.0\.0/m);
   });
 

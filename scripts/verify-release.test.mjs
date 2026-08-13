@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -8,6 +9,47 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function modelStagingFixture({ corruptFp32 = false } = {}) {
+  const fp16 = Buffer.from("fp16-model");
+  const fp32 = Buffer.from("fp32-model");
+  const manifest = {
+    schemaVersion: 1,
+    variants: [
+      {
+        bytes: fp16.byteLength,
+        filename: "model-fp16.onnx",
+        id: "fp16",
+        sha256: sha256(fp16),
+        url: "https://release.invalid/model-fp16.onnx"
+      },
+      {
+        bytes: fp32.byteLength,
+        filename: "model-fp32.onnx",
+        id: "fp32",
+        sha256: sha256(fp32),
+        url: "https://release.invalid/model-fp32.onnx"
+      }
+    ]
+  };
+  const assets = new Map([
+    ["https://release.test/manifest.json", JSON.stringify(manifest)],
+    ["https://release.test/model-fp16.onnx", fp16],
+    ["https://release.test/model-fp32.onnx", corruptFp32 ? Buffer.from("Fp32-model") : fp32]
+  ]);
+  return {
+    fp16,
+    fp32,
+    fetchImpl: async (url) => {
+      const body = assets.get(String(url));
+      return body === undefined ? new Response(null, { status: 404 }) : new Response(body);
+    }
+  };
+}
 
 describe("release workflow contract", () => {
   test("validates the repository release configuration", () => {
@@ -30,6 +72,21 @@ describe("release workflow contract", () => {
       type: "git",
       url: "git+https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3.git"
     });
+  });
+
+  test("keeps the 1.0.1 package, runtime, and changelog versions aligned", () => {
+    const packageMetadata = JSON.parse(
+      readFileSync(resolve(repositoryRoot, "packages/sdk/package.json"), "utf8")
+    );
+    const runtime = readFileSync(
+      resolve(repositoryRoot, "packages/sdk/src/model/manifest.ts"),
+      "utf8"
+    );
+    const changelog = readFileSync(resolve(repositoryRoot, "CHANGELOG.md"), "utf8");
+
+    assert.equal(packageMetadata.version, "1.0.1");
+    assert.match(runtime, /CURRENT_SDK_VERSION = "1\.0\.1"/);
+    assert.match(changelog, /^## 1\.0\.1$/m);
   });
 
   test("recognizes standard list-form GitHub Action steps", () => {
@@ -93,6 +150,68 @@ describe("release workflow contract", () => {
 
       const html = readFileSync(resolve(outputRoot, "index.html"), "utf8");
       assert.match(html, /(?:src|href)="\/web-sdk-PP-DocLayoutV3\/assets\//);
+    } finally {
+      rmSync(outputRoot, { force: true, recursive: true });
+    }
+  });
+
+  test("stages validated browser-fetchable models in the Pages artifact", () => {
+    const pages = readFileSync(resolve(repositoryRoot, ".github/workflows/pages.yml"), "utf8");
+
+    assert.match(
+      pages,
+      /vite build[\s\S]*node scripts\/stage-pages-models\.mjs[\s\S]*upload-pages-artifact/
+    );
+  });
+
+  test("publishes through npm Trusted Publishing without token fallbacks", () => {
+    const release = readFileSync(resolve(repositoryRoot, ".github/workflows/release.yml"), "utf8");
+
+    assert.match(release, /environment:\s*npm/);
+    assert.match(release, /id-token:\s+write/);
+    assert.match(release, /npm publish --access public --provenance/);
+    assert.doesNotMatch(release, /NPM_TOKEN|NODE_AUTH_TOKEN|_authToken/);
+  });
+
+  test("stages verified release models with public Pages URLs", async () => {
+    const { stagePagesModels } = await import("./stage-pages-models.mjs");
+    const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-model-stage-"));
+    const fixture = modelStagingFixture();
+    try {
+      const staged = await stagePagesModels({
+        fetchImpl: fixture.fetchImpl,
+        outputRoot,
+        publicRoot: "https://pages.test/models/v1.0.0",
+        releaseRoot: "https://release.test"
+      });
+
+      assert.equal(staged.variants[0].url, "https://pages.test/models/v1.0.0/model-fp16.onnx");
+      assert.equal(staged.variants[1].url, "https://pages.test/models/v1.0.0/model-fp32.onnx");
+      assert.deepEqual(readFileSync(resolve(outputRoot, "model-fp16.onnx")), fixture.fp16);
+      assert.deepEqual(readFileSync(resolve(outputRoot, "model-fp32.onnx")), fixture.fp32);
+      assert.deepEqual(
+        JSON.parse(readFileSync(resolve(outputRoot, "manifest.json"), "utf8")),
+        staged
+      );
+    } finally {
+      rmSync(outputRoot, { force: true, recursive: true });
+    }
+  });
+
+  test("rejects a staged model whose SHA-256 does not match", async () => {
+    const { stagePagesModels } = await import("./stage-pages-models.mjs");
+    const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-model-stage-"));
+    const fixture = modelStagingFixture({ corruptFp32: true });
+    try {
+      await assert.rejects(
+        stagePagesModels({
+          fetchImpl: fixture.fetchImpl,
+          outputRoot,
+          publicRoot: "https://pages.test/models/v1.0.0",
+          releaseRoot: "https://release.test"
+        }),
+        /model-fp32\.onnx SHA-256 mismatch/
+      );
     } finally {
       rmSync(outputRoot, { force: true, recursive: true });
     }

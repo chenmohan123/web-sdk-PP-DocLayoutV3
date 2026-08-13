@@ -38,6 +38,21 @@ function verifyActions(name, source) {
 
 function verifyStaticContract() {
   const packageMetadata = JSON.parse(read("packages/sdk/package.json"));
+  const packageReadme = read("packages/sdk/README.md");
+  for (const required of [
+    "web-sdk-pp-doclayoutv3",
+    "pnpm add web-sdk-pp-doclayoutv3",
+    "createDocLayout",
+    "WebGPU",
+    "WASM",
+    "FP16",
+    "FP32",
+    "Custom manifest",
+    "H5/WebView",
+    "native Mini Program"
+  ]) {
+    if (!packageReadme.includes(required)) fail(`package README must include ${required}`);
+  }
   const expectedRepositoryUrl = "git+https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3.git";
   if (
     packageMetadata.repository?.type !== "git" ||
@@ -108,6 +123,16 @@ function verifyStaticContract() {
     /pnpm --filter demo exec vite build --base \/web-sdk-PP-DocLayoutV3\//,
     "Pages must build with the repository base path"
   );
+  requireMatch(
+    pages,
+    /vite build[\s\S]*node scripts\/stage-pages-models\.mjs[\s\S]*upload-pages-artifact/,
+    "Pages must stage model assets after the Demo build and before upload"
+  );
+  requireMatch(
+    read("scripts/stage-pages-models.mjs"),
+    /releases\/download\/v1\.0\.0-models/,
+    "Pages model staging must use the immutable v1.0.0-models release"
+  );
   requireMatch(pages, /pages:\s+write/, "Pages deploy job needs pages: write");
   requireMatch(pages, /pages:\s+read/, "Pages build job needs pages: read");
   requireMatch(pages, /id-token:\s+write/, "Pages deploy job needs id-token: write");
@@ -143,8 +168,11 @@ function verifyStaticContract() {
     /npm publish --access public --provenance/,
     "npm publish must enable provenance"
   );
-  requireMatch(release, /secrets\.NPM_TOKEN/, "release must support an NPM_TOKEN fallback");
+  requireMatch(release, /environment:\s*npm/, "Trusted Publishing must use the npm environment");
   requireMatch(release, /id-token:\s+write/, "Trusted Publishing needs id-token: write");
+  if (/NPM_TOKEN|NODE_AUTH_TOKEN|_authToken/.test(release)) {
+    fail("Trusted Publishing must not use npm token fallbacks");
+  }
   if (/develop/.test(release) || /branches:\s*\n\s+-\s+develop/.test(release)) {
     fail("npm publishing must never run from develop");
   }

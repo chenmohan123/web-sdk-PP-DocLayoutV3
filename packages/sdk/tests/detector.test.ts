@@ -97,6 +97,10 @@ describe("createDocLayout", () => {
   it("uses the pinned default manifest with zero configuration", async () => {
     const deps = dependencies();
 
+    expect(DEFAULT_MANIFEST_URL).toBe(
+      "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.0/manifest.json"
+    );
+
     const detector = await createDocLayoutWithDependencies({}, deps);
 
     expect(deps.fetchManifest).toHaveBeenCalledWith(DEFAULT_MANIFEST_URL, undefined);
