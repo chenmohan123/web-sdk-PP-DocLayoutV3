@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { describe, test } from "node:test";
 import { dirname, resolve } from "node:path";
@@ -150,6 +150,12 @@ describe("release workflow contract", () => {
 
       const html = readFileSync(resolve(outputRoot, "index.html"), "utf8");
       assert.match(html, /(?:src|href)="\/web-sdk-PP-DocLayoutV3\/assets\//);
+      const javascript = readdirSync(resolve(outputRoot, "assets"))
+        .filter((filename) => filename.endsWith(".js"))
+        .map((filename) => readFileSync(resolve(outputRoot, "assets", filename), "utf8"))
+        .join("\n");
+      assert.match(javascript, /\/web-sdk-PP-DocLayoutV3\/samples\//);
+      assert.match(javascript, /layout-demo\.jpg/);
     } finally {
       rmSync(outputRoot, { force: true, recursive: true });
     }

@@ -69,7 +69,11 @@ function dependencies(overrides: Partial<DetectorDependencies> = {}): DetectorDe
         return Promise.resolve({
           data: new ArrayBuffer(variant.bytes),
           downloadedBytes: variant.bytes,
-          source: "network"
+          source: "network",
+          modelDownloadMs: 2,
+          modelCacheMs: 0,
+          integrityMs: 1,
+          modelSource: "network"
         });
       }
     )
@@ -139,11 +143,17 @@ describe("createDocLayout", () => {
     const load = vi.spyOn(deps.modelManager, "load");
     const data = new Uint8Array([1, 2, 3]).buffer;
 
-    await createDocLayoutWithDependencies({ model: { data, manifest } }, deps);
+    const detector = await createDocLayoutWithDependencies({ model: { data, manifest } }, deps);
 
     expect(load).not.toHaveBeenCalled();
     expect(deps.verifyModel).toHaveBeenCalledWith(data, manifest.variants[1]);
     expect(deps.createExecutor).toHaveBeenCalledWith(expect.objectContaining({ modelBytes: data }));
+    expect(detector.loadTimings).toMatchObject({
+      integrityMs: 1,
+      modelCacheMs: 0,
+      modelDownloadMs: 0,
+      modelSource: "custom"
+    });
   });
 
   it("falls back automatically and records the failed candidate cause", async () => {
@@ -177,6 +187,11 @@ describe("createDocLayout", () => {
       precision: "fp16",
       provider: "webgpu",
       variantId: "fp16"
+    });
+    expect(detector.loadTimings).toMatchObject({
+      integrityMs: 2,
+      modelDownloadMs: 4,
+      modelSource: "network"
     });
   });
 
@@ -239,6 +254,10 @@ describe("createDocLayout", () => {
       capabilitiesMs: 1,
       manifestMs: 1,
       modelMs: 1,
+      modelDownloadMs: 2,
+      modelCacheMs: 0,
+      integrityMs: 1,
+      modelSource: "network",
       sessionMs: 1,
       totalMs: 9
     });
