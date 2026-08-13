@@ -36,16 +36,9 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Verify tag, package, models, workspace, and packed package
         run: node scripts/verify-release.mjs --release "${GITHUB_REF_NAME}"
-      - name: Use NPM_TOKEN when Trusted Publishing is not configured
-        if: env.NPM_TOKEN != ''
-        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> "$HOME/.npmrc"
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Publish with npm provenance
         working-directory: packages/sdk
         run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Record published integrity
         run: |
           echo '## npm integrity' >> "$GITHUB_STEP_SUMMARY"

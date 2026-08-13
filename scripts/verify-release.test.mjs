@@ -149,6 +149,15 @@ describe("release workflow contract", () => {
     );
   });
 
+  test("publishes through npm Trusted Publishing without token fallbacks", () => {
+    const release = readFileSync(resolve(repositoryRoot, ".github/workflows/release.yml"), "utf8");
+
+    assert.match(release, /environment:\s*npm/);
+    assert.match(release, /id-token:\s+write/);
+    assert.match(release, /npm publish --access public --provenance/);
+    assert.doesNotMatch(release, /NPM_TOKEN|NODE_AUTH_TOKEN|_authToken/);
+  });
+
   test("stages verified release models with public Pages URLs", async () => {
     const { stagePagesModels } = await import("./stage-pages-models.mjs");
     const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-model-stage-"));

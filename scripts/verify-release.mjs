@@ -153,8 +153,11 @@ function verifyStaticContract() {
     /npm publish --access public --provenance/,
     "npm publish must enable provenance"
   );
-  requireMatch(release, /secrets\.NPM_TOKEN/, "release must support an NPM_TOKEN fallback");
+  requireMatch(release, /environment:\s*npm/, "Trusted Publishing must use the npm environment");
   requireMatch(release, /id-token:\s+write/, "Trusted Publishing needs id-token: write");
+  if (/NPM_TOKEN|NODE_AUTH_TOKEN|_authToken/.test(release)) {
+    fail("Trusted Publishing must not use npm token fallbacks");
+  }
   if (/develop/.test(release) || /branches:\s*\n\s+-\s+develop/.test(release)) {
     fail("npm publishing must never run from develop");
   }
