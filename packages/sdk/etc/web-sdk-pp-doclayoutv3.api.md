@@ -46,7 +46,7 @@ export const CURRENT_SDK_VERSION = "1.0.0";
 export type DecodableImage = Blob | CanvasImageSource | NormalizedRaster;
 
 // @public (undocumented)
-export const DEFAULT_MANIFEST_URL = "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/manifest.json";
+export const DEFAULT_MANIFEST_URL = "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.0/manifest.json";
 
 // @public (undocumented)
 export const DEFAULT_ORT_WASM_BASE_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
