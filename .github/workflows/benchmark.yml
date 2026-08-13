@@ -16,7 +16,7 @@ jobs:
   wasm-fp32:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           lfs: true
       - uses: pnpm/action-setup@v6
@@ -40,7 +40,7 @@ jobs:
     runs-on: [self-hosted, windows, x64, webgpu-hardware]
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           lfs: true
       - uses: pnpm/action-setup@v6
@@ -63,7 +63,7 @@ jobs:
   responsive-screenshots:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
         with:
           version: 11.16.0
