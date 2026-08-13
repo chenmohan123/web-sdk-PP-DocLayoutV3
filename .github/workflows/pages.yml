@@ -34,7 +34,7 @@ jobs:
       - name: Stage validated model assets for browser delivery
         run: node scripts/stage-pages-models.mjs
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: apps/demo/dist
 
