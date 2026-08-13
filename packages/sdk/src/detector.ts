@@ -27,7 +27,7 @@ import { createWorkerBridge, type InferenceExecutor } from "./worker/worker-brid
 import type { WorkerProgress } from "./worker/protocol";
 
 export const DEFAULT_MANIFEST_URL =
-  "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/manifest.json";
+  "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.0/manifest.json";
 
 export const DEFAULT_ORT_WASM_BASE_URL =
   "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
