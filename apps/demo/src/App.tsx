@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import {
+  CURRENT_SDK_VERSION,
   clearModelCache,
   createDocLayout,
   parseModelManifest,
@@ -217,7 +218,7 @@ export function App(): ReactElement {
         <div className="brand-block">
           <span className="eyebrow">ONNX RUNTIME WEB</span>
           <h1>PP-DocLayoutV3</h1>
-          <span className="version">SDK 1.0.0</span>
+          <span className="version">SDK {CURRENT_SDK_VERSION}</span>
         </div>
         <div className="top-actions">
           <button
