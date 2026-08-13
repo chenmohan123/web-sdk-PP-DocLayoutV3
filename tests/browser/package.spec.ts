@@ -219,8 +219,14 @@ test("keeps ONNX model files out of the npm tarball", () => {
   const entries = run("tar", ["-tf", tarball], fixtureRoot).split(/\r?\n/);
 
   expect(entries.some((entry) => entry.endsWith(".onnx"))).toBe(false);
+  expect(entries).toContain("package/README.md");
   expect(entries).toContain("package/dist/inference.worker.js");
   expect(entries).toContain("package/dist/browser-global.js");
+
+  const readme = readFileSync(join(installedSdkRoot, "README.md"), "utf8");
+  expect(readme).toContain("# web-sdk-pp-doclayoutv3");
+  expect(readme).toContain("## English");
+  expect(readme).toContain("createDocLayout");
 });
 
 declare global {

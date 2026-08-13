@@ -38,6 +38,21 @@ function verifyActions(name, source) {
 
 function verifyStaticContract() {
   const packageMetadata = JSON.parse(read("packages/sdk/package.json"));
+  const packageReadme = read("packages/sdk/README.md");
+  for (const required of [
+    "web-sdk-pp-doclayoutv3",
+    "pnpm add web-sdk-pp-doclayoutv3",
+    "createDocLayout",
+    "WebGPU",
+    "WASM",
+    "FP16",
+    "FP32",
+    "Custom manifest",
+    "H5/WebView",
+    "native Mini Program"
+  ]) {
+    if (!packageReadme.includes(required)) fail(`package README must include ${required}`);
+  }
   const expectedRepositoryUrl = "git+https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3.git";
   if (
     packageMetadata.repository?.type !== "git" ||
