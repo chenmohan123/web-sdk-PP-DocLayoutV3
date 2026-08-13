@@ -40,7 +40,7 @@ export interface CreateDocLayoutOptions {
 }
 
 // @public (undocumented)
-export const CURRENT_SDK_VERSION = "1.0.0";
+export const CURRENT_SDK_VERSION = "1.0.1";
 
 // @public (undocumented)
 export type DecodableImage = Blob | CanvasImageSource | NormalizedRaster;

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- Added Chinese-first bilingual npm package documentation.
+- Migrated npm releases to GitHub Actions Trusted Publishing with provenance and no npm token.
+- Served validated FP16 and FP32 model assets from GitHub Pages so browsers can load the built-in model without CORS failures.
+
 ## 1.0.0 (release candidate)
 
 - Added browser-first PP-DocLayoutV3 SDK runtime with WASM/WebGPU backend selection.

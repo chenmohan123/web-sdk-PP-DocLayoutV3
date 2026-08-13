@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { DocLayoutError } from "../src/errors";
-import { parseModelManifest } from "../src/model/manifest";
+import { CURRENT_SDK_VERSION, parseModelManifest } from "../src/model/manifest";
 
 const defaultManifest = JSON.parse(
   readFileSync(
@@ -35,6 +35,10 @@ function expectManifestError(input: unknown, message: RegExp): void {
 }
 
 describe("parseModelManifest", () => {
+  it("reports the published SDK version", () => {
+    expect(CURRENT_SDK_VERSION).toBe("1.0.1");
+  });
+
   it("parses the generated default manifest without changing model semantics", () => {
     const manifest = parseModelManifest(defaultManifest);
 
@@ -100,13 +104,13 @@ describe("parseModelManifest", () => {
 
   it("rejects a manifest requiring a newer SDK", () => {
     const manifest = copyManifest();
-    manifest.minSdkVersion = "1.0.1";
+    manifest.minSdkVersion = "1.0.2";
 
     const error = captureManifestError(manifest);
     expect(error.code).toBe("MODEL_INCOMPATIBLE");
     expect(error.details).toEqual({
-      currentSdkVersion: "1.0.0",
-      minSdkVersion: "1.0.1"
+      currentSdkVersion: "1.0.1",
+      minSdkVersion: "1.0.2"
     });
   });
 });

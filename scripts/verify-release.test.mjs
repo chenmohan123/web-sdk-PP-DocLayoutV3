@@ -74,6 +74,21 @@ describe("release workflow contract", () => {
     });
   });
 
+  test("keeps the 1.0.1 package, runtime, and changelog versions aligned", () => {
+    const packageMetadata = JSON.parse(
+      readFileSync(resolve(repositoryRoot, "packages/sdk/package.json"), "utf8")
+    );
+    const runtime = readFileSync(
+      resolve(repositoryRoot, "packages/sdk/src/model/manifest.ts"),
+      "utf8"
+    );
+    const changelog = readFileSync(resolve(repositoryRoot, "CHANGELOG.md"), "utf8");
+
+    assert.equal(packageMetadata.version, "1.0.1");
+    assert.match(runtime, /CURRENT_SDK_VERSION = "1\.0\.1"/);
+    assert.match(changelog, /^## 1\.0\.1$/m);
+  });
+
   test("recognizes standard list-form GitHub Action steps", () => {
     const ci = readFileSync(resolve(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
 
