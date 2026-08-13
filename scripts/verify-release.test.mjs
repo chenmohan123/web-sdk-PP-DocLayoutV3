@@ -96,6 +96,23 @@ describe("release workflow contract", () => {
     assert.match(ci, /^\s*- uses: actions\/checkout@v7\r?$/m);
     assert.match(pages, /^\s*- uses: actions\/configure-pages@v6\r?$/m);
     assert.match(pages, /^\s*- uses: actions\/upload-pages-artifact@v5\r?$/m);
+
+    const setupNodeWorkflows = [
+      ["benchmark.yml", 3],
+      ["ci.yml", 3],
+      ["model-validation.yml", 2],
+      ["pages.yml", 1],
+      ["release.yml", 1]
+    ];
+    for (const [name, expectedCount] of setupNodeWorkflows) {
+      const source = readFileSync(resolve(repositoryRoot, ".github/workflows", name), "utf8");
+      assert.equal(
+        source.match(/actions\/setup-node@v7/g)?.length ?? 0,
+        expectedCount,
+        `${name} must pin every Node setup step to v7`
+      );
+      assert.doesNotMatch(source, /actions\/setup-node@v4/);
+    }
   });
 
   test("runs the workspace verify script without invoking pnpm's built-in verify command", () => {
