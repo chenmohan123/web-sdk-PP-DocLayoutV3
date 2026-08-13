@@ -26,7 +26,9 @@ During the Pages build, the workflow downloads these three immutable assets from
 - `model-fp16.onnx`
 - `model-fp32.onnx`
 
-The files are placed under `apps/demo/dist/models/v1.0.0/`. The deployed manifest is rewritten only for delivery: each variant URL becomes a relative same-origin filename. Model bytes and hashes remain unchanged. The demo's built-in manifest URL becomes a base-aware Pages URL under `models/v1.0.0/manifest.json`; custom manifest behavior remains untouched.
+The files are placed under `apps/demo/dist/models/v1.0.0/`. The deployed manifest is rewritten only for delivery: each variant URL becomes an absolute GitHub Pages URL under `https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.0/`. Model bytes and hashes remain unchanged. GitHub Pages returns `Access-Control-Allow-Origin: *`, so both the official Demo and third-party H5 consumers can fetch these assets.
+
+The SDK's built-in default manifest URL becomes the absolute Pages manifest URL. The Demo continues to use the SDK default, so it does not gain a private configuration path that differs from normal npm consumers. Custom manifest behavior remains untouched.
 
 The Pages workflow verifies downloaded file hashes against the manifest before uploading the artifact. A failure stops deployment rather than publishing a partially usable demo.
 
@@ -62,7 +64,8 @@ Tests are added before implementation for these contracts:
 - the packed npm package includes its README;
 - the release workflow grants OIDC and contains no npm token reference;
 - the Pages workflow stages and verifies all model assets;
-- the demo resolves its default manifest inside the configured Vite base path;
+- the SDK default manifest and staged variant URLs use the public Pages model path;
+- the public Pages model responses allow cross-origin browser requests;
 - custom manifest input still passes through unchanged;
 - version metadata is consistently `1.0.1`.
 
