@@ -31,7 +31,7 @@ jobs:
       - run: pnpm exec playwright test tests/browser/benchmark.spec.ts
         env:
           PPDOCLAYOUT_BENCHMARK_MODE: wasm-fp32
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: benchmark-wasm-fp32
           path: test-results/benchmark/wasm-fp32.json
@@ -55,7 +55,7 @@ jobs:
       - run: pnpm exec playwright test tests/browser/benchmark.spec.ts
         env:
           PPDOCLAYOUT_BENCHMARK_MODE: webgpu-fp16
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: benchmark-webgpu-fp16
           path: test-results/benchmark/webgpu-fp16.json
@@ -75,7 +75,7 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm --filter web-sdk-pp-doclayoutv3 build
       - run: pnpm --filter demo test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: responsive-screenshots
           path: apps/demo/test-results/**/*.png
