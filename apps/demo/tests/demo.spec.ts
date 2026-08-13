@@ -10,7 +10,7 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
 
   await expect(page.getByRole("heading", { name: "PP-DocLayoutV3" })).toBeVisible();
   await expect(page.getByText("SDK 1.0.1", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "English" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "English", exact: true })).toBeVisible();
   await expect(page.getByRole("group", { name: "运行后端" })).toBeVisible();
   await expect(page.getByRole("group", { name: "模型精度" })).toBeVisible();
   await page.getByRole("group", { name: "运行后端" }).getByRole("button", { name: "CPU" }).click();
@@ -29,6 +29,7 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   });
   await expect(page.getByRole("button", { name: "开始检测" })).toBeEnabled();
   await page.getByRole("button", { name: "开始检测" }).click();
+  await expect(page.getByTestId("status")).toContainText("检测完成", { timeout: 15_000 });
   await expect(page.getByTestId("result-canvas")).toBeVisible();
   await expect(
     page.getByTestId("result-panel").getByRole("heading", { name: "检测结果" })
@@ -60,11 +61,24 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   await page.screenshot({ path: testInfo.outputPath("desktop.png"), fullPage: true });
 });
 
+test("shows local sample documents and only previews a selected sample", async ({ page }) => {
+  await page.goto("/?fixture=1");
+  await expect(page.getByTestId("sample-gallery")).toBeVisible();
+  await expect(page.getByRole("button", { name: /版面示例/ }).first()).toBeVisible();
+  await page
+    .getByRole("button", { name: /版面示例/ })
+    .first()
+    .click();
+  await expect(page.getByTestId("status")).toContainText("准备就绪");
+  await expect(page.getByRole("button", { name: "开始检测" })).toBeEnabled();
+  await expect(page.getByTestId("sample-source")).toContainText("PaddleOCR");
+});
+
 test("switches language, toggles overlays, validates custom model input, and cancels", async ({
   page
 }) => {
   await page.goto("/?fixture=1");
-  await page.getByRole("button", { name: "English" }).click();
+  await page.getByRole("button", { name: "English", exact: true }).click();
   await expect(page.getByRole("heading", { name: "PP-DocLayoutV3" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Select image" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Run detection" })).toBeVisible();

@@ -110,8 +110,12 @@ export interface DocLayoutModelInfo {
 
 export interface DocLayoutLoadTimings {
   readonly capabilitiesMs: number;
+  readonly integrityMs: number;
   readonly manifestMs: number;
+  readonly modelCacheMs: number;
+  readonly modelDownloadMs: number;
   readonly modelMs: number;
+  readonly modelSource: "cache" | "custom" | "memory" | "network";
   readonly sessionMs: number;
   readonly totalMs: number;
 }
@@ -182,8 +186,12 @@ interface ResolvedModel {
 interface AttemptResult {
   readonly candidate: ExecutionCandidate & { variantId: string };
   readonly executor: InferenceExecutor;
+  readonly integrityMs: number;
   readonly loaded: LoadedModel;
+  readonly modelCacheMs: number;
+  readonly modelDownloadMs: number;
   readonly modelMs: number;
+  readonly modelSource: "cache" | "custom" | "memory" | "network";
   readonly sessionMs: number;
   readonly variant: ModelVariant;
 }
@@ -284,6 +292,9 @@ async function attemptExecutor(
   fallbacks: DocLayoutFallback[]
 ): Promise<AttemptResult> {
   let lastError: unknown;
+  let integrityMs = 0;
+  let modelCacheMs = 0;
+  let modelDownloadMs = 0;
   let modelMs = 0;
   let sessionMs = 0;
   for (const [index, candidate] of candidates.entries()) {
@@ -300,12 +311,24 @@ async function attemptExecutor(
             ...(options.signal === undefined ? {} : { signal: options.signal })
           });
         } else {
+          const integrityStartedAt = dependencies.now();
           await dependencies.verifyModel(resolved.data, variant);
-          loaded = { data: resolved.data, downloadedBytes: 0, source: "cache" };
+          loaded = {
+            data: resolved.data,
+            downloadedBytes: 0,
+            integrityMs: elapsed(dependencies.now, integrityStartedAt),
+            modelCacheMs: 0,
+            modelDownloadMs: 0,
+            modelSource: "custom",
+            source: "cache"
+          };
         }
       } finally {
         modelMs += elapsed(dependencies.now, modelStartedAt);
       }
+      integrityMs += loaded.integrityMs;
+      modelCacheMs += loaded.modelCacheMs;
+      modelDownloadMs += loaded.modelDownloadMs;
       options.onProgress?.({ phase: "model", status: "complete" });
       options.onProgress?.({ phase: "session", status: "start" });
       const sessionStartedAt = dependencies.now();
@@ -328,7 +351,18 @@ async function attemptExecutor(
         sessionMs += elapsed(dependencies.now, sessionStartedAt);
       }
       options.onProgress?.({ phase: "session", status: "complete" });
-      return { candidate, executor, loaded, modelMs, sessionMs, variant };
+      return {
+        candidate,
+        executor,
+        integrityMs,
+        loaded,
+        modelCacheMs,
+        modelDownloadMs,
+        modelMs,
+        modelSource: loaded.modelSource,
+        sessionMs,
+        variant
+      };
     } catch (error) {
       lastError = error;
       const fallback = fallbackFrom(candidate, error);
@@ -460,8 +494,12 @@ export async function createDocLayoutWithDependencies(
   const info = modelInfo(resolved.manifest, selected.variant);
   const loadTimings: DocLayoutLoadTimings = {
     capabilitiesMs,
+    integrityMs: selected.integrityMs,
     manifestMs,
+    modelCacheMs: selected.modelCacheMs,
+    modelDownloadMs: selected.modelDownloadMs,
     modelMs: selected.modelMs,
+    modelSource: selected.modelSource,
     sessionMs: selected.sessionMs,
     totalMs: elapsed(dependencies.now, totalStartedAt)
   };

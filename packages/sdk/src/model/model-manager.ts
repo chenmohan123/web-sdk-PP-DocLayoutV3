@@ -10,6 +10,7 @@ export interface ModelManagerOptions {
   readonly memoryCache?: ModelCache;
   readonly persistentCache?: ModelCache | null;
   readonly subtle?: SubtleCrypto;
+  readonly now?: () => number;
 }
 
 export interface ModelLoadOptions {
@@ -20,6 +21,10 @@ export interface ModelLoadOptions {
 export interface LoadedModel {
   readonly data: ArrayBuffer;
   readonly downloadedBytes: number;
+  readonly integrityMs: number;
+  readonly modelCacheMs: number;
+  readonly modelDownloadMs: number;
+  readonly modelSource: "cache" | "custom" | "memory" | "network";
   readonly source: "cache" | "network";
 }
 
@@ -28,6 +33,7 @@ export class ModelManager {
   readonly #memoryCache: ModelCache;
   readonly #persistentCache: ModelCache | undefined;
   readonly #subtle: SubtleCrypto | undefined;
+  readonly #now: () => number;
 
   constructor(options: ModelManagerOptions = {}) {
     this.#fetch = options.fetch;
@@ -37,6 +43,8 @@ export class ModelManager {
         ? undefined
         : (options.persistentCache ?? defaultPersistentCache());
     this.#subtle = options.subtle;
+    this.#now =
+      options.now ?? (() => (typeof performance === "object" ? performance.now() : Date.now()));
   }
 
   async load(
@@ -45,24 +53,54 @@ export class ModelManager {
     options: ModelLoadOptions = {}
   ): Promise<LoadedModel> {
     const key = modelCacheKey(manifest, variant);
-    const memoryEntry = await this.#readValid(this.#memoryCache, key, variant);
+    let modelCacheMs = 0;
+    let integrityMs = 0;
+    const timings = {
+      addCache: (value: number) => {
+        modelCacheMs += value;
+      },
+      addIntegrity: (value: number) => {
+        integrityMs += value;
+      }
+    };
+    const memoryEntry = await this.#readValid(this.#memoryCache, key, variant, timings);
     if (memoryEntry !== undefined) {
-      return { data: memoryEntry.data, downloadedBytes: 0, source: "cache" };
+      return {
+        data: memoryEntry.data,
+        downloadedBytes: 0,
+        integrityMs,
+        modelCacheMs,
+        modelDownloadMs: 0,
+        modelSource: "memory",
+        source: "cache"
+      };
     }
 
     if (this.#persistentCache !== undefined) {
-      const persistentEntry = await this.#readValid(this.#persistentCache, key, variant);
+      const persistentEntry = await this.#readValid(this.#persistentCache, key, variant, timings);
       if (persistentEntry !== undefined) {
-        return { data: persistentEntry.data, downloadedBytes: 0, source: "cache" };
+        return {
+          data: persistentEntry.data,
+          downloadedBytes: 0,
+          integrityMs,
+          modelCacheMs,
+          modelDownloadMs: 0,
+          modelSource: "cache",
+          source: "cache"
+        };
       }
     }
 
+    const downloadStartedAt = this.#now();
     const downloaded = await downloadModel(variant.url, {
       ...(this.#fetch === undefined ? {} : { fetch: this.#fetch }),
       ...(options.onProgress === undefined ? {} : { onProgress: options.onProgress }),
       ...(options.signal === undefined ? {} : { signal: options.signal })
     });
+    const modelDownloadMs = Math.max(0, this.#now() - downloadStartedAt);
+    const integrityStartedAt = this.#now();
     await verifyModelIntegrity(downloaded.data, variant, this.#subtle);
+    integrityMs += Math.max(0, this.#now() - integrityStartedAt);
     const entry: ModelCacheEntry = {
       bytes: downloaded.data.byteLength,
       data: downloaded.data,
@@ -82,7 +120,14 @@ export class ModelManager {
     if (!persisted) {
       await this.#memoryCache.set(entry);
     }
-    return { ...downloaded, source: "network" };
+    return {
+      ...downloaded,
+      integrityMs,
+      modelCacheMs,
+      modelDownloadMs,
+      modelSource: "network",
+      source: "network"
+    };
   }
 
   async clearCache(): Promise<void> {
@@ -108,21 +153,28 @@ export class ModelManager {
   async #readValid(
     cache: ModelCache,
     key: string,
-    variant: ModelVariant
+    variant: ModelVariant,
+    timings?: { addCache(value: number): void; addIntegrity(value: number): void }
   ): Promise<ModelCacheEntry | undefined> {
     let entry: ModelCacheEntry | undefined;
+    const cacheStartedAt = this.#now();
     try {
       entry = await cache.get(key);
     } catch {
       return undefined;
+    } finally {
+      timings?.addCache(Math.max(0, this.#now() - cacheStartedAt));
     }
     if (entry === undefined) {
       return undefined;
     }
+    const integrityStartedAt = this.#now();
     try {
       await verifyModelIntegrity(entry.data, variant, this.#subtle);
+      timings?.addIntegrity(Math.max(0, this.#now() - integrityStartedAt));
       return entry;
     } catch {
+      timings?.addIntegrity(Math.max(0, this.#now() - integrityStartedAt));
       await cache.delete(key);
       return undefined;
     }

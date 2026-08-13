@@ -224,6 +224,66 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.sample-gallery {
+  padding: 14px 0 18px;
+  border-bottom: 1px solid #c9d1ce;
+}
+.sample-gallery-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.sample-source,
+.sample-attribution {
+  color: #688078;
+  font-size: 11px;
+}
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.sample-card {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 6px;
+  text-align: left;
+  border: 1px solid #bbc8c3;
+  border-radius: 6px;
+  background: white;
+  color: #183b42;
+}
+.sample-card:hover,
+.sample-card:focus-visible {
+  border-color: #d95f2b;
+}
+.sample-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #d8dfdc;
+}
+.sample-card span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+}
+.sample-card small {
+  color: #82908c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+.sample-attribution {
+  display: inline-block;
+  margin-top: 8px;
+}
 .error-banner {
   display: flex;
   align-items: center;
@@ -498,6 +558,9 @@ button {
   }
   .canvas-wrap {
     min-height: 280px;
+  }
+  .sample-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .panel-heading {
     align-items: flex-start;

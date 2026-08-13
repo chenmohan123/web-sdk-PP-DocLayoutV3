@@ -30,7 +30,7 @@ export const zhCN = {
   precisionInfo: "实际精度",
   mode: "运行模式",
   total: "总耗时",
-  loadTotal: "模型加载",
+  loadTotal: "初始化总耗时",
   session: "Session 创建",
   decode: "解码",
   preprocess: "预处理",
@@ -48,7 +48,17 @@ export const zhCN = {
   noDetections: "未检测到版面区域",
   error: "运行错误",
   fallback: "回退记录",
-  selectHint: "支持 PNG、JPG、WEBP，单次处理一张图片。"
+  selectHint: "支持 PNG、JPG、WEBP，单次处理一张图片。",
+  samples: "示例文档",
+  sampleSource: "来源",
+  modelDownload: "模型下载",
+  modelCache: "缓存读取",
+  integrity: "完整性校验",
+  modelSource: "模型来源",
+  source_network: "网络下载",
+  source_cache: "持久缓存",
+  source_memory: "内存缓存",
+  source_custom: "自定义模型"
 } as const;
 
 export type Copy = { [Key in keyof typeof zhCN]: string };

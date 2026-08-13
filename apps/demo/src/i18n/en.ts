@@ -32,7 +32,7 @@ export const en: Copy = {
   precisionInfo: "Precision",
   mode: "Mode",
   total: "Total",
-  loadTotal: "Model load",
+  loadTotal: "Initialization total",
   session: "Session creation",
   decode: "Decode",
   preprocess: "Preprocess",
@@ -51,5 +51,15 @@ export const en: Copy = {
   noDetections: "No layout regions detected",
   error: "Runtime error",
   fallback: "Fallback records",
-  selectHint: "PNG, JPG, and WEBP; one image per run."
+  selectHint: "PNG, JPG, and WEBP; one image per run.",
+  samples: "Sample documents",
+  sampleSource: "Source",
+  modelDownload: "Model download",
+  modelCache: "Cache read",
+  integrity: "Integrity check",
+  modelSource: "Model source",
+  source_network: "Network download",
+  source_cache: "Persistent cache",
+  source_memory: "Memory cache",
+  source_custom: "Custom model"
 };

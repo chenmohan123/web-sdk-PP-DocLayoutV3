@@ -110,6 +110,9 @@ describe("ModelManager", () => {
 
     expect(fetches).toBe(1);
     expect(result.source).toBe("network");
+    expect(result.modelDownloadMs).toBeGreaterThanOrEqual(0);
+    expect(result.modelCacheMs).toBeGreaterThanOrEqual(0);
+    expect(result.integrityMs).toBeGreaterThanOrEqual(0);
     expect(result.downloadedBytes).toBe(data.byteLength);
     expect(new Uint8Array(result.data)).toEqual(data);
     expect(progress.map(({ loadedBytes }) => loadedBytes)).toEqual([4, 11, data.byteLength]);
@@ -139,6 +142,9 @@ describe("ModelManager", () => {
 
     expect(fetches).toBe(0);
     expect(result).toMatchObject({ source: "cache", downloadedBytes: 0 });
+    expect(result.modelDownloadMs).toBe(0);
+    expect(result.modelCacheMs).toBeGreaterThanOrEqual(0);
+    expect(result.integrityMs).toBeGreaterThanOrEqual(0);
     expect(new Uint8Array(result.data)).toEqual(data);
   });
 

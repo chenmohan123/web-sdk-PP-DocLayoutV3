@@ -134,9 +134,17 @@ export interface DocLayoutLoadTimings {
     // (undocumented)
     readonly capabilitiesMs: number;
     // (undocumented)
+    readonly integrityMs: number;
+    // (undocumented)
     readonly manifestMs: number;
     // (undocumented)
+    readonly modelCacheMs: number;
+    // (undocumented)
+    readonly modelDownloadMs: number;
+    // (undocumented)
     readonly modelMs: number;
+    // (undocumented)
+    readonly modelSource: "cache" | "custom" | "memory" | "network";
     // (undocumented)
     readonly sessionMs: number;
     // (undocumented)

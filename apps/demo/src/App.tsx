@@ -16,11 +16,13 @@ import {
   parseModelManifest,
   type DocLayoutDetector,
   type DocLayoutResult,
+  type DocLayoutLoadTimings,
   type ModelBackend,
   type ModelManifest
 } from "web-sdk-pp-doclayoutv3";
 
 import { tinyModelData, tinyModelManifest } from "./fixture";
+import { demoSamples, fetchSampleFile, sampleUrl, type DemoSample } from "./samples";
 import { en } from "./i18n/en";
 import { zhCN, type Copy } from "./i18n/zh-CN";
 
@@ -29,6 +31,13 @@ type Backend = "auto" | ModelBackend;
 type Precision = "auto" | "fp16" | "fp32";
 type Overlay = "box" | "polygon";
 type Status = "ready" | "loading" | "running" | "success" | "error";
+
+type DemoLoadTimings = DocLayoutLoadTimings & {
+  readonly integrityMs?: number;
+  readonly modelCacheMs?: number;
+  readonly modelDownloadMs?: number;
+  readonly modelSource?: "cache" | "custom" | "memory" | "network";
+};
 
 const demoFixture = new URLSearchParams(window.location.search).has("fixture");
 
@@ -107,10 +116,12 @@ export function App(): ReactElement {
   const [customError, setCustomError] = useState<string | undefined>();
   const [customManifest, setCustomManifest] = useState<ModelManifest | undefined>();
   const [notice, setNotice] = useState<string | undefined>();
+  const [selectedSample, setSelectedSample] = useState<DemoSample | undefined>();
   const imageRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const detectorRef = useRef<DocLayoutDetector | undefined>(undefined);
   const abortRef = useRef<AbortController | undefined>(undefined);
+  const loadTimings = detectorRef.current?.loadTimings as DemoLoadTimings | undefined;
 
   const redraw = useCallback(() => {
     drawResult(canvasRef.current!, imageRef.current, result, overlay);
@@ -134,6 +145,18 @@ export function App(): ReactElement {
     setError(undefined);
     setNotice(undefined);
     setStatus("ready");
+    setSelectedSample(undefined);
+  };
+
+  const onSample = async (sample: DemoSample): Promise<void> => {
+    try {
+      const next = await fetchSampleFile(sample);
+      onImage(next);
+      setSelectedSample(sample);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+      setStatus("error");
+    }
   };
 
   const cancel = (): void => {
@@ -316,6 +339,33 @@ export function App(): ReactElement {
                 : copy.ready}
         <span className="status-hint">{file === undefined ? copy.noImage : file.name}</span>
       </div>
+      <section className="sample-gallery" data-testid="sample-gallery" aria-label={copy.samples}>
+        <div className="sample-gallery-heading">
+          <span className="control-label">{copy.samples}</span>
+          <span className="sample-source" data-testid="sample-source">
+            {selectedSample === undefined ? copy.sampleSource : `${copy.sampleSource}: PaddleOCR`}
+          </span>
+        </div>
+        <div className="sample-grid">
+          {demoSamples.map((sample) => (
+            <button className="sample-card" key={sample.id} onClick={() => void onSample(sample)}>
+              <img src={sampleUrl(sample)} alt={sample.label[language]} />
+              <span>{sample.label[language]}</span>
+              <small>{sample.coverage[language]}</small>
+            </button>
+          ))}
+        </div>
+        {selectedSample !== undefined && (
+          <a
+            className="sample-attribution"
+            href={selectedSample.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {copy.sampleSource}: PaddleOCR
+          </a>
+        )}
+      </section>
       {error !== undefined && (
         <div className="error-banner" role="alert">
           <CircleAlert size={18} />
@@ -414,11 +464,31 @@ export function App(): ReactElement {
             <dl className="metric-list">
               <div>
                 <dt>{copy.loadTotal}</dt>
-                <dd>{formatMs(detectorRef.current?.loadTimings.totalMs)}</dd>
+                <dd>{formatMs(loadTimings?.totalMs)}</dd>
+              </div>
+              <div>
+                <dt>{copy.modelDownload}</dt>
+                <dd>{formatMs(loadTimings?.modelDownloadMs)}</dd>
+              </div>
+              <div>
+                <dt>{copy.modelCache}</dt>
+                <dd>{formatMs(loadTimings?.modelCacheMs)}</dd>
+              </div>
+              <div>
+                <dt>{copy.integrity}</dt>
+                <dd>{formatMs(loadTimings?.integrityMs)}</dd>
+              </div>
+              <div>
+                <dt>{copy.modelSource}</dt>
+                <dd>
+                  {loadTimings?.modelSource === undefined
+                    ? "-"
+                    : copy[`source_${loadTimings.modelSource}`]}
+                </dd>
               </div>
               <div>
                 <dt>{copy.session}</dt>
-                <dd>{formatMs(detectorRef.current?.loadTimings.sessionMs)}</dd>
+                <dd>{formatMs(loadTimings?.sessionMs)}</dd>
               </div>
               <div>
                 <dt>{copy.total}</dt>
