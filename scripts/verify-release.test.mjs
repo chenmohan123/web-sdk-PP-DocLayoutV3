@@ -97,4 +97,13 @@ describe("release workflow contract", () => {
       rmSync(outputRoot, { force: true, recursive: true });
     }
   });
+
+  test("stages validated browser-fetchable models in the Pages artifact", () => {
+    const pages = readFileSync(resolve(repositoryRoot, ".github/workflows/pages.yml"), "utf8");
+
+    assert.match(
+      pages,
+      /vite build[\s\S]*node scripts\/stage-pages-models\.mjs[\s\S]*upload-pages-artifact/
+    );
+  });
 });

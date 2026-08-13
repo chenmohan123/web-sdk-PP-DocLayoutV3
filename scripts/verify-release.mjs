@@ -108,6 +108,16 @@ function verifyStaticContract() {
     /pnpm --filter demo exec vite build --base \/web-sdk-PP-DocLayoutV3\//,
     "Pages must build with the repository base path"
   );
+  requireMatch(
+    pages,
+    /vite build[\s\S]*node scripts\/stage-pages-models\.mjs[\s\S]*upload-pages-artifact/,
+    "Pages must stage model assets after the Demo build and before upload"
+  );
+  requireMatch(
+    read("scripts/stage-pages-models.mjs"),
+    /releases\/download\/v1\.0\.0-models/,
+    "Pages model staging must use the immutable v1.0.0-models release"
+  );
   requireMatch(pages, /pages:\s+write/, "Pages deploy job needs pages: write");
   requireMatch(pages, /pages:\s+read/, "Pages build job needs pages: read");
   requireMatch(pages, /id-token:\s+write/, "Pages deploy job needs id-token: write");
