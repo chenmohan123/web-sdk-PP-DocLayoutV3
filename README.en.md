@@ -36,7 +36,7 @@ try {
 
 Set `backend` to `auto`, `webgpu`, or `wasm`, and `precision` to `auto`, `fp16`, or `fp32`. `allowFallback` defaults to `true`; set it to `false` for strict selection. A model can be a manifest URL, a manifest object, or an in-memory `{ manifest, data }` pair. Custom models must preserve the documented tensor and postprocessing contract.
 
-The default 1.0.0 FP16 model is 74,279,796 bytes and targets WebGPU. The FP32 model is 143,216,104 bytes and supports WebGPU and WASM. The upstream PaddlePaddle `PP-DocLayoutV3_safetensors` model is Apache-2.0; see [Models](docs/en/models.md) and [Third-Party Notices](THIRD_PARTY_NOTICES.md).
+The default FP16 model is 74,279,796 bytes and targets WebGPU. The FP32 model is 143,216,104 bytes and supports WebGPU and WASM. The upstream PaddlePaddle `PP-DocLayoutV3_safetensors` model is Apache-2.0; see [Models](docs/en/models.md) and [Third-Party Notices](THIRD_PARTY_NOTICES.md).
 
 ## Deployment and privacy
 
