@@ -93,7 +93,7 @@ describe("release workflow contract", () => {
     const ci = readFileSync(resolve(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
     const pages = readFileSync(resolve(repositoryRoot, ".github/workflows/pages.yml"), "utf8");
 
-    assert.match(ci, /^\s*- uses: actions\/checkout@v4$/m);
+    assert.match(ci, /^\s*- uses: actions\/checkout@v7\r?$/m);
     assert.match(pages, /^\s*- uses: actions\/configure-pages@v6\r?$/m);
     assert.match(pages, /^\s*- uses: actions\/upload-pages-artifact@v5\r?$/m);
   });
