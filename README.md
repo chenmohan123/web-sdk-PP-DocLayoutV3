@@ -36,7 +36,7 @@ try {
 
 `backend` 可设为 `auto`、`webgpu`、`wasm`；`precision` 可设为 `auto`、`fp16`、`fp32`。`allowFallback` 默认为 `true`，严格模式可设为 `false`。用户可传清单 URL、清单对象，或内存中的 `{ manifest, data }`；自定义模型必须遵循相同输入、输出和后处理契约。
 
-默认 1.0.0 模型：FP16 为 74,279,796 字节，仅用于 WebGPU；FP32 为 143,216,104 字节，支持 WebGPU 与 WASM。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。
+默认模型：FP16 为 74,279,796 字节，仅用于 WebGPU；FP32 为 143,216,104 字节，支持 WebGPU 与 WASM。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。
 
 ## 部署与隐私
 
