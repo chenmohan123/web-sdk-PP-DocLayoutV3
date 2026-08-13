@@ -29,7 +29,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Verify model hashes and validation reports
         run: node scripts/verify-release.mjs --models
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: pp-doclayoutv3-model-validation
           if-no-files-found: error

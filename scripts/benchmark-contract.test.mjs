@@ -23,7 +23,23 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?webgpu-fp16/);
     assert.match(workflow, /runs-on:\s*\[self-hosted, windows, x64, webgpu-hardware\]/);
     assert.match(workflow, /benchmark\.spec\.ts/);
-    assert.match(workflow, /upload-artifact@v4/);
+    const artifactWorkflows = [
+      ["benchmark.yml", workflow, 3],
+      ["ci.yml", readFileSync(join(repositoryRoot, ".github/workflows/ci.yml"), "utf8"), 1],
+      [
+        "model-validation.yml",
+        readFileSync(join(repositoryRoot, ".github/workflows/model-validation.yml"), "utf8"),
+        1
+      ]
+    ];
+    for (const [name, source, expectedCount] of artifactWorkflows) {
+      assert.equal(
+        source.match(/actions\/upload-artifact@v7/g)?.length ?? 0,
+        expectedCount,
+        `${name} must pin every artifact upload to v7`
+      );
+      assert.doesNotMatch(source, /actions\/upload-artifact@v4/);
+    }
     assert.match(workflow, /responsive-screenshots/);
     assert.match(
       workflow,
