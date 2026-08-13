@@ -21,6 +21,17 @@ describe("release workflow contract", () => {
     assert.match(output, /4 workflows, 2 model variants/);
   });
 
+  test("requires package repository metadata to match GitHub provenance", () => {
+    const packageMetadata = JSON.parse(
+      readFileSync(resolve(repositoryRoot, "packages/sdk/package.json"), "utf8")
+    );
+
+    assert.deepEqual(packageMetadata.repository, {
+      type: "git",
+      url: "git+https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3.git"
+    });
+  });
+
   test("recognizes standard list-form GitHub Action steps", () => {
     const ci = readFileSync(resolve(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
 

@@ -37,6 +37,15 @@ function verifyActions(name, source) {
 }
 
 function verifyStaticContract() {
+  const packageMetadata = JSON.parse(read("packages/sdk/package.json"));
+  const expectedRepositoryUrl = "git+https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3.git";
+  if (
+    packageMetadata.repository?.type !== "git" ||
+    packageMetadata.repository?.url !== expectedRepositoryUrl
+  ) {
+    fail(`packages/sdk/package.json repository.url must be ${expectedRepositoryUrl}`);
+  }
+
   const workflows = Object.fromEntries(
     requiredWorkflows.map((name) => [name, read(`.github/workflows/${name}`)])
   );
