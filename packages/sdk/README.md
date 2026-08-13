@@ -28,6 +28,8 @@ await detector.dispose();
 
 默认模型由 SDK 自动加载，无需额外配置。
 
+模型初始化耗时可以通过 `detector.loadTimings` 查看。`totalMs` 是初始化总耗时，`modelMs` 是模型获取与校验的聚合耗时；同时提供 `modelDownloadMs`（网络下载）、`modelCacheMs`（缓存读取）、`integrityMs`（SHA-256 完整性校验）、`sessionMs`（ONNX Runtime Session 创建）和 `modelSource`（`network`、`cache`、`memory` 或 `custom`）。
+
 ## 运行后端与精度
 
 - `backend: "auto"` 优先使用 WebGPU，不可用时回退到 WASM（CPU）。也可手动指定 `"webgpu"` 或 `"wasm"`。
@@ -86,6 +88,8 @@ await detector.dispose();
 ```
 
 The SDK loads its default model automatically.
+
+Detailed initialization timings are available through `detector.loadTimings`. `totalMs` is the full initialization duration and `modelMs` is the aggregate model acquisition and verification duration. The additive fields `modelDownloadMs`, `modelCacheMs`, `integrityMs`, `sessionMs`, and `modelSource` (`network`, `cache`, `memory`, or `custom`) separate network download, cache reads, SHA-256 verification, Session creation, and the selected model source.
 
 ### Backend and precision
 

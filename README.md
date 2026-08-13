@@ -32,6 +32,8 @@ try {
 }
 ```
 
+初始化完成后可通过 `detector.loadTimings` 查看耗时拆分：`totalMs` 为初始化总耗时，`modelMs` 为模型获取与校验聚合耗时；`modelDownloadMs`、`modelCacheMs`、`integrityMs`、`sessionMs` 分别对应网络下载、缓存读取、SHA-256 完整性校验和 ONNX Runtime Session 创建，`modelSource` 表示 `network`、`cache`、`memory` 或 `custom`。
+
 ## 手动选择与自定义模型
 
 `backend` 可设为 `auto`、`webgpu`、`wasm`；`precision` 可设为 `auto`、`fp16`、`fp32`。`allowFallback` 默认为 `true`，严格模式可设为 `false`。用户可传清单 URL、清单对象，或内存中的 `{ manifest, data }`；自定义模型必须遵循相同输入、输出和后处理契约。
