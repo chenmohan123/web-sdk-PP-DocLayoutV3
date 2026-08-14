@@ -199,6 +199,22 @@ describe("release workflow contract", () => {
     assert.doesNotMatch(release, /NPM_TOKEN|NODE_AUTH_TOKEN|_authToken/);
   });
 
+  test("retries npm integrity lookup without hiding a persistent failure", () => {
+    const release = readFileSync(resolve(repositoryRoot, ".github/workflows/release.yml"), "utf8");
+    const integrityStep = release.slice(release.indexOf("- name: Record published integrity"));
+
+    assert.match(integrityStep, /shell: bash/);
+    assert.match(integrityStep, /set -o pipefail/);
+    assert.match(integrityStep, /for attempt in \{1\.\.5\}; do/);
+    assert.match(
+      integrityStep,
+      /metadata="\$\(npm view "\$package" version dist\.integrity --json\)"/
+    );
+    assert.match(integrityStep, /sleep 3/);
+    assert.match(integrityStep, /echo "\$metadata"/);
+    assert.match(integrityStep, /exit 1/);
+  });
+
   test("stages verified release models with public Pages URLs", async () => {
     const { stagePagesModels } = await import("./stage-pages-models.mjs");
     const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-model-stage-"));
