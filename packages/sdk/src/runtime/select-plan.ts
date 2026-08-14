@@ -47,7 +47,24 @@ export function selectExecutionPlan(
   const precision = options.precision ?? "auto";
   const hasExplicitPreference = backend !== "auto" || precision !== "auto";
   const allowFallback = options.allowFallback ?? !hasExplicitPreference;
-  const orderedDefinitions = orderForPreferences(backend, precision, allowFallback);
+  if (
+    backend !== "auto" &&
+    precision !== "auto" &&
+    !variants.some(
+      (variant) =>
+        variant.precision === precision &&
+        variant.backendCompatibility.includes(backend) &&
+        variant.validation.included &&
+        variant.validation.pass
+    )
+  ) {
+    throw new DocLayoutError(
+      "CAPABILITY_UNSUPPORTED",
+      `No validated ${precision.toUpperCase()} variant supports ${backend.toUpperCase()}`,
+      { allowFallback, backend, precision }
+    );
+  }
+  const orderedDefinitions = orderForPreferences(backend, precision, allowFallback, variants);
   const candidates: ExecutionCandidate[] = [];
   let selected: ExecutionPlan["selected"] | undefined;
 
@@ -111,19 +128,40 @@ export function selectExecutionPlan(
 function orderForPreferences(
   backend: BackendPreference,
   precision: PrecisionPreference,
-  allowFallback: boolean
+  allowFallback: boolean,
+  variants: readonly ModelVariant[]
 ): readonly CandidateDefinition[] {
   if (backend === "auto" && precision === "auto") {
     return AUTOMATIC_ORDER;
   }
-  const preferred = AUTOMATIC_ORDER.filter((candidate) =>
+  const explicitDefinition =
+    backend !== "auto" &&
+    precision !== "auto" &&
+    variants.some(
+      (variant) =>
+        variant.precision === precision &&
+        variant.backendCompatibility.includes(backend) &&
+        variant.validation.included &&
+        variant.validation.pass
+    ) &&
+    !AUTOMATIC_ORDER.some(
+      (candidate) => candidate.provider === backend && candidate.precision === precision
+    )
+      ? [{ provider: backend, precision }]
+      : [];
+  const availableDefinitions = [...explicitDefinition, ...AUTOMATIC_ORDER];
+  const backendCandidates =
+    backend === "auto"
+      ? availableDefinitions
+      : availableDefinitions.filter((candidate) => candidate.provider === backend);
+  const preferred = backendCandidates.filter((candidate) =>
     matchesPreferences(candidate, backend, precision)
   );
   if (!allowFallback) {
-    const excluded = AUTOMATIC_ORDER.filter((candidate) => !preferred.includes(candidate));
+    const excluded = backendCandidates.filter((candidate) => !preferred.includes(candidate));
     return [...preferred, ...excluded];
   }
-  return [...preferred, ...AUTOMATIC_ORDER.filter((candidate) => !preferred.includes(candidate))];
+  return [...preferred, ...backendCandidates.filter((candidate) => !preferred.includes(candidate))];
 }
 
 function matchesPreferences(

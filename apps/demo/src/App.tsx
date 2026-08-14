@@ -4,6 +4,7 @@ import {
   CircleAlert,
   Download,
   FileImage,
+  Github,
   Trash2,
   Upload,
   X
@@ -25,12 +26,13 @@ import { tinyModelData, tinyModelManifest } from "./fixture";
 import { demoSamples, fetchSampleFile, sampleUrl, type DemoSample } from "./samples";
 import { en } from "./i18n/en";
 import { zhCN, type Copy } from "./i18n/zh-CN";
+import { modelProgressState } from "./model-progress";
 
 type Language = "zh" | "en";
 type Backend = "auto" | ModelBackend;
 type Precision = "auto" | "fp16" | "fp32";
 type Overlay = "box" | "polygon";
-type Status = "ready" | "loading" | "running" | "success" | "error";
+type Status = "ready" | "downloading" | "loading" | "running" | "success" | "error";
 
 type DemoLoadTimings = DocLayoutLoadTimings & {
   readonly integrityMs?: number;
@@ -40,6 +42,7 @@ type DemoLoadTimings = DocLayoutLoadTimings & {
 };
 
 const demoFixture = new URLSearchParams(window.location.search).has("fixture");
+const fixtureOrtWasmBaseUrl = new URL("/ort-fixture/", window.location.href).href;
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -106,7 +109,7 @@ export function App(): ReactElement {
   const [overlay, setOverlay] = useState<Overlay>("box");
   const [threshold, setThreshold] = useState(0.5);
   const [status, setStatus] = useState<Status>("ready");
-  const [progress, setProgress] = useState(0);
+  const [downloadPercentage, setDownloadPercentage] = useState<number | undefined>();
   const [file, setFile] = useState<File | undefined>();
   const [imageUrl, setImageUrl] = useState<string | undefined>();
   const [result, setResult] = useState<DocLayoutResult | undefined>();
@@ -122,6 +125,14 @@ export function App(): ReactElement {
   const detectorRef = useRef<DocLayoutDetector | undefined>(undefined);
   const abortRef = useRef<AbortController | undefined>(undefined);
   const loadTimings = detectorRef.current?.loadTimings as DemoLoadTimings | undefined;
+  const cpuFp16Supported =
+    customManifest?.variants.some(
+      (variant) =>
+        variant.precision === "fp16" &&
+        variant.backendCompatibility.includes("wasm") &&
+        variant.validation.included &&
+        variant.validation.pass
+    ) ?? false;
 
   const redraw = useCallback(() => {
     drawResult(canvasRef.current!, imageRef.current, result, overlay);
@@ -159,6 +170,14 @@ export function App(): ReactElement {
     }
   };
 
+  const onBackend = (next: Backend): void => {
+    setBackend(next);
+    if (next === "wasm" && precision === "fp16" && !cpuFp16Supported) {
+      setPrecision("fp32");
+      setNotice(copy.cpuFp16Unsupported);
+    }
+  };
+
   const cancel = (): void => {
     abortRef.current?.abort("cancelled");
     abortRef.current = undefined;
@@ -172,7 +191,7 @@ export function App(): ReactElement {
     abortRef.current = controller;
     setError(undefined);
     setStatus("loading");
-    setProgress(0);
+    setDownloadPercentage(undefined);
     try {
       await detectorRef.current?.dispose();
       detectorRef.current = undefined;
@@ -185,13 +204,14 @@ export function App(): ReactElement {
         cache: true,
         ...(model === undefined ? {} : { model }),
         onProgress: (event) => {
-          if (event.totalBytes !== undefined && event.totalBytes > 0) {
-            setProgress(
-              Math.min(100, Math.round(((event.loadedBytes ?? 0) / event.totalBytes) * 100))
-            );
-          }
-          if (event.phase === "session") setStatus("running");
+          const nextProgress = modelProgressState(event);
+          if (nextProgress === undefined) return;
+          setStatus(nextProgress.status);
+          setDownloadPercentage(
+            nextProgress.status === "downloading" ? nextProgress.percentage : undefined
+          );
         },
+        ...(demoFixture ? { ort: { wasm: { paths: fixtureOrtWasmBaseUrl } } } : {}),
         precision,
         signal: controller.signal
       });
@@ -200,7 +220,6 @@ export function App(): ReactElement {
       const nextResult = await detector.detect(file, { signal: controller.signal, threshold });
       setResult(nextResult);
       setStatus("success");
-      setProgress(100);
     } catch (caught) {
       if (controller.signal.aborted) return;
       const message = caught instanceof Error ? caught.message : String(caught);
@@ -244,6 +263,15 @@ export function App(): ReactElement {
           <span className="version">SDK {CURRENT_SDK_VERSION}</span>
         </div>
         <div className="top-actions">
+          <a
+            className="text-button repository-link"
+            href="https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Github size={16} />
+            GitHub
+          </a>
           <button
             className="language-button"
             onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
@@ -266,7 +294,7 @@ export function App(): ReactElement {
                 key={value}
                 className={backend === value ? "selected" : ""}
                 aria-pressed={backend === value}
-                onClick={() => setBackend(value)}
+                onClick={() => onBackend(value)}
               >
                 {copy[value]}
               </button>
@@ -281,6 +309,12 @@ export function App(): ReactElement {
                 key={value}
                 className={precision === value ? "selected" : ""}
                 aria-pressed={precision === value}
+                disabled={backend === "wasm" && value === "fp16" && !cpuFp16Supported}
+                title={
+                  backend === "wasm" && value === "fp16" && !cpuFp16Supported
+                    ? copy.cpuFp16Unsupported
+                    : undefined
+                }
                 onClick={() => setPrecision(value)}
               >
                 {copy[value]}
@@ -313,7 +347,12 @@ export function App(): ReactElement {
           </label>
           <button
             className="primary-button"
-            disabled={file === undefined || status === "loading" || status === "running"}
+            disabled={
+              file === undefined ||
+              status === "downloading" ||
+              status === "loading" ||
+              status === "running"
+            }
             onClick={() => void runDetection()}
           >
             <Check size={17} />
@@ -328,44 +367,19 @@ export function App(): ReactElement {
 
       <div className="status-line" data-testid="status">
         <span className={`status-dot ${status}`} />
-        {status === "loading"
-          ? `${copy.loading} ${progress}%`
-          : status === "running"
-            ? copy.running
-            : status === "success"
-              ? copy.success
-              : status === "error"
-                ? copy.error
-                : copy.ready}
+        {status === "downloading"
+          ? `${copy.downloading}${downloadPercentage === undefined ? "" : ` ${downloadPercentage}%`}`
+          : status === "loading"
+            ? copy.loading
+            : status === "running"
+              ? copy.running
+              : status === "success"
+                ? copy.success
+                : status === "error"
+                  ? copy.error
+                  : copy.ready}
         <span className="status-hint">{file === undefined ? copy.noImage : file.name}</span>
       </div>
-      <section className="sample-gallery" data-testid="sample-gallery" aria-label={copy.samples}>
-        <div className="sample-gallery-heading">
-          <span className="control-label">{copy.samples}</span>
-          <span className="sample-source" data-testid="sample-source">
-            {selectedSample === undefined ? copy.sampleSource : `${copy.sampleSource}: PaddleOCR`}
-          </span>
-        </div>
-        <div className="sample-grid">
-          {demoSamples.map((sample) => (
-            <button className="sample-card" key={sample.id} onClick={() => void onSample(sample)}>
-              <img src={sampleUrl(sample)} alt={sample.label[language]} />
-              <span>{sample.label[language]}</span>
-              <small>{sample.coverage[language]}</small>
-            </button>
-          ))}
-        </div>
-        {selectedSample !== undefined && (
-          <a
-            className="sample-attribution"
-            href={selectedSample.sourceUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {copy.sampleSource}: PaddleOCR
-          </a>
-        )}
-      </section>
       {error !== undefined && (
         <div className="error-banner" role="alert">
           <CircleAlert size={18} />
@@ -429,90 +443,112 @@ export function App(): ReactElement {
               className={imageUrl === undefined ? "hidden" : "result-canvas"}
             />
           </div>
+          <section
+            className="sample-gallery"
+            data-testid="sample-gallery"
+            aria-label={copy.samples}
+          >
+            <div className="sample-gallery-heading">
+              <span className="control-label">{copy.samples}</span>
+              <span className="sample-source" data-testid="sample-source">
+                {selectedSample === undefined
+                  ? copy.sampleSource
+                  : `${copy.sampleSource}: PaddleOCR`}
+              </span>
+            </div>
+            <div className="sample-grid">
+              {demoSamples.map((sample) => (
+                <button
+                  className="sample-card"
+                  key={sample.id}
+                  onClick={() => void onSample(sample)}
+                >
+                  <img src={sampleUrl(sample)} alt={sample.label[language]} />
+                  <span>{sample.label[language]}</span>
+                  <small>{sample.coverage[language]}</small>
+                </button>
+              ))}
+            </div>
+            {selectedSample !== undefined && (
+              <a
+                className="sample-attribution"
+                href={selectedSample.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {copy.sampleSource}: PaddleOCR
+              </a>
+            )}
+          </section>
         </article>
 
         <aside className="details-panel" data-testid="details-panel">
-          <section className="detail-section detection-section">
-            <div className="section-title">
-              <h2>{copy.result}</h2>
-              <span className="count-badge">
-                {result?.detections.length ?? 0} {copy.detections}
-              </span>
-            </div>
-            {result?.detections.length ? (
-              result.detections.map((detection, index) => (
-                <div className="detection-row" key={`${detection.labelId}-${index}`}>
-                  <span className="detection-index">{String(index + 1).padStart(2, "0")}</span>
-                  <div>
-                    <strong>{detection.label}</strong>
-                    <small>
-                      {(detection.score * 100).toFixed(1)}% · {detection.box.xMin.toFixed(0)},
-                      {detection.box.yMin.toFixed(0)}
-                    </small>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="muted">{copy.noDetections}</p>
-            )}
-          </section>
-          <section className="detail-section">
+          <section className="detail-section" data-testid="performance-section">
             <div className="section-title">
               <h2>{copy.performance}</h2>
               <ChevronDown size={17} />
             </div>
-            <dl className="metric-list">
-              <div>
-                <dt>{copy.loadTotal}</dt>
-                <dd>{formatMs(loadTimings?.totalMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.modelDownload}</dt>
-                <dd>{formatMs(loadTimings?.modelDownloadMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.modelCache}</dt>
-                <dd>{formatMs(loadTimings?.modelCacheMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.integrity}</dt>
-                <dd>{formatMs(loadTimings?.integrityMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.modelSource}</dt>
-                <dd>
-                  {loadTimings?.modelSource === undefined
-                    ? "-"
-                    : copy[`source_${loadTimings.modelSource}`]}
-                </dd>
-              </div>
-              <div>
-                <dt>{copy.session}</dt>
-                <dd>{formatMs(loadTimings?.sessionMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.total}</dt>
-                <dd data-testid="timing-total">{formatMs(result?.timings.totalMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.decode}</dt>
-                <dd>{formatMs(result?.timings.decodeMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.preprocess}</dt>
-                <dd>{formatMs(result?.timings.preprocessMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.inference}</dt>
-                <dd>{formatMs(result?.timings.inferenceMs)}</dd>
-              </div>
-              <div>
-                <dt>{copy.postprocess}</dt>
-                <dd>{formatMs(result?.timings.postprocessMs)}</dd>
-              </div>
-            </dl>
+            <div className="timing-group" data-testid="initialization-timings">
+              <h3 className="timing-group-title">{copy.initializationGroup}</h3>
+              <dl className="metric-list">
+                <div className="timing-total-row">
+                  <dt>{copy.loadTotal}</dt>
+                  <dd>{formatMs(loadTimings?.totalMs)}</dd>
+                </div>
+                <div>
+                  <dt>{copy.modelDownload}</dt>
+                  <dd>{formatMs(loadTimings?.modelDownloadMs)}</dd>
+                </div>
+                <div>
+                  <dt>{copy.modelCache}</dt>
+                  <dd>{formatMs(loadTimings?.modelCacheMs)}</dd>
+                </div>
+                <div>
+                  <dt>{copy.integrity}</dt>
+                  <dd>{formatMs(loadTimings?.integrityMs)}</dd>
+                </div>
+                <div>
+                  <dt>{copy.modelSource}</dt>
+                  <dd>
+                    {loadTimings?.modelSource === undefined
+                      ? "-"
+                      : copy[`source_${loadTimings.modelSource}`]}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{copy.session}</dt>
+                  <dd>{formatMs(loadTimings?.sessionMs)}</dd>
+                </div>
+              </dl>
+            </div>
+            <div className="timing-group" data-testid="detection-timings">
+              <h3 className="timing-group-title">{copy.detectionGroup}</h3>
+              <dl className="metric-list">
+                <div className="timing-total-row">
+                  <dt>{copy.total}</dt>
+                  <dd data-testid="timing-total">{formatMs(result?.timings.totalMs)}</dd>
+                </div>
+                <div>
+                  <dt>{copy.decode}</dt>
+                  <dd>{formatMs(result?.timings.decodeMs)}</dd>
+                </div>
+                <div>
+                  <dt>{copy.preprocess}</dt>
+                  <dd>{formatMs(result?.timings.preprocessMs)}</dd>
+                </div>
+                <div>
+                  <dt>{copy.inference}</dt>
+                  <dd>{formatMs(result?.timings.inferenceMs)}</dd>
+                </div>
+                <div>
+                  <dt>{copy.postprocess}</dt>
+                  <dd>{formatMs(result?.timings.postprocessMs)}</dd>
+                </div>
+              </dl>
+              <p className="timing-note">{copy.timingOverhead}</p>
+            </div>
           </section>
-          <section className="detail-section">
+          <section className="detail-section" data-testid="model-section">
             <div className="section-title">
               <h2>{copy.modelInfo}</h2>
               <ChevronDown size={17} />
@@ -544,25 +580,51 @@ export function App(): ReactElement {
               </div>
             </dl>
           </section>
-          {result?.runtime.fallbacks.length ? (
-            <section className="detail-section">
-              <div className="section-title">
-                <h2>{copy.fallback}</h2>
-                <span className="count-badge">{result.runtime.fallbacks.length}</span>
-              </div>
-              {result.runtime.fallbacks.map((fallback, index) => (
-                <div className="fallback-row" key={`${fallback.variantId}-${index}`}>
-                  <strong>
-                    {fallback.provider} · {fallback.precision}
-                  </strong>
-                  <small>
-                    {fallback.code} · {fallback.stage}
-                  </small>
+          <div data-testid="fallback-slot">
+            {result?.runtime.fallbacks.length ? (
+              <section className="detail-section" data-testid="fallback-section">
+                <div className="section-title">
+                  <h2>{copy.fallback}</h2>
+                  <span className="count-badge">{result.runtime.fallbacks.length}</span>
                 </div>
-              ))}
-            </section>
-          ) : null}
-          <div className="detail-actions">
+                {result.runtime.fallbacks.map((fallback, index) => (
+                  <div className="fallback-row" key={`${fallback.variantId}-${index}`}>
+                    <strong>
+                      {fallback.provider} · {fallback.precision}
+                    </strong>
+                    <small>
+                      {fallback.code} · {fallback.stage}
+                    </small>
+                  </div>
+                ))}
+              </section>
+            ) : null}
+          </div>
+          <section className="detail-section detection-section" data-testid="detection-section">
+            <div className="section-title">
+              <h2>{copy.result}</h2>
+              <span className="count-badge">
+                {result?.detections.length ?? 0} {copy.detections}
+              </span>
+            </div>
+            {result?.detections.length ? (
+              result.detections.map((detection, index) => (
+                <div className="detection-row" key={`${detection.labelId}-${index}`}>
+                  <span className="detection-index">{String(index + 1).padStart(2, "0")}</span>
+                  <div>
+                    <strong>{detection.label}</strong>
+                    <small>
+                      {(detection.score * 100).toFixed(1)}% · {detection.box.xMin.toFixed(0)},
+                      {detection.box.yMin.toFixed(0)}
+                    </small>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="muted">{copy.noDetections}</p>
+            )}
+          </section>
+          <div className="detail-actions" data-testid="detail-actions">
             <button className="text-button" disabled={result === undefined} onClick={exportJson}>
               <Download size={16} />
               {copy.exportJson}

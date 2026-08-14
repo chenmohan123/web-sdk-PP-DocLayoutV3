@@ -10,6 +10,6 @@
 | FP32 | 143,216,104 字节 | WebGPU、WASM | 与官方 safetensors 实现对齐验证通过               |
 | INT8 |           不发布 | 无           | 精度验收失败，不在默认清单中                      |
 
-FP16 的图输入输出仍保持 FP32，并为 Resize 等敏感算子保留 FP32。`auto` 模式在 WebGPU `shader-f16` 可用时优先 FP16，否则选择 FP32。手动选择 `fp16` 时应允许回退，除非产品需要严格失败。
+FP16 的图输入输出仍保持 FP32，并为 Resize 等敏感算子保留 FP32。`auto` 模式在 WebGPU `shader-f16` 可用时优先 FP16，否则选择 FP32。CPU/WASM 没有已验证的 FP16 变体，因此显式选择 CPU/WASM + FP16 会以 `CAPABILITY_UNSUPPORTED` 失败；CPU 应使用 FP32。
 
 上游模型为 PaddlePaddle `PP-DocLayoutV3_safetensors`，官方元数据声明 Apache-2.0。本项目的转换产物也按 Apache-2.0 分发；使用者仍应保留 [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md) 中的归属与引用。

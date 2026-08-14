@@ -10,12 +10,16 @@ Returns a `Promise<DocLayoutDetector>`. Common options:
 
 - `backend`: `"auto" | "webgpu" | "wasm"`
 - `precision`: `"auto" | "fp16" | "fp32" | "int8"`; the default manifest has no INT8 variant
-- `allowFallback`: whether session failures try the next candidate; defaults to `true`
+- `allowFallback`: whether session failures try the next valid candidate; defaults to `true` for fully automatic selection and `false` when backend or precision is explicit
 - `model`: manifest URL, manifest object, or `{ manifest, data }`
 - `cache`: enable or disable model caching
 - `signal`: cancel loading
 - `onProgress`: capability, manifest, model, session, fallback, and ready phases
 - `ort.wasm`: WASM asset paths and thread options
+
+For `phase: "model"` and `status: "progress"`, `loadedBytes` and the optional `totalBytes` describe model network-transfer bytes only, not overall initialization progress. They exclude integrity verification and ONNX Runtime Session creation. `totalBytes` can be absent when the response has no `Content-Length`, and cache, memory, or custom binary model sources may emit no byte progress.
+
+For the default model, `webgpu` supports `fp16` and `fp32`, while `wasm` (CPU) supports `fp32` only. An explicit `backend: "wasm", precision: "fp16"` pair throws `CAPABILITY_UNSUPPORTED`. `allowFallback` handles runtime failures among valid candidates; it does not rewrite an invalid pair.
 
 ```ts
 import { createDocLayout } from "web-sdk-pp-doclayoutv3";

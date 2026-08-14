@@ -29,7 +29,7 @@ button {
   min-height: 100vh;
   max-width: 1540px;
   margin: 0 auto;
-  padding: 28px clamp(16px, 3vw, 48px) 48px;
+  padding: 20px clamp(16px, 3vw, 48px) 40px;
 }
 .topbar,
 .control-band,
@@ -45,9 +45,9 @@ button {
 }
 .topbar {
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
   border-bottom: 1px solid #c9d1ce;
-  padding-bottom: 22px;
+  padding-bottom: 14px;
 }
 .brand-block {
   display: grid;
@@ -57,7 +57,7 @@ button {
 }
 .brand-block h1 {
   margin: 0;
-  font-size: clamp(25px, 3vw, 39px);
+  font-size: 30px;
   letter-spacing: 0;
   line-height: 1;
 }
@@ -73,7 +73,7 @@ button {
 }
 .top-actions,
 .control-actions {
-  gap: 8px;
+  gap: 6px;
 }
 .icon-button,
 .language-button,
@@ -89,8 +89,8 @@ button {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 36px;
-  padding: 0 12px;
+  min-height: 34px;
+  padding: 0 10px;
   white-space: nowrap;
 }
 .icon-button {
@@ -110,6 +110,9 @@ button {
   color: #27545b;
   padding-inline: 8px;
 }
+.repository-link {
+  text-decoration: none;
+}
 .text-button:hover {
   background: #dfe9e6;
 }
@@ -121,6 +124,11 @@ button {
 .primary-button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+.segmented button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 .secondary-button,
 .file-button {
@@ -140,8 +148,8 @@ button {
 }
 .control-band {
   flex-wrap: wrap;
-  gap: 18px;
-  padding: 18px 0;
+  gap: 14px;
+  padding: 13px 0;
   border-bottom: 1px solid #c9d1ce;
 }
 .control-group {
@@ -197,7 +205,7 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 43px;
+  min-height: 37px;
   color: #3e5653;
   font-size: 13px;
 }
@@ -213,6 +221,7 @@ button {
 .status-dot.error {
   background: #c94e43;
 }
+.status-dot.downloading,
 .status-dot.loading,
 .status-dot.running {
   background: #d95f2b;
@@ -225,14 +234,13 @@ button {
   white-space: nowrap;
 }
 .sample-gallery {
-  padding: 14px 0 18px;
-  border-bottom: 1px solid #c9d1ce;
+  padding-top: 12px;
 }
 .sample-gallery-heading {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .sample-source,
 .sample-attribution {
@@ -242,13 +250,13 @@ button {
 .sample-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 .sample-card {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
-  padding: 6px;
+  padding: 5px;
   text-align: left;
   border: 1px solid #bbc8c3;
   border-radius: 6px;
@@ -262,7 +270,7 @@ button {
 .sample-card img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   object-fit: cover;
   background: #d8dfdc;
 }
@@ -270,7 +278,7 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 .sample-card small {
@@ -278,7 +286,7 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 9px;
 }
 .sample-attribution {
   display: inline-block;
@@ -310,7 +318,7 @@ button {
 }
 .workspace-grid {
   align-items: stretch;
-  gap: 22px;
+  gap: 20px;
 }
 .result-panel,
 .details-panel {
@@ -343,7 +351,7 @@ button {
 }
 .canvas-wrap {
   position: relative;
-  min-height: 520px;
+  min-height: 480px;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -379,6 +387,9 @@ button {
 .detail-section {
   padding: 17px 0;
   border-bottom: 1px solid #c9d1ce;
+}
+[data-testid="fallback-slot"]:empty {
+  display: none;
 }
 .section-title {
   justify-content: space-between;
@@ -449,6 +460,28 @@ button {
   text-align: right;
   overflow-wrap: anywhere;
 }
+.timing-group + .timing-group {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #d9e0dd;
+}
+.timing-group-title {
+  margin: 0 0 9px;
+  color: #57706a;
+  font-size: 12px;
+  font-weight: 700;
+}
+.metric-list .timing-total-row dt,
+.metric-list .timing-total-row dd {
+  color: #183b3c;
+  font-weight: 700;
+}
+.timing-note {
+  margin: 10px 0 0;
+  color: #688078;
+  font-size: 11px;
+  line-height: 1.5;
+}
 .model-list dd {
   max-width: 190px;
 }
@@ -517,7 +550,7 @@ button {
 }
 @media (max-width: 620px) {
   .demo-shell {
-    padding: 18px 12px 30px;
+    padding: 14px 12px 28px;
   }
   .topbar {
     align-items: flex-start;
@@ -530,9 +563,13 @@ button {
     display: block;
     margin-bottom: 7px;
   }
+  .brand-block h1 {
+    font-size: 25px;
+  }
   .top-actions {
-    flex-direction: column;
-    align-items: stretch;
+    flex: 0 1 190px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
   .control-band {
     display: grid;

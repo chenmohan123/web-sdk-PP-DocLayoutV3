@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Prevented explicit CPU/WASM + FP16 selection because the validated FP16 model is WebGPU-only.
+- Updated the Demo to disable FP16 for CPU and explain automatic switching to FP32.
+- Synchronized the backend/precision support matrix across SDK and repository documentation.
+
 ## 1.0.2
 
 - Added separate model download, cache read, integrity verification, and Session creation timings through `detector.loadTimings`.

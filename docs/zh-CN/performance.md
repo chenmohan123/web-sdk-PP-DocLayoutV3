@@ -2,7 +2,7 @@
 
 [English](../en/performance.md)
 
-性能必须拆分为冷下载、缓存读取、能力探测、会话创建、图片解码、预处理、推理、后处理和总耗时。`detector.loadTimings` 与 `result.timings` 已分别提供加载和单次检测指标。
+性能指标分成两个独立范围。`detector.loadTimings` 记录一次性的初始化过程：能力探测、manifest 获取、模型下载或缓存读取、完整性校验和 Session 创建；其中 `totalMs` 是整个初始化过程的墙钟时间。`result.timings` 记录当前图片的单次检测：图片解码、预处理、模型推理和后处理；其中 `totalMs` 是从开始处理图片到返回检测结果的端到端墙钟时间，还包含 Worker 通信、调度和结果传输等少量开销，因此各阶段耗时之和不一定与 `totalMs` 完全相等。
 
 现有真实运行证据（2026-08-11）：Windows、Chrome 151、NVIDIA Blackwell、ONNX Runtime Web 1.27.0、FP16 74,279,796 字节，样本输入 `[1,3,800,800]`。记录值为下载约 440 ms、会话创建约 1785 ms、推理约 682 ms，所有四个输出有限值检查通过。
 

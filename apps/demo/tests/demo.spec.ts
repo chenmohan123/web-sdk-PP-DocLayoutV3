@@ -3,12 +3,109 @@ import { expect, test } from "playwright/test";
 const pixelPng =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
+test("maps SDK progress events to honest model status text states", async ({ page }) => {
+  await page.goto("/?fixture=1");
+  const states = await page.evaluate(async (moduleUrl) => {
+    type EvaluatedState =
+      | { readonly status: "downloading"; readonly percentage?: number }
+      | { readonly status: "loading" };
+    const { modelProgressState } = (await import(moduleUrl)) as {
+      readonly modelProgressState: (event: {
+        readonly phase: string;
+        readonly status: string;
+        readonly loadedBytes?: number;
+        readonly totalBytes?: number;
+      }) => EvaluatedState | undefined;
+    };
+    return [
+      modelProgressState({ phase: "model", status: "start" }),
+      modelProgressState({ phase: "model", status: "progress", loadedBytes: 56 }),
+      modelProgressState({
+        phase: "model",
+        status: "progress",
+        loadedBytes: 56,
+        totalBytes: 100
+      }),
+      modelProgressState({ phase: "session", status: "start" }),
+      modelProgressState({ phase: "ready", status: "complete" })
+    ];
+  }, "/src/model-progress.ts");
+
+  expect(states).toEqual([
+    { status: "loading" },
+    { status: "downloading" },
+    { percentage: 56, status: "downloading" },
+    { status: "loading" },
+    undefined
+  ]);
+});
+
+test("reports loading before detecting for an in-memory model", async ({ page }) => {
+  await page.route("**/ort-fixture/*.wasm", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await route.continue();
+  });
+  await page.goto("/?fixture=1");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "status.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(pixelPng, "base64")
+  });
+  await page.getByTestId("status").evaluate((target) => {
+    const history: string[] = [];
+    Object.defineProperty(window, "__statusHistory", { configurable: true, value: history });
+    const record = (): void => {
+      const snapshot = target.cloneNode(true) as HTMLElement;
+      snapshot.querySelector(".status-hint")?.remove();
+      const text = snapshot.textContent?.trim();
+      if (text !== undefined && history.at(-1) !== text) history.push(text);
+    };
+    new MutationObserver(record).observe(target, {
+      attributes: true,
+      characterData: true,
+      childList: true,
+      subtree: true
+    });
+    record();
+  });
+
+  const wasmRequest = page.waitForRequest(
+    (request) => request.url().includes("/ort-fixture/") && request.url().endsWith(".wasm")
+  );
+  await page.getByRole("button", { name: "开始检测" }).click();
+  await wasmRequest;
+  await expect(page.getByTestId("status")).toContainText("模型加载中");
+  await expect(page.getByTestId("status")).toContainText("检测完成", { timeout: 15_000 });
+
+  const history = await page.evaluate(
+    () =>
+      (window as typeof window & { readonly __statusHistory: readonly string[] }).__statusHistory
+  );
+  const loadingIndex = history.indexOf("模型加载中");
+  const detectingIndex = history.indexOf("检测中");
+  const successIndex = history.indexOf("检测完成");
+  expect(loadingIndex).toBeGreaterThanOrEqual(0);
+  expect(detectingIndex).toBeGreaterThan(loadingIndex);
+  expect(successIndex).toBeGreaterThan(detectingIndex);
+  expect(history.some((text) => text.includes("模型下载中") || text.includes("0%"))).toBe(false);
+});
+
 test("starts in Chinese and exposes the complete detection workflow", async ({
   page
 }, testInfo) => {
   await page.goto("/?fixture=1");
 
+  const fixtureOrtModule = await page.request.get("/ort-fixture/ort-wasm-simd-threaded.jsep.mjs");
+  expect(fixtureOrtModule.status()).toBe(200);
+  expect(fixtureOrtModule.headers()["content-type"]).toContain("text/javascript");
+
   await expect(page.getByRole("heading", { name: "PP-DocLayoutV3" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute(
+    "href",
+    "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3"
+  );
+  await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("target", "_blank");
+  await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("rel", "noreferrer");
   await expect(page.getByText("SDK 1.0.2", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "English", exact: true })).toBeVisible();
   await expect(page.getByRole("group", { name: "运行后端" })).toBeVisible();
@@ -20,6 +117,12 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   await page.getByRole("group", { name: "模型精度" }).getByRole("button", { name: "FP32" }).click();
   await expect(page.getByRole("button", { name: "选择图片" })).toBeVisible();
   await expect(page.getByText("模型信息")).toBeVisible();
+
+  const performance = page.getByTestId("performance-section");
+  const initialization = performance.getByTestId("initialization-timings");
+  const detection = performance.getByTestId("detection-timings");
+  await expect(initialization).toBeVisible();
+  await expect(detection).toBeVisible();
 
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles({
@@ -34,6 +137,24 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   await expect(
     page.getByTestId("result-panel").getByRole("heading", { name: "检测结果" })
   ).toBeVisible();
+  await expect(initialization.getByText("初始化", { exact: true })).toBeVisible();
+  await expect(detection.getByText("本次检测", { exact: true })).toBeVisible();
+  await expect(initialization.getByText("初始化总耗时", { exact: true })).toBeVisible();
+  await expect(detection.getByText("端到端耗时", { exact: true })).toBeVisible();
+  await expect(detection.getByText("图片解码", { exact: true })).toBeVisible();
+  await expect(detection.getByText("模型推理", { exact: true })).toBeVisible();
+  await expect(detection).toContainText("端到端耗时还包含 Worker 通信与结果传输等少量开销。");
+  expect(
+    await performance.evaluate((section: HTMLElement) => {
+      const initialization = section.querySelector('[data-testid="initialization-timings"]');
+      const detection = section.querySelector('[data-testid="detection-timings"]');
+      return Boolean(
+        initialization &&
+        detection &&
+        initialization.compareDocumentPosition(detection) & Node.DOCUMENT_POSITION_FOLLOWING
+      );
+    })
+  ).toBe(true);
   await expect(page.getByTestId("timing-total")).toContainText("ms");
   await expect(page.getByTestId("model-name")).not.toHaveText("-");
   await expect(page.getByRole("button", { name: "导出 JSON" })).toBeEnabled();
@@ -43,27 +164,65 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   expect((await downloadPromise).suggestedFilename()).toBe("pp-doclayoutv3-result.json");
   await page.getByRole("button", { name: "清理缓存" }).click();
   await expect(page.getByTestId("notice")).toContainText("缓存已清理");
-  const canvasPixels = await page.getByTestId("result-canvas").evaluate((canvas) => {
-    const context = (canvas as HTMLCanvasElement).getContext("2d");
-    if (context === null) return 0;
-    const pixels = context.getImageData(
-      0,
-      0,
-      (canvas as HTMLCanvasElement).width,
-      (canvas as HTMLCanvasElement).height
-    ).data;
-    let sum = 0;
-    for (let index = 0; index < pixels.length; index += 4)
-      sum += pixels[index]! + pixels[index + 1]! + pixels[index + 2]!;
-    return sum;
-  });
+  const canvasPixels = await page
+    .getByTestId("result-canvas")
+    .evaluate((canvas: HTMLCanvasElement) => {
+      const context = canvas.getContext("2d");
+      if (context === null) return 0;
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let sum = 0;
+      for (let index = 0; index < pixels.length; index += 4)
+        sum += pixels[index]! + pixels[index + 1]! + pixels[index + 2]!;
+      return sum;
+    });
   expect(canvasPixels).toBeGreaterThan(0);
   await page.screenshot({ path: testInfo.outputPath("desktop.png"), fullPage: true });
+});
+
+test("prevents FP16 on CPU and explains the switch to FP32", async ({ page }) => {
+  await page.goto("/?fixture=1");
+  const backend = page.getByRole("group", { name: "运行后端" });
+  const precision = page.getByRole("group", { name: "模型精度" });
+  await precision.getByRole("button", { name: "FP16" }).click();
+  await backend.getByRole("button", { name: "CPU" }).click();
+
+  await expect(precision.getByRole("button", { name: "FP16" })).toBeDisabled();
+  await expect(precision.getByRole("button", { name: "FP16" })).toHaveAttribute(
+    "title",
+    "CPU 当前仅支持 FP32，已为你切换模型精度。"
+  );
+  await expect(precision.getByRole("button", { name: "FP32" })).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  await expect(page.getByTestId("notice")).toContainText("CPU 当前仅支持 FP32，已为你切换模型精度");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "cpu-fp16.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(pixelPng, "base64")
+  });
+
+  await page.getByRole("button", { name: "开始检测" }).click();
+  await expect(page.getByTestId("status")).toContainText("检测完成", { timeout: 15_000 });
+  await expect(page.getByText("wasm", { exact: true })).toBeVisible();
+  await expect(page.getByText("fp32", { exact: true })).toBeVisible();
 });
 
 test("shows local sample documents and only previews a selected sample", async ({ page }) => {
   await page.goto("/?fixture=1");
   await expect(page.getByTestId("sample-gallery")).toBeVisible();
+  await expect(page.getByTestId("result-panel").getByTestId("sample-gallery")).toBeVisible();
+  expect(
+    await page.getByTestId("result-panel").evaluate((panel: HTMLElement) => {
+      const canvas = panel.querySelector(".canvas-wrap");
+      const samples = panel.querySelector('[data-testid="sample-gallery"]');
+      return Boolean(
+        canvas &&
+        samples &&
+        canvas.compareDocumentPosition(samples) & Node.DOCUMENT_POSITION_FOLLOWING
+      );
+    })
+  ).toBe(true);
   await expect(page.getByRole("button", { name: /版面示例/ }).first()).toBeVisible();
   await page
     .getByRole("button", { name: /版面示例/ })
@@ -72,6 +231,26 @@ test("shows local sample documents and only previews a selected sample", async (
   await expect(page.getByTestId("status")).toContainText("准备就绪");
   await expect(page.getByRole("button", { name: "开始检测" })).toBeEnabled();
   await expect(page.getByTestId("sample-source")).toContainText("PaddleOCR");
+});
+
+test("orders runtime details before fallback and potentially long detections", async ({ page }) => {
+  await page.goto("/?fixture=1");
+
+  expect(
+    await page
+      .getByTestId("details-panel")
+      .evaluate((panel: HTMLElement) =>
+        [...panel.children]
+          .map((element) => element.getAttribute("data-testid"))
+          .filter((value): value is string => value !== null)
+      )
+  ).toEqual([
+    "performance-section",
+    "model-section",
+    "fallback-slot",
+    "detection-section",
+    "detail-actions"
+  ]);
 });
 
 test("switches language, toggles overlays, validates custom model input, and cancels", async ({
