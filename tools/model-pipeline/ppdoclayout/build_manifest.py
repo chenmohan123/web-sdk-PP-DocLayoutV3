@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -10,18 +11,26 @@ import onnx
 
 
 MODEL_ID = "pp-doclayoutv3"
-MODEL_VERSION = "1.0.0"
 MIN_SDK_VERSION = "1.0.0"
-RELEASE_BASE_URL = (
-    "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
-    "releases/download/v1.0.0-models/"
-)
+SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
 EXPECTED_INPUT_NAME = "pixel_values"
 EXPECTED_INPUT_SHAPE = [1, 3, 800, 800]
 EXPECTED_OUTPUT_NAMES = ["logits", "pred_boxes", "order_logits", "out_masks"]
 EXPECTED_OPSET = 18
 SOURCE_URL = "https://huggingface.co/PaddlePaddle/PP-DocLayoutV3_safetensors"
 ROOT = Path(__file__).parents[3]
+
+
+def release_base_url(model_version: str, release_tag: str) -> str:
+    if not SEMVER.fullmatch(model_version):
+        raise ValueError(f"Invalid model version: {model_version}")
+    if release_tag != f"v{model_version}-models":
+        raise ValueError("Release tag must match model version")
+    return (
+        "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
+        f"releases/download/{release_tag}/"
+    )
 
 
 def sha256_file(path: Path) -> str:
@@ -138,16 +147,78 @@ def _validation_status(report: dict[str, Any], name: str) -> tuple[bool, bool]:
     return passed, included
 
 
+def _validate_fp32_browser_evidence(
+    report: dict[str, Any], fp32: dict[str, Any]
+) -> None:
+    if report.get("schemaVersion") != 1:
+        raise ValueError("Unsupported browser evidence schema")
+
+    for key, backend in (("fp32Wasm", "wasm"), ("fp32Webgpu", "webgpu")):
+        evidence = report.get(key)
+        if not isinstance(evidence, dict):
+            raise ValueError(f"FP32 {backend} browser evidence is missing")
+        if evidence.get("status") != "passed":
+            raise ValueError(f"FP32 {backend} browser validation did not pass")
+        if evidence.get("executionProvider") != backend:
+            raise ValueError(f"FP32 {backend} execution provider does not match")
+        if evidence.get("precision") != "fp32":
+            raise ValueError(f"FP32 {backend} precision does not match")
+        if evidence.get("fallbacks") != []:
+            raise ValueError(f"FP32 {backend} browser evidence contains fallback records")
+        if evidence.get("modelBytes") != fp32["bytes"]:
+            raise ValueError(f"FP32 {backend} browser byte size does not match")
+        if evidence.get("modelSha256") != fp32["sha256"]:
+            raise ValueError(f"FP32 {backend} browser SHA-256 does not match")
+        if evidence.get("onnxruntimeWebVersion") != "1.27.0":
+            raise ValueError(f"FP32 {backend} ONNX Runtime Web version does not match")
+
+        fixtures = evidence.get("fixtures")
+        if not isinstance(fixtures, list) or len(fixtures) != 7:
+            raise ValueError(f"FP32 {backend} evidence must contain seven fixtures")
+        filenames = set()
+        for fixture in fixtures:
+            if not isinstance(fixture, dict) or fixture.get("parity") != "passed":
+                raise ValueError(f"FP32 {backend} fixture parity did not pass")
+            filename = fixture.get("filename")
+            if not isinstance(filename, str) or not filename or filename in filenames:
+                raise ValueError(f"FP32 {backend} fixture identity is invalid")
+            filenames.add(filename)
+            digest = fixture.get("outputSha256")
+            if not isinstance(digest, str) or not SHA256.fullmatch(digest):
+                raise ValueError(f"FP32 {backend} fixture output hash is invalid")
+
+        if backend == "webgpu":
+            adapter = evidence.get("adapter")
+            if not isinstance(adapter, dict) or not any(
+                isinstance(adapter.get(name), str) and adapter[name]
+                for name in ("architecture", "description", "device", "vendor")
+            ):
+                raise ValueError("FP32 WebGPU adapter identity is missing")
+            features = evidence.get("adapterFeatures")
+            if (
+                not isinstance(features, list)
+                or not features
+                or any(not isinstance(feature, str) or not feature for feature in features)
+                or features != sorted(set(features))
+            ):
+                raise ValueError("FP32 WebGPU adapter feature list is invalid")
+
+
 def build_manifest(
     *,
     contract_path: Path,
     fp32_report_path: Path,
     variant_report_path: Path,
+    browser_report_path: Path,
     model_dir: Path,
+    model_version: str,
+    release_tag: str,
 ) -> dict[str, Any]:
+    release_url = release_base_url(model_version, release_tag)
     contract = _load_json(contract_path)
     fp32_report = _load_json(fp32_report_path)
     variant_report = _load_json(variant_report_path)
+    browser_report = _load_json(browser_report_path)
     fp32_path = model_dir / "model-fp32.onnx"
     fp16_path = model_dir / "model-fp16.onnx"
     fp32 = _inspect_onnx(fp32_path)
@@ -161,6 +232,7 @@ def build_manifest(
     fp32_source_hashes = fp32_report.get("sourceHashes", {})
     if fp32_source_hashes.get("onnx") != fp32["sha256"]:
         raise ValueError("FP32 report SHA-256 does not match the ONNX artifact")
+    _validate_fp32_browser_evidence(browser_report, fp32)
 
     source_files = contract.get("source", {}).get("files")
     if not isinstance(source_files, dict) or "model.safetensors" not in source_files:
@@ -190,11 +262,11 @@ def build_manifest(
             "opset": fp32["opset"],
             "precision": "fp32",
             "sha256": fp32["sha256"],
-            "url": RELEASE_BASE_URL + fp32_path.name,
+            "url": release_url + fp32_path.name,
             "validation": {
                 "included": True,
                 "pass": True,
-                "report": "tools/model-pipeline/reports/fp32-validation.json",
+                "report": f"tools/model-pipeline/reports/{model_version}/fp32-validation.json",
             },
         }
     ]
@@ -226,11 +298,11 @@ def build_manifest(
                 "opset": fp16["opset"],
                 "precision": "fp16",
                 "sha256": fp16["sha256"],
-                "url": RELEASE_BASE_URL + fp16_path.name,
+                "url": release_url + fp16_path.name,
                 "validation": {
                     "included": fp16_included,
                     "pass": fp16_pass,
-                    "report": "tools/model-pipeline/reports/variant-validation.json",
+                    "report": f"tools/model-pipeline/reports/{model_version}/variant-validation.json",
                 },
             }
         )
@@ -265,7 +337,7 @@ def build_manifest(
             "id": MODEL_ID,
             "modelType": contract.get("modelType"),
             "parameterCount": contract.get("parameterCount"),
-            "version": MODEL_VERSION,
+            "version": model_version,
         },
         "outputs": outputs,
         "preprocessing": preprocessing,
@@ -286,14 +358,20 @@ def write_manifest(
     contract_path: Path,
     fp32_report_path: Path,
     variant_report_path: Path,
+    browser_report_path: Path,
     model_dir: Path,
     output_path: Path,
+    model_version: str,
+    release_tag: str,
 ) -> None:
     manifest = build_manifest(
         contract_path=contract_path,
         fp32_report_path=fp32_report_path,
         variant_report_path=variant_report_path,
+        browser_report_path=browser_report_path,
         model_dir=model_dir,
+        model_version=model_version,
+        release_tag=release_tag,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_bytes(canonical_json(manifest))
@@ -301,8 +379,9 @@ def write_manifest(
 
 def parse_args() -> argparse.Namespace:
     pipeline_dir = ROOT / "tools" / "model-pipeline"
-    model_dir = ROOT / "models" / MODEL_ID / MODEL_VERSION
     parser = argparse.ArgumentParser(description="Build the versioned model manifest")
+    parser.add_argument("--model-version", default="1.0.1")
+    parser.add_argument("--release-tag", default="v1.0.1-models")
     parser.add_argument(
         "--contract",
         type=Path,
@@ -311,16 +390,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--fp32-report",
         type=Path,
-        default=pipeline_dir / "reports" / "fp32-validation.json",
+        default=None,
     )
     parser.add_argument(
         "--variant-report",
         type=Path,
-        default=pipeline_dir / "reports" / "variant-validation.json",
+        default=None,
     )
-    parser.add_argument("--model-dir", type=Path, default=model_dir)
-    parser.add_argument("--output", type=Path, default=model_dir / "manifest.json")
-    return parser.parse_args()
+    parser.add_argument("--browser-report", type=Path, default=None)
+    parser.add_argument("--model-dir", type=Path, default=None)
+    parser.add_argument("--output", type=Path, default=None)
+    args = parser.parse_args()
+    model_dir = ROOT / "models" / MODEL_ID / args.model_version
+    report_dir = pipeline_dir / "reports" / args.model_version
+    args.model_dir = args.model_dir or model_dir
+    args.fp32_report = args.fp32_report or report_dir / "fp32-validation.json"
+    args.variant_report = args.variant_report or report_dir / "variant-validation.json"
+    args.browser_report = args.browser_report or report_dir / "browser-evidence.json"
+    args.output = args.output or model_dir / "manifest.json"
+    return args
 
 
 def main() -> None:
@@ -329,8 +417,11 @@ def main() -> None:
         contract_path=args.contract.resolve(),
         fp32_report_path=args.fp32_report.resolve(),
         variant_report_path=args.variant_report.resolve(),
+        browser_report_path=args.browser_report.resolve(),
         model_dir=args.model_dir.resolve(),
         output_path=args.output.resolve(),
+        model_version=args.model_version,
+        release_tag=args.release_tag,
     )
 
 

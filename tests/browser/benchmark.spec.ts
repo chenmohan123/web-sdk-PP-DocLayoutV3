@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   createReadStream,
   existsSync,
@@ -15,23 +16,96 @@ import { expect, test } from "playwright/test";
 
 import reference from "../../packages/sdk/tests/fixtures/model-output-reference.json";
 
-const mode = process.env.PPDOCLAYOUT_BENCHMARK_MODE;
+type BenchmarkMode = "wasm-fp32" | "webgpu-fp16" | "webgpu-fp32";
+
+interface BenchmarkManifest {
+  model: { version: string; [key: string]: unknown };
+  variants: Array<{
+    backendCompatibility: string[];
+    bytes: number;
+    filename: string;
+    id: string;
+    precision: string;
+    sha256: string;
+    url: string;
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
+interface FixtureLock {
+  fixtures: Array<{
+    filename: string;
+    height: number;
+    sha256: string;
+    width: number;
+  }>;
+}
+
+const mode = process.env.PPDOCLAYOUT_BENCHMARK_MODE as BenchmarkMode | undefined;
 const repositoryRoot = resolve(__dirname, "../..");
 const sdkRoot = join(repositoryRoot, "packages/sdk");
 const ortRoot = join(sdkRoot, "node_modules/onnxruntime-web/dist");
-const modelRoot = join(repositoryRoot, "models/pp-doclayoutv3/1.0.0");
+const acceptedModelRoot = join(repositoryRoot, "models/pp-doclayoutv3/1.0.0");
+const candidateModelVersion = mode === "webgpu-fp16" ? "1.0.0" : "1.0.1";
+const candidateModelRoot = join(repositoryRoot, `models/pp-doclayoutv3/${candidateModelVersion}`);
 const fixtureRoot = join(repositoryRoot, "tools/model-pipeline/fixtures/images");
+const fixturesLockPath = join(repositoryRoot, "tools/model-pipeline/fixtures/fixtures.lock.json");
 const outputRoot = join(repositoryRoot, "test-results/benchmark");
 let origin = "";
 let server: Server;
 
-test.use(mode === "webgpu-fp16" ? { channel: "chrome" } : {});
+test.use(mode?.startsWith("webgpu-") ? { channel: "chrome" } : {});
 
-const parityThresholds = {
+const referenceThresholds = {
   iou: 0.95,
   maxScoreDelta: 0.02,
   meanPolygonPointDistancePixels: 2
 } as const;
+
+const acceptedParityThresholds = {
+  maxBoxCoordinateDeltaPixels: 1,
+  maxPolygonCoordinateDeltaPixels: 1.5,
+  maxScoreDelta: 0.001
+} as const;
+
+function sha256File(path: string): string {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+function loadManifest(): BenchmarkManifest {
+  return JSON.parse(
+    readFileSync(join(acceptedModelRoot, "manifest.json"), "utf8")
+  ) as BenchmarkManifest;
+}
+
+function localManifest(
+  modelRoot: string,
+  urlPrefix: "accepted" | "candidate",
+  fp32Backends: readonly string[]
+): BenchmarkManifest {
+  const manifest = structuredClone(loadManifest());
+  manifest.model.version = basename(modelRoot);
+  for (const variant of manifest.variants) {
+    const path = join(modelRoot, variant.filename);
+    variant.bytes = statSync(path).size;
+    variant.sha256 = sha256File(path);
+    variant.url = `${origin}/models/${urlPrefix}/${variant.filename}`;
+    if (variant.precision === "fp32") {
+      variant.backendCompatibility = [...fp32Backends];
+    }
+  }
+  return manifest;
+}
+
+function verifiedFixtures(): FixtureLock {
+  const lock = JSON.parse(readFileSync(fixturesLockPath, "utf8")) as FixtureLock;
+  for (const fixture of lock.fixtures) {
+    const path = join(fixtureRoot, fixture.filename);
+    expect(sha256File(path), `fixture integrity: ${fixture.filename}`).toBe(fixture.sha256);
+  }
+  return lock;
+}
 
 function boxIou(actual: { xMin: number; xMax: number; yMin: number; yMax: number }): number {
   const [xMin, yMin, xMax, yMax] = reference.realImage.expected.boxes[0]!;
@@ -70,7 +144,12 @@ function resolveAsset(url: string): string | undefined {
   const pathname = new URL(url, "http://localhost").pathname;
   if (pathname.startsWith("/dist/")) return join(sdkRoot, pathname.slice(1));
   if (pathname.startsWith("/ort/")) return join(ortRoot, basename(pathname));
-  if (pathname.startsWith("/models/")) return join(modelRoot, basename(pathname));
+  if (pathname.startsWith("/models/accepted/")) {
+    return join(acceptedModelRoot, basename(pathname));
+  }
+  if (pathname.startsWith("/models/candidate/")) {
+    return join(candidateModelRoot, basename(pathname));
+  }
   if (pathname.startsWith("/fixtures/")) return join(fixtureRoot, basename(pathname));
   return undefined;
 }
@@ -78,6 +157,8 @@ function resolveAsset(url: string): string | undefined {
 function contentType(path: string): string {
   return (
     {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
       ".js": "text/javascript; charset=utf-8",
       ".mjs": "text/javascript; charset=utf-8",
       ".onnx": "application/octet-stream",
@@ -88,7 +169,10 @@ function contentType(path: string): string {
 }
 
 test.beforeAll(async () => {
-  test.skip(!["wasm-fp32", "webgpu-fp16"].includes(mode ?? ""), "Set benchmark mode");
+  test.skip(
+    !["wasm-fp32", "webgpu-fp16", "webgpu-fp32"].includes(mode ?? ""),
+    "Set benchmark mode"
+  );
   runPnpm(["--filter", "web-sdk-pp-doclayoutv3", "build"]);
   server = createServer((request, response) => {
     response.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
@@ -128,30 +212,106 @@ test.afterAll(async () => {
   );
 });
 
-test("records complete real-model timings", async ({ browser, page }) => {
-  const manifest = JSON.parse(readFileSync(join(modelRoot, "manifest.json"), "utf8")) as unknown;
-  await page.goto(origin);
+test("records strict seven-fixture browser evidence", async ({ browser, page }) => {
+  test.setTimeout(20 * 60_000);
   const backend = mode === "wasm-fp32" ? "wasm" : "webgpu";
-  const precision = mode === "wasm-fp32" ? "fp32" : "fp16";
+  const precision = mode?.endsWith("fp32") ? "fp32" : "fp16";
+  const fixturesLock = verifiedFixtures();
+  const acceptedManifest = localManifest(acceptedModelRoot, "accepted", ["wasm"]);
+  const targetManifest = localManifest(candidateModelRoot, "candidate", ["wasm", "webgpu"]);
+  const manifestVariant = targetManifest.variants.find(
+    (variant) => variant.precision === precision && variant.backendCompatibility.includes(backend)
+  );
+  expect(manifestVariant).toBeDefined();
+
+  await page.goto(origin);
   const result = await page.evaluate(
-    async ({ backend, manifest, origin: browserOrigin, precision }) => {
-      const configured = structuredClone(manifest) as {
-        variants: Array<{ filename: string; url: string }>;
+    async ({
+      acceptedManifest,
+      acceptedParityThresholds: browserParityThresholds,
+      backend,
+      fixtures,
+      origin: browserOrigin,
+      precision,
+      targetManifest
+    }) => {
+      async function sha256(bytes: Uint8Array): Promise<string> {
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        return [...new Uint8Array(digest)]
+          .map((value) => value.toString(16).padStart(2, "0"))
+          .join("");
+      }
+
+      type DetectionForParity = {
+        box: { xMax: number; xMin: number; yMax: number; yMin: number };
+        polygon: Array<{ x: number; y: number }>;
+        score: number;
       };
-      for (const variant of configured.variants)
-        variant.url = `${browserOrigin}/models/${variant.filename}`;
-      const options = {
+
+      function compareDetections(
+        acceptedDetections: DetectionForParity[],
+        candidateDetections: DetectionForParity[]
+      ) {
+        let maxBoxCoordinateDeltaPixels = 0;
+        let maxPolygonCoordinateDeltaPixels = 0;
+        let maxScoreDelta = 0;
+        if (acceptedDetections.length !== candidateDetections.length) {
+          return {
+            maxBoxCoordinateDeltaPixels: Number.POSITIVE_INFINITY,
+            maxPolygonCoordinateDeltaPixels: Number.POSITIVE_INFINITY,
+            maxScoreDelta: Number.POSITIVE_INFINITY
+          };
+        }
+        for (const [index, candidate] of candidateDetections.entries()) {
+          const accepted = acceptedDetections[index]!;
+          for (const coordinate of ["xMin", "xMax", "yMin", "yMax"] as const) {
+            maxBoxCoordinateDeltaPixels = Math.max(
+              maxBoxCoordinateDeltaPixels,
+              Math.abs(candidate.box[coordinate] - accepted.box[coordinate])
+            );
+          }
+          maxScoreDelta = Math.max(maxScoreDelta, Math.abs(candidate.score - accepted.score));
+          if (candidate.polygon.length !== accepted.polygon.length) {
+            maxPolygonCoordinateDeltaPixels = Number.POSITIVE_INFINITY;
+            continue;
+          }
+          for (const [pointIndex, point] of candidate.polygon.entries()) {
+            const acceptedPoint = accepted.polygon[pointIndex]!;
+            maxPolygonCoordinateDeltaPixels = Math.max(
+              maxPolygonCoordinateDeltaPixels,
+              Math.abs(point.x - acceptedPoint.x),
+              Math.abs(point.y - acceptedPoint.y)
+            );
+          }
+        }
+        return {
+          maxBoxCoordinateDeltaPixels,
+          maxPolygonCoordinateDeltaPixels,
+          maxScoreDelta
+        };
+      }
+
+      const targetOptions = {
         allowFallback: false,
         backend,
         cache: true,
-        model: configured,
+        model: targetManifest,
         ort: { wasm: { numThreads: 1, paths: `${browserOrigin}/ort/` } },
         precision
       } as const;
+      const acceptedOptions = {
+        allowFallback: false,
+        backend: "wasm",
+        cache: true,
+        model: acceptedManifest,
+        ort: { wasm: { numThreads: 1, paths: `${browserOrigin}/ort/` } },
+        precision: "fp32"
+      } as const;
+
       await window.PPDocLayout!.clearModelCache();
-      let cold;
+      let target;
       try {
-        cold = await window.PPDocLayout!.createDocLayout(options);
+        target = await window.PPDocLayout!.createDocLayout(targetOptions);
       } catch (error) {
         const capabilities = await window.PPDocLayout!.probeDocLayoutCapabilities();
         const failure = error as Error & {
@@ -163,6 +323,7 @@ test("records complete real-model timings", async ({ browser, page }) => {
           JSON.stringify({
             capabilities,
             cause: failure.cause instanceof Error ? failure.cause.message : failure.cause,
+            causeMessage: failure.details?.causeMessage,
             code: failure.code,
             details: failure.details,
             message: failure.message,
@@ -170,16 +331,61 @@ test("records complete real-model timings", async ({ browser, page }) => {
           })
         );
       }
-      const image = await (await fetch(`${browserOrigin}/fixtures/table.png`)).blob();
-      const detection = await cold.detect(image, { threshold: 0.5 });
-      const coldLoad = cold.loadTimings;
-      const model = cold.model;
-      const runtime = cold.runtime;
-      await cold.dispose();
-      const warm = await window.PPDocLayout!.createDocLayout(options);
+      const accepted = await window.PPDocLayout!.createDocLayout(acceptedOptions);
+      const fixtureResults = [];
+      for (const fixture of fixtures) {
+        const image = await (await fetch(`${browserOrigin}/fixtures/${fixture.filename}`)).blob();
+        const acceptedDetection = await accepted.detect(image, { threshold: 0.5 });
+        const detection = await target.detect(image, { threshold: 0.5 });
+        const acceptedLabels = acceptedDetection.detections.map(({ labelId }) => labelId);
+        const labels = detection.detections.map(({ labelId }) => labelId);
+        const acceptedOrder = acceptedDetection.detections.map(({ readingOrder }) => readingOrder);
+        const readingOrder = detection.detections.map(({ readingOrder }) => readingOrder);
+        const labelSequenceEqual = JSON.stringify(labels) === JSON.stringify(acceptedLabels);
+        const readingOrderEqual = JSON.stringify(readingOrder) === JSON.stringify(acceptedOrder);
+        const parityMetrics = compareDetections(acceptedDetection.detections, detection.detections);
+        const numericParity =
+          parityMetrics.maxBoxCoordinateDeltaPixels <=
+            browserParityThresholds.maxBoxCoordinateDeltaPixels &&
+          parityMetrics.maxPolygonCoordinateDeltaPixels <=
+            browserParityThresholds.maxPolygonCoordinateDeltaPixels &&
+          parityMetrics.maxScoreDelta <= browserParityThresholds.maxScoreDelta;
+        const acceptedDetectionJson = JSON.stringify(acceptedDetection.detections);
+        const detectionJson = JSON.stringify(detection.detections);
+        const acceptedOutputSha256 = await sha256(new TextEncoder().encode(acceptedDetectionJson));
+        const outputSha256 = await sha256(new TextEncoder().encode(detectionJson));
+        fixtureResults.push({
+          acceptedOutputSha256,
+          detectionCount: detection.detections.length,
+          detections: detection.detections,
+          expectedDetectionCount: acceptedDetection.detections.length,
+          filename: fixture.filename,
+          fixtureSha256: fixture.sha256,
+          labelSequenceEqual,
+          outputSha256,
+          parityMetrics,
+          parityThresholds: browserParityThresholds,
+          parity:
+            detection.detections.length === acceptedDetection.detections.length &&
+            labelSequenceEqual &&
+            readingOrderEqual &&
+            numericParity
+              ? "passed"
+              : "failed",
+          readingOrderEqual,
+          timings: detection.timings
+        });
+      }
+      const coldLoad = target.loadTimings;
+      const model = target.model;
+      const runtime = target.runtime;
+      await accepted.dispose();
+      await target.dispose();
+      const warm = await window.PPDocLayout!.createDocLayout(targetOptions);
       const warmLoad = warm.loadTimings;
       await warm.dispose();
       await window.PPDocLayout!.clearModelCache();
+
       const adapter =
         backend === "webgpu"
           ? await navigator.gpu?.requestAdapter({ powerPreference: "high-performance" })
@@ -191,75 +397,90 @@ test("records complete real-model timings", async ({ browser, page }) => {
               architecture: adapter.info.architecture || null,
               description: adapter.info.description || null,
               device: adapter.info.device || null,
-              shaderF16: adapter.features.has("shader-f16"),
               vendor: adapter.info.vendor || null
             };
       return {
         adapter: adapterInfo,
+        adapterFeatures: adapter === undefined ? [] : [...adapter.features].sort(),
         browser: navigator.userAgent,
-        coldLoad,
-        detection,
+        fixtures: fixtureResults,
         model,
         runtime,
-        warmLoad
+        timings: { coldLoad, warmLoad }
       };
     },
-    { backend, manifest, origin, precision }
-  );
-  expect(result.runtime).toMatchObject({ backend, precision });
-  expect(result.detection.detections).toHaveLength(reference.realImage.expected.scores.length);
-  const firstDetection = result.detection.detections[0]!;
-  expect(firstDetection.labelId).toBe(reference.realImage.expected.labels[0]);
-  const parity = {
-    iou: boxIou(firstDetection.box),
-    maxScoreDelta: Math.abs(firstDetection.score - reference.realImage.expected.scores[0]!),
-    meanPolygonPointDistancePixels: meanPolygonPointDistance(firstDetection.polygon)
-  };
-  expect(parity.iou).toBeGreaterThanOrEqual(parityThresholds.iou);
-  expect(parity.maxScoreDelta).toBeLessThanOrEqual(parityThresholds.maxScoreDelta);
-  expect(parity.meanPolygonPointDistancePixels).toBeLessThanOrEqual(
-    parityThresholds.meanPolygonPointDistancePixels
+    {
+      acceptedManifest,
+      acceptedParityThresholds,
+      backend,
+      fixtures: fixturesLock.fixtures,
+      origin,
+      precision,
+      targetManifest
+    }
   );
 
+  expect(result.runtime).toMatchObject({ backend, fallbacks: [], precision });
+  expect(result.model.sha256).toBe(manifestVariant!.sha256);
+  expect(result.fixtures).toHaveLength(fixturesLock.fixtures.length);
+  const fixtureEvidence = result.fixtures.map(({ detections, ...fixture }) => {
+    expect(fixture.detectionCount).toBe(fixture.expectedDetectionCount);
+    expect(fixture.labelSequenceEqual).toBe(true);
+    expect(fixture.readingOrderEqual).toBe(true);
+    expect(fixture.parity).toBe("passed");
+    expect(fixture.acceptedOutputSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(fixture.outputSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(fixture.parityMetrics.maxBoxCoordinateDeltaPixels).toBeLessThanOrEqual(
+      acceptedParityThresholds.maxBoxCoordinateDeltaPixels
+    );
+    expect(fixture.parityMetrics.maxPolygonCoordinateDeltaPixels).toBeLessThanOrEqual(
+      acceptedParityThresholds.maxPolygonCoordinateDeltaPixels
+    );
+    expect(fixture.parityMetrics.maxScoreDelta).toBeLessThanOrEqual(
+      acceptedParityThresholds.maxScoreDelta
+    );
+    if (fixture.filename !== "table.png") return fixture;
+
+    const firstDetection = detections[0]!;
+    expect(firstDetection.labelId).toBe(reference.realImage.expected.labels[0]);
+    const referenceMetrics = {
+      iou: boxIou(firstDetection.box),
+      maxScoreDelta: Math.abs(firstDetection.score - reference.realImage.expected.scores[0]!),
+      meanPolygonPointDistancePixels: meanPolygonPointDistance(firstDetection.polygon)
+    };
+    expect(referenceMetrics.iou).toBeGreaterThanOrEqual(referenceThresholds.iou);
+    expect(referenceMetrics.maxScoreDelta).toBeLessThanOrEqual(referenceThresholds.maxScoreDelta);
+    expect(referenceMetrics.meanPolygonPointDistancePixels).toBeLessThanOrEqual(
+      referenceThresholds.meanPolygonPointDistancePixels
+    );
+    return { ...fixture, referenceMetrics, referenceThresholds };
+  });
+
+  const sdkCommit = execFileSync("git", ["rev-parse", "HEAD"], {
+    cwd: repositoryRoot,
+    encoding: "utf8"
+  }).trim();
   const report = {
     schemaVersion: 1,
-    id: mode,
     status: "passed",
-    generatedAt: new Date().toISOString(),
-    sdkCommit: execFileSync("git", ["rev-parse", "HEAD"], {
-      cwd: repositoryRoot,
-      encoding: "utf8"
-    }).trim(),
-    environment: {
-      browser: { name: "Chromium", version: browser.version(), userAgent: result.browser },
-      capabilities: result.runtime.capabilities,
-      cpu: cpus()[0]?.model ?? "unknown",
-      hardware:
-        backend === "webgpu"
-          ? (result.adapter?.description ?? result.adapter?.architecture ?? result.adapter?.vendor)
-          : (cpus()[0]?.model ?? "unknown"),
-      os: `${platform()} ${release()}`
-    },
-    ort: { version: "1.27.0" },
-    model: {
-      bytes: result.model.bytes,
-      precision: result.model.precision,
-      sha256: result.model.sha256
-    },
-    coldLoad: result.coldLoad,
-    warmLoad: result.warmLoad,
-    detection: {
-      count: result.detection.detections.length,
-      parity: "passed",
-      parityMetrics: parity,
-      parityThresholds,
-      timings: result.detection.timings
-    },
+    acceptedModelSha256: acceptedManifest.variants.find(({ id }) => id === "fp32")!.sha256,
+    executionProvider: backend,
+    precision,
+    fallbacks: result.runtime.fallbacks,
+    modelBytes: result.model.bytes,
+    modelSha256: result.model.sha256,
+    onnxruntimeWebVersion: "1.27.0",
     adapter: result.adapter,
-    peakMemory: {
-      bytes: null,
-      reason: "Chromium does not expose reliable per-inference peak memory."
-    }
+    adapterFeatures: result.adapterFeatures,
+    browser: { name: "Chromium", version: browser.version(), userAgent: result.browser },
+    operatingSystem: `${platform()} ${release()}`,
+    fixtures: fixtureEvidence,
+    timingsMs: result.timings,
+    sdkCommit,
+    capabilities: result.runtime.capabilities,
+    cpu: cpus()[0]?.model ?? "unknown",
+    generatedAt: new Date().toISOString(),
+    id: mode
   };
   mkdirSync(outputRoot, { recursive: true });
   writeFileSync(join(outputRoot, `${mode}.json`), `${JSON.stringify(report, null, 2)}\n`);
