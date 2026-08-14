@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "executionProvider": "webgpu",
+  "precision": "fp32",
+  "fallbacks": [],
+  "modelBytes": 142574928,
+  "modelSha256": "476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269",
+  "onnxruntimeWebVersion": "1.27.0",
+  "adapter": {
+    "architecture": "blackwell",
+    "description": null,
+    "device": null,
+    "vendor": "nvidia"
+  },
+  "adapterFeatures": [
+    "bgra8unorm-storage",
+    "clip-distances",
+    "core-features-and-limits",
+    "depth-clip-control",
+    "depth32float-stencil8",
+    "dual-source-blending",
+    "float32-blendable",
+    "float32-filterable",
+    "indirect-first-instance",
+    "primitive-index",
+    "rg11b10ufloat-renderable",
+    "shader-f16",
+    "subgroups",
+    "texture-component-swizzle",
+    "texture-compression-bc",
+    "texture-compression-bc-sliced-3d",
+    "texture-formats-tier1",
+    "texture-formats-tier2",
+    "timestamp-query"
+  ],
+  "browser": {
+    "name": "Chromium",
+    "version": "151.0.7922.138",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36"
+  },
+  "operatingSystem": "win32 10.0.26200",
+  "fixtures": [
+    {
+      "detectionCount": 12,
+      "expectedDetectionCount": 12,
+      "filename": "curved-document.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "49d017eb3a0946b85dbf0076cf3fc8af88ad12faa1c46b2e5063b54f0b082393",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 15.869999997317791,
+        "inferenceMs": 5850.69999999553,
+        "postprocessMs": 68.39000000059605,
+        "preprocessMs": 161.90999999642372,
+        "totalMs": 6113.865000002086
+      }
+    },
+    {
+      "detectionCount": 59,
+      "expectedDetectionCount": 59,
+      "filename": "doc-formula.png",
+      "labelSequenceEqual": true,
+      "outputSha256": "70e57bf726376f2e3aad8fd35a6d492d679b6b38087df95de2648aee09babc51",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 8.570000000298023,
+        "inferenceMs": 315.6899999976158,
+        "postprocessMs": 50.16499999910593,
+        "preprocessMs": 119.58000000566244,
+        "totalMs": 504.45499999821186
+      }
+    },
+    {
+      "detectionCount": 44,
+      "expectedDetectionCount": 44,
+      "filename": "image-layout.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "16320eaccc62ae6d9509d498ade7996febe9fa72cc7543f716c91d8577b06b00",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 24.344999998807907,
+        "inferenceMs": 278.85999999940395,
+        "postprocessMs": 72.42000000178814,
+        "preprocessMs": 121.79500000178814,
+        "totalMs": 508.01500000059605
+      }
+    },
+    {
+      "detectionCount": 13,
+      "expectedDetectionCount": 13,
+      "filename": "layout-demo.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "24d11a2ed203d8ee72ca4e14e803cab560ef57855976ead40efa65a07bd0fbb7",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 30.639999993145466,
+        "inferenceMs": 290.7799999937415,
+        "postprocessMs": 94.3399999961257,
+        "preprocessMs": 177.5300000011921,
+        "totalMs": 606.9549999982119
+      }
+    },
+    {
+      "detectionCount": 13,
+      "expectedDetectionCount": 13,
+      "filename": "screen-photo.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "6f0fe242016734de274a9ac9d002ee166694e8360cb52cc3cb1d0b4000d1d160",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 11.925000004470348,
+        "inferenceMs": 290.51500000059605,
+        "postprocessMs": 44.42000000178814,
+        "preprocessMs": 144,
+        "totalMs": 502.4949999973178
+      }
+    },
+    {
+      "detectionCount": 13,
+      "expectedDetectionCount": 13,
+      "filename": "skew-document.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "840d7c61343deee9fa966b541e17a19671d5987aa27280ecec8ca2943c133c47",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 11.689999997615814,
+        "inferenceMs": 230.11499999463558,
+        "postprocessMs": 57.30500000715256,
+        "preprocessMs": 138.96000000089407,
+        "totalMs": 451.71000000089407
+      }
+    },
+    {
+      "detectionCount": 1,
+      "expectedDetectionCount": 1,
+      "filename": "table.png",
+      "labelSequenceEqual": true,
+      "outputSha256": "7978ca0ec7143f98fc24ef2f4613c72d785a82ca4a1b31bcf97fc1952ffb9e8c",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 3.0450000017881393,
+        "inferenceMs": 355.1149999946356,
+        "postprocessMs": 53.979999996721745,
+        "preprocessMs": 83.14499999582767,
+        "totalMs": 504.5949999988079
+      },
+      "parityMetrics": {
+        "iou": 0.9999962574460338,
+        "maxScoreDelta": 0.00001386435552097609,
+        "meanPolygonPointDistancePixels": 0
+      },
+      "parityThresholds": {
+        "iou": 0.95,
+        "maxScoreDelta": 0.02,
+        "meanPolygonPointDistancePixels": 2
+      }
+    }
+  ],
+  "timingsMs": {
+    "coldLoad": {
+      "capabilitiesMs": 168.0949999988079,
+      "integrityMs": 539.7800000011921,
+      "manifestMs": 2.3250000029802322,
+      "modelCacheMs": 1.089999996125698,
+      "modelDownloadMs": 3077.2300000041723,
+      "modelMs": 4335.57499999553,
+      "modelSource": "network",
+      "sessionMs": 3461.4400000050664,
+      "totalMs": 7968.234999999404
+    },
+    "warmLoad": {
+      "capabilitiesMs": 0.5600000023841858,
+      "integrityMs": 363.2800000011921,
+      "manifestMs": 0.11999999731779099,
+      "modelCacheMs": 102.08500000089407,
+      "modelDownloadMs": 0,
+      "modelMs": 465.5,
+      "modelSource": "cache",
+      "sessionMs": 1073.929999999702,
+      "totalMs": 1540.1750000044703
+    }
+  },
+  "sdkCommit": "8c47754068ff4ec7b34451cb7d562e6e9a8b1c8a",
+  "capabilities": {
+    "crossOriginIsolated": true,
+    "diagnostics": [
+      "webgpu: supported by an acquired adapter",
+      "webgpu-fp16: shader-f16 is supported",
+      "wasm: supported",
+      "wasm-simd: supported",
+      "wasm-threads: supported",
+      "worker: supported"
+    ],
+    "wasm": true,
+    "wasmSimd": true,
+    "wasmThreads": true,
+    "webgpu": true,
+    "webgpuFp16": true,
+    "worker": true
+  },
+  "cpu": "Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz",
+  "generatedAt": "2026-08-14T17:22:41.632Z",
+  "id": "webgpu-fp32"
+}

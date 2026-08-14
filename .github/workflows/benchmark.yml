@@ -60,6 +60,30 @@ jobs:
           name: benchmark-webgpu-fp16
           path: test-results/benchmark/webgpu-fp16.json
 
+  webgpu-fp32:
+    runs-on: [self-hosted, windows, x64, webgpu-hardware]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.16.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install chromium
+      - run: pnpm exec playwright test tests/browser/benchmark.spec.ts
+        env:
+          PPDOCLAYOUT_BENCHMARK_MODE: webgpu-fp32
+      - uses: actions/upload-artifact@v7
+        with:
+          name: benchmark-webgpu-fp32
+          path: test-results/benchmark/webgpu-fp32.json
+
   responsive-screenshots:
     runs-on: ubuntu-latest
     steps:

@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "executionProvider": "wasm",
+  "precision": "fp32",
+  "fallbacks": [],
+  "modelBytes": 142574928,
+  "modelSha256": "476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269",
+  "onnxruntimeWebVersion": "1.27.0",
+  "adapter": null,
+  "adapterFeatures": [],
+  "browser": {
+    "name": "Chromium",
+    "version": "151.0.7922.34",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36"
+  },
+  "operatingSystem": "win32 10.0.26200",
+  "fixtures": [
+    {
+      "detectionCount": 12,
+      "expectedDetectionCount": 12,
+      "filename": "curved-document.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "98601e9b45ffca68a280c95604d67f40bca747aefa7f07ec502369969dfd4025",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 10.405000001192093,
+        "inferenceMs": 7859.410000003874,
+        "postprocessMs": 39.41499999910593,
+        "preprocessMs": 127.48499999940395,
+        "totalMs": 8045.539999999106
+      }
+    },
+    {
+      "detectionCount": 59,
+      "expectedDetectionCount": 59,
+      "filename": "doc-formula.png",
+      "labelSequenceEqual": true,
+      "outputSha256": "8bba1fb0a794a86ec0b2f4d1b1425d28e000a49beab399e4c55bbb04b4cf8cf4",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 10.439999997615814,
+        "inferenceMs": 7962.560000002384,
+        "postprocessMs": 35.59000000357628,
+        "preprocessMs": 115.08500000089407,
+        "totalMs": 8132.585000000894
+      }
+    },
+    {
+      "detectionCount": 44,
+      "expectedDetectionCount": 44,
+      "filename": "image-layout.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "da3c2a041cc94c4b5616637b7acd9af116c0882befd434920ebe8aaf96be626d",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 27.730000004172325,
+        "inferenceMs": 7777.990000002086,
+        "postprocessMs": 59.399999998509884,
+        "preprocessMs": 105.34000000357628,
+        "totalMs": 7979.435000002384
+      }
+    },
+    {
+      "detectionCount": 13,
+      "expectedDetectionCount": 13,
+      "filename": "layout-demo.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "c6051575214356859bcb9f87be446f27f32dc405a22bdc99ef9f887866c5ddb7",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 31.45500000566244,
+        "inferenceMs": 7889.280000001192,
+        "postprocessMs": 99.87999999523163,
+        "preprocessMs": 172.27000000327826,
+        "totalMs": 8202.32500000298
+      }
+    },
+    {
+      "detectionCount": 13,
+      "expectedDetectionCount": 13,
+      "filename": "screen-photo.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "b036ef27908bd3b94406d9a3106cb5ef6ecca8030874f2fceacac7a0a6407a90",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 11.390000000596046,
+        "inferenceMs": 8091.3499999940395,
+        "postprocessMs": 44.645000003278255,
+        "preprocessMs": 122.03499999642372,
+        "totalMs": 8279.155000001192
+      }
+    },
+    {
+      "detectionCount": 13,
+      "expectedDetectionCount": 13,
+      "filename": "skew-document.jpg",
+      "labelSequenceEqual": true,
+      "outputSha256": "07f0c613f0d87b91597984e01e83acdca5c5bf440d3efcc19873153b9250fa82",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 11.479999996721745,
+        "inferenceMs": 7944.47500000149,
+        "postprocessMs": 52.269999995827675,
+        "preprocessMs": 125.89500000327826,
+        "totalMs": 8142.655000001192
+      }
+    },
+    {
+      "detectionCount": 1,
+      "expectedDetectionCount": 1,
+      "filename": "table.png",
+      "labelSequenceEqual": true,
+      "outputSha256": "8ff528db91eb3893ec1fbf50d69ac23aac17bc2aefec79e70cf0c11f0602550a",
+      "parity": "passed",
+      "readingOrderEqual": true,
+      "timings": {
+        "decodeMs": 3.0499999970197678,
+        "inferenceMs": 7915.270000003278,
+        "postprocessMs": 55.57499999552965,
+        "preprocessMs": 76.70500000566244,
+        "totalMs": 8060.77499999851
+      },
+      "parityMetrics": {
+        "iou": 0.9999961699392192,
+        "maxScoreDelta": 0.000013727193068024945,
+        "meanPolygonPointDistancePixels": 0
+      },
+      "parityThresholds": {
+        "iou": 0.95,
+        "maxScoreDelta": 0.02,
+        "meanPolygonPointDistancePixels": 2
+      }
+    }
+  ],
+  "timingsMs": {
+    "coldLoad": {
+      "capabilitiesMs": 3.530000001192093,
+      "integrityMs": 366.4150000065565,
+      "manifestMs": 1.589999996125698,
+      "modelCacheMs": 0.8250000029802322,
+      "modelDownloadMs": 1204.2849999964237,
+      "modelMs": 1968.9499999955297,
+      "modelSource": "network",
+      "sessionMs": 1593.4200000017881,
+      "totalMs": 3568.1999999955297
+    },
+    "warmLoad": {
+      "capabilitiesMs": 1.2349999994039536,
+      "integrityMs": 361.66499999910593,
+      "manifestMs": 0.0949999988079071,
+      "modelCacheMs": 79.13000000268221,
+      "modelDownloadMs": 0,
+      "modelMs": 440.8799999952316,
+      "modelSource": "cache",
+      "sessionMs": 510.9950000047684,
+      "totalMs": 953.2649999931455
+    }
+  },
+  "sdkCommit": "8c47754068ff4ec7b34451cb7d562e6e9a8b1c8a",
+  "capabilities": {
+    "crossOriginIsolated": true,
+    "diagnostics": [
+      "webgpu: unavailable because no adapter was returned",
+      "webgpu-fp16: shader-f16 is unavailable",
+      "wasm: supported",
+      "wasm-simd: supported",
+      "wasm-threads: supported",
+      "worker: unavailable in this environment"
+    ],
+    "wasm": true,
+    "wasmSimd": true,
+    "wasmThreads": true,
+    "webgpu": false,
+    "webgpuFp16": false,
+    "worker": false
+  },
+  "cpu": "Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz",
+  "generatedAt": "2026-08-14T17:26:16.905Z",
+  "id": "wasm-fp32"
+}
