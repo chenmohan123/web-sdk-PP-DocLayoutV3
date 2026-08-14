@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { describe, test } from "node:test";
 import { dirname, resolve } from "node:path";
@@ -12,6 +11,23 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function verifyWithJsonMutation(relativePath, mutate) {
+  const path = resolve(repositoryRoot, relativePath);
+  const original = readFileSync(path, "utf8");
+  const value = JSON.parse(original);
+  mutate(value);
+  try {
+    writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+    return spawnSync(
+      process.execPath,
+      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.1"],
+      { cwd: repositoryRoot, encoding: "utf8" }
+    );
+  } finally {
+    writeFileSync(path, original);
+  }
 }
 
 function modelStagingFixture({ corruptFp32 = false } = {}) {
@@ -83,6 +99,74 @@ describe("release workflow contract", () => {
     assert.match(workflow, /release_tag:[\s\S]*default:\s*["']?v1\.0\.1-models/);
     assert.match(workflow, /gh release create/);
     assert.doesNotMatch(workflow, /--clobber/);
+    assert.match(workflow, /GITHUB_REF[\s\S]*refs\/heads\/main/);
+    assert.match(
+      workflow,
+      /git ls-remote --exit-code --tags origin "refs\/tags\/\$\{RELEASE_TAG\}"/
+    );
+    assert.match(workflow, /--target "\$\{GITHUB_SHA\}"/);
+    assert.doesNotMatch(workflow, /--target main/);
+  });
+
+  test("rejects FP32 browser evidence for a different model", () => {
+    const result = verifyWithJsonMutation(
+      "tools/model-pipeline/reports/1.0.1/browser-evidence.json",
+      (evidence) => {
+        evidence.fp32Wasm.modelSha256 = "0".repeat(64);
+      }
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /FP32 WASM browser evidence does not match the manifest/);
+  });
+
+  test("rejects incomplete or inconsistent FP32 browser evidence", () => {
+    const evidencePath = "tools/model-pipeline/reports/1.0.1/browser-evidence.json";
+    const cases = [
+      [
+        (evidence) => {
+          evidence.fp32Wasm.modelBytes += 1;
+        },
+        /FP32 WASM browser evidence byte size does not match the manifest/
+      ],
+      [
+        (evidence) => {
+          evidence.fp32Wasm.executionProvider = "webgpu";
+        },
+        /FP32 WASM browser evidence execution provider is invalid/
+      ],
+      [
+        (evidence) => {
+          evidence.fp32Wasm.precision = "fp16";
+        },
+        /FP32 WASM browser evidence precision is invalid/
+      ],
+      [
+        (evidence) => {
+          evidence.fp32Wasm.fixtures.pop();
+        },
+        /FP32 WASM browser evidence fixture set is incomplete/
+      ],
+      [
+        (evidence) => {
+          evidence.fp32Wasm.fixtures[0].parity = "failed";
+        },
+        /FP32 WASM browser evidence fixture parity failed/
+      ]
+    ];
+
+    for (const [mutate, expectedError] of cases) {
+      const result = verifyWithJsonMutation(evidencePath, mutate);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, expectedError);
+    }
+  });
+
+  test("rejects browser evidence that differs from the committed benchmark", () => {
+    const result = verifyWithJsonMutation("benchmarks/1.0.1/wasm-fp32.json", (report) => {
+      report.modelBytes += 1;
+    });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /FP32 WASM browser evidence differs from the benchmark artifact/);
   });
 
   test("requires package repository metadata to match GitHub provenance", () => {

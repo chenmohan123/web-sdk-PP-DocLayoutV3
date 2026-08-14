@@ -104,12 +104,38 @@ describe("1.0.0 benchmark release contract", () => {
   });
 
   test("publishes seven-fixture evidence for model 1.0.1 FP32 runtimes", () => {
+    const fixtureLock = JSON.parse(
+      readFileSync(join(repositoryRoot, "tools/model-pipeline/fixtures/fixtures.lock.json"), "utf8")
+    );
+    const fixtureHashes = new Map(
+      fixtureLock.fixtures.map((fixture) => [fixture.filename, fixture.sha256])
+    );
+    const thresholds = {
+      maxBoxCoordinateDeltaPixels: 1,
+      maxPolygonCoordinateDeltaPixels: 1.5,
+      maxScoreDelta: 0.001
+    };
     for (const name of ["wasm-fp32.json", "webgpu-fp32.json"]) {
       const report = readJson(name, "1.0.1");
       assert.equal(report.status, "passed");
       assert.equal(report.fallbacks.length, 0);
       assert.equal(report.fixtures.length, 7);
-      assert.ok(report.fixtures.every((fixture) => fixture.parity === "passed"));
+      for (const fixture of report.fixtures) {
+        assert.equal(fixture.parity, "passed");
+        assert.equal(fixture.fixtureSha256, fixtureHashes.get(fixture.filename));
+        assert.match(fixture.acceptedOutputSha256, /^[a-f0-9]{64}$/);
+        assert.match(fixture.outputSha256, /^[a-f0-9]{64}$/);
+        assert.deepEqual(fixture.parityThresholds, thresholds);
+        assert.ok(
+          fixture.parityMetrics.maxBoxCoordinateDeltaPixels <=
+            thresholds.maxBoxCoordinateDeltaPixels
+        );
+        assert.ok(
+          fixture.parityMetrics.maxPolygonCoordinateDeltaPixels <=
+            thresholds.maxPolygonCoordinateDeltaPixels
+        );
+        assert.ok(fixture.parityMetrics.maxScoreDelta <= thresholds.maxScoreDelta);
+      }
     }
   });
 
