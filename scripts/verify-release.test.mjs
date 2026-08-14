@@ -63,6 +63,28 @@ describe("release workflow contract", () => {
     assert.match(output, /4 workflows, 2 model variants/);
   });
 
+  test("verifies model 1.0.1 without changing the SDK 1.0.4 default", () => {
+    const output = execFileSync(
+      process.execPath,
+      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.1"],
+      { cwd: repositoryRoot, encoding: "utf8" }
+    );
+
+    assert.match(output, /model 1\.0\.1/);
+  });
+
+  test("creates the immutable model release without clobber", () => {
+    const workflow = readFileSync(
+      resolve(repositoryRoot, ".github/workflows/model-validation.yml"),
+      "utf8"
+    );
+
+    assert.match(workflow, /model_version:[\s\S]*default:\s*["']?1\.0\.1/);
+    assert.match(workflow, /release_tag:[\s\S]*default:\s*["']?v1\.0\.1-models/);
+    assert.match(workflow, /gh release create/);
+    assert.doesNotMatch(workflow, /--clobber/);
+  });
+
   test("requires package repository metadata to match GitHub provenance", () => {
     const packageMetadata = JSON.parse(
       readFileSync(resolve(repositoryRoot, "packages/sdk/package.json"), "utf8")
@@ -98,7 +120,7 @@ describe("release workflow contract", () => {
     assert.match(pages, /^\s*- uses: actions\/upload-pages-artifact@v5\r?$/m);
 
     const setupNodeWorkflows = [
-      ["benchmark.yml", 3],
+      ["benchmark.yml", 4],
       ["ci.yml", 3],
       ["model-validation.yml", 2],
       ["pages.yml", 1],

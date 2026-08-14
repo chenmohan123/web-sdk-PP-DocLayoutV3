@@ -204,12 +204,18 @@ async function sha256(path) {
   return hash.digest("hex");
 }
 
-async function verifyModels(manifest) {
+async function verifyModels(modelVersion) {
+  const modelRoot = `models/pp-doclayoutv3/${modelVersion}`;
+  const reportRoot =
+    modelVersion === "1.0.0"
+      ? "tools/model-pipeline/reports"
+      : `tools/model-pipeline/reports/${modelVersion}`;
+  const manifest = JSON.parse(read(`${modelRoot}/manifest.json`));
   const manifestVariants = Object.fromEntries(
     manifest.variants.map((variant) => [variant.id, variant])
   );
   for (const variant of manifest.variants) {
-    const path = join(repositoryRoot, "models/pp-doclayoutv3/1.0.0", variant.filename);
+    const path = join(repositoryRoot, modelRoot, variant.filename);
     const size = statSync(path).size;
     if (size < 1024) fail(`${variant.filename} is probably an unresolved Git LFS pointer`);
     if (size !== variant.bytes)
@@ -218,9 +224,9 @@ async function verifyModels(manifest) {
     if (digest !== variant.sha256) fail(`${variant.filename} SHA-256 does not match the manifest`);
   }
 
-  const fp32 = JSON.parse(read("tools/model-pipeline/reports/fp32-validation.json"));
-  const variants = JSON.parse(read("tools/model-pipeline/reports/variant-validation.json"));
-  const browser = JSON.parse(read("tools/model-pipeline/reports/browser-evidence.json"));
+  const fp32 = JSON.parse(read(`${reportRoot}/fp32-validation.json`));
+  const variants = JSON.parse(read(`${reportRoot}/variant-validation.json`));
+  const browser = JSON.parse(read(`${reportRoot}/browser-evidence.json`));
   if (fp32.overallPass !== true) fail("FP32 validation report did not pass");
   if (variants.variants?.fp16?.pass !== true) fail("FP16 validation report did not pass");
   if (browser.fp16Webgpu?.status !== "passed") fail("FP16 hardware WebGPU evidence is missing");
@@ -232,6 +238,17 @@ async function verifyModels(manifest) {
     fail("variant validation report does not match the FP16 manifest SHA-256");
   if (browser.fp16Webgpu?.modelSha256 !== manifestVariants.fp16?.sha256)
     fail("browser evidence does not match the FP16 manifest SHA-256");
+
+  if (modelVersion === "1.0.1") {
+    if (browser.fp32Wasm?.status !== "passed") fail("strict FP32 WASM evidence is missing");
+    if (browser.fp32Webgpu?.status !== "passed") fail("strict FP32 WebGPU evidence is missing");
+    if (browser.fp32Wasm?.fallbacks?.length !== 0) fail("FP32 WASM evidence contains fallback");
+    if (browser.fp32Webgpu?.fallbacks?.length !== 0) fail("FP32 WebGPU evidence contains fallback");
+    if (manifestVariants.fp32?.backendCompatibility.join(",") !== "wasm,webgpu") {
+      fail("FP32 manifest compatibility must be wasm,webgpu");
+    }
+  }
+  return manifest;
 }
 
 function runPnpm(args) {
@@ -255,13 +272,18 @@ function verifyTag(tag) {
 
 const [mode, value, ...extraArguments] = process.argv.slice(2);
 if (extraArguments.length > 0 || ![undefined, "--static", "--models", "--release"].includes(mode)) {
-  fail("usage: verify-release.mjs [--static | --models | --release vX.Y.Z]");
+  fail("usage: verify-release.mjs [--static | --models X.Y.Z | --release vX.Y.Z]");
 }
 if (mode === "--release" && value === undefined) fail("--release requires a tag");
-if (mode !== "--release" && value !== undefined) fail(`${mode} does not accept a value`);
+if (mode === "--models" && value === undefined) fail("--models requires a version");
+if (mode === "--models" && !/^\d+\.\d+\.\d+$/.test(value))
+  fail(`model version ${value} is not semver`);
+if (!["--models", "--release"].includes(mode) && value !== undefined)
+  fail(`${mode} does not accept a value`);
 
-const manifest = verifyStaticContract();
-if (mode !== "--static") await verifyModels(manifest);
+const staticManifest = verifyStaticContract();
+const modelVersion = mode === "--models" ? value : "1.0.0";
+const manifest = mode === "--static" ? staticManifest : await verifyModels(modelVersion);
 if (mode === "--release") verifyTag(value);
 if (mode === undefined || mode === "--release") {
   runPnpm(["run", "verify"]);
@@ -269,5 +291,5 @@ if (mode === undefined || mode === "--release") {
 }
 
 console.log(
-  `Release contract verified: ${requiredWorkflows.length} workflows, ${manifest.variants.length} model variants.`
+  `Release contract verified: ${requiredWorkflows.length} workflows, ${manifest.variants.length} model variants, model ${modelVersion}.`
 );
