@@ -147,6 +147,32 @@ def test_rejects_wrong_concat_topology(tmp_path: Path) -> None:
     assert not output.exists()
 
 
+def test_rejects_renamed_cast_node(tmp_path: Path) -> None:
+    source = tmp_path / "source.onnx"
+    output = tmp_path / "output.onnx"
+    model = source_model()
+    model.graph.node[1].name = "other_cast"
+    write_source(source, model)
+
+    with pytest.raises(ValueError, match="node__to_copy_4"):
+        sanitize_webgpu_fp32(source, output)
+
+    assert not output.exists()
+
+
+def test_rejects_wrong_cast_topology(tmp_path: Path) -> None:
+    source = tmp_path / "source.onnx"
+    output = tmp_path / "output.onnx"
+    model = source_model()
+    model.graph.node[1].input[0] = "input"
+    write_source(source, model)
+
+    with pytest.raises(ValueError, match="Cast"):
+        sanitize_webgpu_fp32(source, output)
+
+    assert not output.exists()
+
+
 def test_rejects_cast_target_other_than_float(tmp_path: Path) -> None:
     source = tmp_path / "source.onnx"
     output = tmp_path / "output.onnx"
