@@ -60,10 +60,10 @@ describe("selectExecutionPlan", () => {
     expect(plan.candidates.every((candidate) => candidate.reason.length > 0)).toBe(true);
   });
 
-  it("skips WebGPU FP16 when shader-f16 is missing", () => {
+  it("uses WASM FP32 when shader-f16 is missing", () => {
     const plan = selectExecutionPlan({}, capabilities({ webgpuFp16: false }), manifest.variants);
 
-    expect(plan.selected).toMatchObject({ provider: "webgpu", precision: "fp32" });
+    expect(plan.selected).toMatchObject({ provider: "wasm", precision: "fp32" });
     expect(plan.candidates[0]).toMatchObject({ status: "skipped" });
     expect(plan.candidates[0]!.reason).toMatch(/shader-f16/);
   });
@@ -106,7 +106,7 @@ describe("selectExecutionPlan", () => {
       manifest.variants
     );
 
-    expect(plan.selected).toMatchObject({ provider: "webgpu", precision: "fp32" });
+    expect(plan.selected).toMatchObject({ provider: "wasm", precision: "fp32" });
     expect(plan.selected.reason).toMatch(/fallback/i);
   });
 

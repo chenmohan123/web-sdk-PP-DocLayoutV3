@@ -58,13 +58,22 @@ describe("parseModelManifest", () => {
     expect(manifest.labels[8]).toBe("footer");
     expect(manifest.labels[9]).toBe("footer");
     expect(manifest.preprocessing.size).toEqual({ height: 800, width: 800 });
-    expect(manifest.variants.map(({ id, precision, url }) => ({ id, precision, url }))).toEqual([
+    expect(
+      manifest.variants.map(({ backendCompatibility, id, precision, url }) => ({
+        backendCompatibility,
+        id,
+        precision,
+        url
+      }))
+    ).toEqual([
       {
+        backendCompatibility: ["webgpu"],
         id: "fp16",
         precision: "fp16",
         url: "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/model-fp16.onnx"
       },
       {
+        backendCompatibility: ["wasm"],
         id: "fp32",
         precision: "fp32",
         url: "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/model-fp32.onnx"

@@ -180,7 +180,7 @@ describe("createDocLayout", () => {
     });
 
     expect(createExecutor).toHaveBeenCalledTimes(2);
-    expect(result.runtime).toMatchObject({ backend: "webgpu", precision: "fp32" });
+    expect(result.runtime).toMatchObject({ backend: "wasm", precision: "fp32" });
     expect(result.runtime.fallbacks).toHaveLength(1);
     expect(result.runtime.fallbacks[0]).toMatchObject({
       code: "SESSION_CREATE_FAILED",
