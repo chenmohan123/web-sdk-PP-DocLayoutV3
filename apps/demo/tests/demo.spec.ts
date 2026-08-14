@@ -40,6 +40,53 @@ test("maps SDK progress events to honest model status text states", async ({ pag
   ]);
 });
 
+test("keeps manual choices strict and uses only validated default pairs", async ({ page }) => {
+  await page.goto("/?fixture=1");
+  const behavior = await page.evaluate(
+    async ({ preferencesUrl, messagesUrl }) => {
+      const preferences = await import(preferencesUrl);
+      const messages = await import(messagesUrl);
+      return {
+        autoFallback: preferences.allowFallbackForSelection("auto", "auto"),
+        backendFallback: preferences.allowFallbackForSelection("webgpu", "auto"),
+        precisionFallback: preferences.allowFallbackForSelection("auto", "fp32"),
+        gpuFp16: preferences.supportsCombination("webgpu", "fp16"),
+        gpuFp32: preferences.supportsCombination("webgpu", "fp32"),
+        wasmFp16: preferences.supportsCombination("wasm", "fp16"),
+        wasmFp32: preferences.supportsCombination("wasm", "fp32"),
+        gpuCorrection: preferences.precisionForBackend("webgpu", "fp32"),
+        wasmCorrection: preferences.precisionForBackend("wasm", "fp16"),
+        runtimeError: messages.formatRuntimeError({
+          details: { causeMessage: "unsupported WebGPU operator" },
+          message: "ONNX session-create failed for webgpu"
+        }),
+        fallbackCause: messages.formatFallbackCause({
+          cause: { message: "adapter allocation failed" },
+          message: "ONNX session-create failed for webgpu"
+        })
+      };
+    },
+    {
+      preferencesUrl: "/src/execution-preferences.ts",
+      messagesUrl: "/src/runtime-messages.ts"
+    }
+  );
+
+  expect(behavior).toEqual({
+    autoFallback: true,
+    backendFallback: false,
+    precisionFallback: false,
+    gpuFp16: true,
+    gpuFp32: false,
+    wasmFp16: false,
+    wasmFp32: true,
+    gpuCorrection: "fp16",
+    wasmCorrection: "fp32",
+    runtimeError: "ONNX session-create failed for webgpu: unsupported WebGPU operator",
+    fallbackCause: "adapter allocation failed"
+  });
+});
+
 test("reports loading before detecting for an in-memory model", async ({ page }) => {
   await page.route("**/ort-fixture/*.wasm", async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -179,10 +226,23 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   await page.screenshot({ path: testInfo.outputPath("desktop.png"), fullPage: true });
 });
 
-test("prevents FP16 on CPU and explains the switch to FP32", async ({ page }) => {
+test("enforces the validated default model matrix in controls", async ({ page }) => {
   await page.goto("/?fixture=1");
   const backend = page.getByRole("group", { name: "运行后端" });
   const precision = page.getByRole("group", { name: "模型精度" });
+
+  await precision.getByRole("button", { name: "FP32" }).click();
+  await backend.getByRole("button", { name: "GPU" }).click();
+  await expect(precision.getByRole("button", { name: "FP32" })).toBeDisabled();
+  await expect(precision.getByRole("button", { name: "FP16" })).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  await expect(page.getByTestId("notice")).toContainText(
+    "GPU 默认模型当前仅验证了 FP16，已为你切换模型精度"
+  );
+
+  await backend.getByRole("button", { name: "自动" }).click();
   await precision.getByRole("button", { name: "FP16" }).click();
   await backend.getByRole("button", { name: "CPU" }).click();
 

@@ -18,19 +18,24 @@ import {
   type DocLayoutDetector,
   type DocLayoutResult,
   type DocLayoutLoadTimings,
-  type ModelBackend,
   type ModelManifest
 } from "web-sdk-pp-doclayoutv3";
 
+import {
+  allowFallbackForSelection,
+  precisionForBackend,
+  supportsCombination,
+  type BackendPreference,
+  type PrecisionPreference
+} from "./execution-preferences";
 import { tinyModelData, tinyModelManifest } from "./fixture";
 import { demoSamples, fetchSampleFile, sampleUrl, type DemoSample } from "./samples";
 import { en } from "./i18n/en";
 import { zhCN, type Copy } from "./i18n/zh-CN";
 import { modelProgressState } from "./model-progress";
+import { formatFallbackCause, formatRuntimeError } from "./runtime-messages";
 
 type Language = "zh" | "en";
-type Backend = "auto" | ModelBackend;
-type Precision = "auto" | "fp16" | "fp32";
 type Overlay = "box" | "polygon";
 type Status = "ready" | "downloading" | "loading" | "running" | "success" | "error";
 
@@ -104,8 +109,8 @@ function drawSource(canvas: HTMLCanvasElement, source: HTMLImageElement): void {
 export function App(): ReactElement {
   const [language, setLanguage] = useState<Language>("zh");
   const copy: Copy = language === "zh" ? zhCN : en;
-  const [backend, setBackend] = useState<Backend>("auto");
-  const [precision, setPrecision] = useState<Precision>("auto");
+  const [backend, setBackend] = useState<BackendPreference>("auto");
+  const [precision, setPrecision] = useState<PrecisionPreference>("auto");
   const [overlay, setOverlay] = useState<Overlay>("box");
   const [threshold, setThreshold] = useState(0.5);
   const [status, setStatus] = useState<Status>("ready");
@@ -125,14 +130,6 @@ export function App(): ReactElement {
   const detectorRef = useRef<DocLayoutDetector | undefined>(undefined);
   const abortRef = useRef<AbortController | undefined>(undefined);
   const loadTimings = detectorRef.current?.loadTimings as DemoLoadTimings | undefined;
-  const cpuFp16Supported =
-    customManifest?.variants.some(
-      (variant) =>
-        variant.precision === "fp16" &&
-        variant.backendCompatibility.includes("wasm") &&
-        variant.validation.included &&
-        variant.validation.pass
-    ) ?? false;
 
   const redraw = useCallback(() => {
     drawResult(canvasRef.current!, imageRef.current, result, overlay);
@@ -165,16 +162,17 @@ export function App(): ReactElement {
       onImage(next);
       setSelectedSample(sample);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
+      setError(formatRuntimeError(caught));
       setStatus("error");
     }
   };
 
-  const onBackend = (next: Backend): void => {
+  const onBackend = (next: BackendPreference): void => {
+    const nextPrecision = precisionForBackend(next, precision, customManifest);
     setBackend(next);
-    if (next === "wasm" && precision === "fp16" && !cpuFp16Supported) {
-      setPrecision("fp32");
-      setNotice(copy.cpuFp16Unsupported);
+    if (nextPrecision !== precision) {
+      setPrecision(nextPrecision);
+      setNotice(next === "webgpu" ? copy.gpuFp32Unsupported : copy.cpuFp16Unsupported);
     }
   };
 
@@ -199,7 +197,7 @@ export function App(): ReactElement {
         ? { data: tinyModelData(), manifest: tinyModelManifest }
         : customManifest;
       const detector = await createDocLayout({
-        allowFallback: true,
+        allowFallback: allowFallbackForSelection(backend, precision),
         backend,
         cache: true,
         ...(model === undefined ? {} : { model }),
@@ -222,8 +220,7 @@ export function App(): ReactElement {
       setStatus("success");
     } catch (caught) {
       if (controller.signal.aborted) return;
-      const message = caught instanceof Error ? caught.message : String(caught);
-      setError(message);
+      setError(formatRuntimeError(caught));
       setStatus("error");
     }
   };
@@ -304,22 +301,30 @@ export function App(): ReactElement {
         <div className="control-group" role="group" aria-label={copy.precision}>
           <span className="control-label">{copy.precision}</span>
           <div className="segmented">
-            {(["auto", "fp16", "fp32"] as const).map((value) => (
-              <button
-                key={value}
-                className={precision === value ? "selected" : ""}
-                aria-pressed={precision === value}
-                disabled={backend === "wasm" && value === "fp16" && !cpuFp16Supported}
-                title={
-                  backend === "wasm" && value === "fp16" && !cpuFp16Supported
-                    ? copy.cpuFp16Unsupported
-                    : undefined
-                }
-                onClick={() => setPrecision(value)}
-              >
-                {copy[value]}
-              </button>
-            ))}
+            {(["auto", "fp16", "fp32"] as const).map((value) => {
+              const unsupported =
+                backend !== "auto" &&
+                value !== "auto" &&
+                !supportsCombination(backend, value, customManifest);
+              return (
+                <button
+                  key={value}
+                  className={precision === value ? "selected" : ""}
+                  aria-pressed={precision === value}
+                  disabled={unsupported}
+                  title={
+                    unsupported
+                      ? backend === "webgpu"
+                        ? copy.gpuFp32Unsupported
+                        : copy.cpuFp16Unsupported
+                      : undefined
+                  }
+                  onClick={() => setPrecision(value)}
+                >
+                  {copy[value]}
+                </button>
+              );
+            })}
           </div>
         </div>
         <label className="threshold-control">
@@ -595,6 +600,7 @@ export function App(): ReactElement {
                     <small>
                       {fallback.code} · {fallback.stage}
                     </small>
+                    <small>{formatFallbackCause(fallback)}</small>
                   </div>
                 ))}
               </section>
