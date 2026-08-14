@@ -14,7 +14,7 @@
     "format:check": "prettier --check .",
     "lint": "pnpm -r --if-present lint",
     "model:test": "python -m pytest tools/model-pipeline",
-    "release:test": "node --test scripts/verify-release.test.mjs",
+    "release:test": "node --test scripts/verify-release.test.mjs scripts/dependency-security.test.mjs",
     "test": "pnpm -r --if-present test",
     "test:browser": "playwright test",
     "typecheck": "pnpm -r --if-present typecheck",
