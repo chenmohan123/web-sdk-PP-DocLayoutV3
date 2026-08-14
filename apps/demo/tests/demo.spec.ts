@@ -44,8 +44,12 @@ test("keeps manual choices strict and uses only validated default pairs", async 
   await page.goto("/?fixture=1");
   const behavior = await page.evaluate(
     async ({ preferencesUrl, messagesUrl }) => {
-      const preferences = await import(preferencesUrl);
-      const messages = await import(messagesUrl);
+      const preferences = (await import(
+        preferencesUrl
+      )) as unknown as typeof import("../src/execution-preferences");
+      const messages = (await import(
+        messagesUrl
+      )) as unknown as typeof import("../src/runtime-messages");
       return {
         autoFallback: preferences.allowFallbackForSelection("auto", "auto"),
         backendFallback: preferences.allowFallbackForSelection("webgpu", "auto"),
@@ -382,6 +386,21 @@ test("stacks the result workflow on a narrow viewport without horizontal overflo
   await expect(page.getByTestId("controls")).toBeVisible();
   await expect(page.getByTestId("result-panel")).toBeVisible();
   await expect(page.getByTestId("details-panel")).toBeVisible();
+
+  const fallbackCause = await page.evaluate((cause) => {
+    const slot = document.querySelector<HTMLElement>('[data-testid="fallback-slot"]');
+    if (slot === null) throw new Error("Fallback slot is missing");
+    slot.innerHTML = `<section class="detail-section"><div class="fallback-row"><small>${cause}</small></div></section>`;
+    const element = slot.querySelector<HTMLElement>(".fallback-row small");
+    if (element === null) throw new Error("Fallback cause is missing");
+    return {
+      clientWidth: element.clientWidth,
+      overflowWrap: getComputedStyle(element).overflowWrap,
+      scrollWidth: element.scrollWidth
+    };
+  }, "adapterallocationfailed".repeat(30));
+  expect(fallbackCause.scrollWidth).toBeLessThanOrEqual(fallbackCause.clientWidth);
+  expect(fallbackCause.overflowWrap).toBe("anywhere");
 });
 
 for (const viewport of [
