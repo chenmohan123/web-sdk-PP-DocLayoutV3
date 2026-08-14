@@ -2,7 +2,7 @@
 
 [English](README.en.md)
 
-在浏览器中运行 PP-DocLayoutV3 的 TypeScript SDK，基于 ONNX Runtime Web。SDK 默认加载版本化模型清单，优先选择 WebGPU 和 FP16；能力不足或会话创建失败时，可自动回退到 WebGPU FP32 或 WASM FP32。
+在浏览器中运行 PP-DocLayoutV3 的 TypeScript SDK，基于 ONNX Runtime Web。SDK 默认加载版本化模型清单，优先选择 WebGPU 和 FP16；能力不足或会话创建失败时，全自动模式可回退到 WASM/CPU 和 FP32。
 
 > 当前支持 PC、移动端浏览器、微信公众号 H5 和微信小程序 `web-view` 页面。不支持微信小程序原生推理。
 
@@ -38,9 +38,9 @@ try {
 
 `backend` 可设为 `auto`、`webgpu`、`wasm`；`precision` 可设为 `auto`、`fp16`、`fp32`。全自动选择时 `allowFallback` 默认为 `true`；显式指定后端或精度时默认为 `false`，需要跨有效候选回退可主动设为 `true`。用户可传清单 URL、清单对象，或内存中的 `{ manifest, data }`；自定义模型必须遵循相同输入、输出和后处理契约。
 
-默认模型的支持矩阵为：WebGPU 支持 FP16 和 FP32，CPU/WASM 仅支持 FP32。使用默认模型时，SDK 会以 `CAPABILITY_UNSUPPORTED` 拒绝显式的 `backend: "wasm", precision: "fp16"` 组合；`allowFallback` 不会覆盖清单中不存在的后端/精度组合。在线 Demo 选择 CPU 时会禁用 FP16；若先选 FP16 再切换 CPU，会自动改为 FP32 并显示提示。自定义清单若包含已验证的 WASM FP16 变体，SDK 和 Demo 仍允许该组合。
+默认模型的支持矩阵为：WebGPU 仅支持 FP16，CPU/WASM 仅支持 FP32。使用默认模型时，SDK 会以 `CAPABILITY_UNSUPPORTED` 拒绝清单中不存在的显式组合；`allowFallback` 只会尝试清单中的有效候选。在线 Demo 仅在“自动后端 + 自动精度”时允许运行时回退；手动选择任一后端或精度后会严格执行，GPU 模式禁用 FP32，CPU 模式禁用 FP16，切换后端时若当前精度无效会改选已验证精度并显示提示。自定义清单若包含已通过验证的 WebGPU FP32 或 WASM FP16 变体，SDK 和 Demo 仍允许对应组合。
 
-默认模型：FP16 为 74,279,796 字节，仅用于 WebGPU；FP32 为 143,216,104 字节，支持 WebGPU 与 WASM。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。
+默认模型：FP16 为 74,279,796 字节，用于 WebGPU；FP32 为 143,216,104 字节，用于 WASM/CPU。FP32 已通过数值对齐与浏览器 WASM 验证，但尚未记录物理 WebGPU FP32 验证。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。
 
 ## 部署与隐私
 

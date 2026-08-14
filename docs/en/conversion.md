@@ -16,4 +16,4 @@ python -m ppdoclayout.build_manifest
 
 Use each module's `--help` for exact local model paths and arguments. Validation reports bind source and ONNX SHA-256 values, opset, tensor names/shapes, detection matching, and browser runtime evidence. Only accepted variants may enter the manifest.
 
-FP32 acceptance covers seven licensed fixtures: at threshold 0.5, detection counts, label sequences, and reading order all match. FP16 passed the same fixture set and real WebGPU execution. The INT8 candidate failed detection matching and is not distributed.
+FP32 acceptance covers seven licensed fixtures: at threshold 0.5, detection counts, label sequences, and reading order all match; browser WASM execution also passed. FP16 passed the same fixture set and real WebGPU execution. No physical WebGPU FP32 validation has been recorded, so the default manifest limits FP32 to WASM. The INT8 candidate failed detection matching and is not distributed.

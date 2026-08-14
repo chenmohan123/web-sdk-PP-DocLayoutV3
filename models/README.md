@@ -6,12 +6,12 @@
 
 ### 1.0.0 变体
 
-| 文件              | 精度                    | 兼容后端     |    字节数 | SHA-256                                                            | 状态                                                        |
-| ----------------- | ----------------------- | ------------ | --------: | ------------------------------------------------------------------ | ----------------------------------------------------------- |
-| `model-fp16.onnx` | FP16（图边界保持 FP32） | WebGPU       |  74279796 | `463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2` | CPU 精度验收和真实浏览器 WebGPU 验证通过，已纳入 1.0.0 清单 |
-| `model-fp32.onnx` | FP32                    | WebGPU、WASM | 143216104 | `fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b` | 官方实现对齐验证通过，已纳入 1.0.0 清单                     |
+| 文件              | 精度                    | 兼容后端 |    字节数 | SHA-256                                                            | 状态                                                        |
+| ----------------- | ----------------------- | -------- | --------: | ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `model-fp16.onnx` | FP16（图边界保持 FP32） | WebGPU   |  74279796 | `463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2` | CPU 精度验收和真实浏览器 WebGPU 验证通过，已纳入 1.0.0 清单 |
+| `model-fp32.onnx` | FP32                    | WASM     | 143216104 | `fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b` | 官方实现对齐和浏览器 WASM 验证通过，已纳入 1.0.0 清单       |
 
-INT8 候选没有通过精度验收，浏览器 WASM 验证因此未执行；它不发布，也不会写入默认清单。FP16 是已通过验收的首选变体，FP32 是兼容性回退。
+INT8 候选没有通过精度验收，浏览器 WASM 验证因此未执行；它不发布，也不会写入默认清单。FP16 是 WebGPU 的已验证变体，FP32 是 WASM/CPU 的已验证变体。FP32 尚未记录物理 WebGPU 验证，因此默认清单不声明 WebGPU FP32 兼容性。
 
 固定版本下载前缀：
 
@@ -36,7 +36,7 @@ Set-Location tools/model-pipeline
 
 ## English
 
-This directory contains versioned PP-DocLayoutV3 ONNX artifacts and a generated manifest. The version 1.0.0 manifest includes the validated FP16 WebGPU variant and the validated FP32 WebGPU/WASM fallback. The rejected INT8 candidate is not distributed and is absent from the default manifest.
+This directory contains versioned PP-DocLayoutV3 ONNX artifacts and a generated manifest. The version 1.0.0 manifest includes the validated FP16 WebGPU variant and the validated FP32 WASM/CPU fallback. No physical WebGPU FP32 validation has been recorded, so the default manifest does not advertise that pair. The rejected INT8 candidate is not distributed and is absent from the default manifest.
 
 The ONNX files are available through Git LFS and are intended for publication at the immutable `v1.0.0-models` GitHub Release URLs above. Regenerate `manifest.json` with the command above; the generator binds report claims to the actual ONNX size, SHA-256, graph contract, and opset. Planned SDK support for custom fine-tuned manifests will require the same explicit runtime contract.
 

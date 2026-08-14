@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Corrected the validated default backend matrix to WebGPU FP16 and WASM FP32, made manual Demo selections strict, and exposed detailed runtime fallback causes.
+
 ## 1.0.3
 
 - Fixed explicit backend selection so CPU/WASM requests no longer fall back to WebGPU, and reject unsupported explicit CPU/WASM + FP16 combinations.

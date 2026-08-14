@@ -24,4 +24,22 @@ describe("documentation contract", () => {
     assert.match(englishReadme, /The default FP16 model/);
     assert.doesNotMatch(englishReadme, /The default 1\.0\.0 FP16 model/);
   });
+
+  it("documents only the validated default backend and precision pairs", () => {
+    const rootReadme = readFileSync(new URL("README.md", repositoryRoot), "utf8");
+    const packageReadme = readFileSync(new URL("packages/sdk/README.md", repositoryRoot), "utf8");
+    const modelReadme = readFileSync(new URL("models/README.md", repositoryRoot), "utf8");
+    const englishModels = readFileSync(new URL("docs/en/models.md", repositoryRoot), "utf8");
+    const chineseModels = readFileSync(new URL("docs/zh-CN/models.md", repositoryRoot), "utf8");
+
+    assert.match(rootReadme, /WebGPU 仅支持 FP16.*CPU\/WASM 仅支持 FP32/s);
+    assert.match(packageReadme, /FP16 模型用于 WebGPU；FP32 模型用于 WASM\/CPU/);
+    assert.match(
+      packageReadme,
+      /The FP16 model targets WebGPU\. The FP32 model targets WASM\/CPU\./
+    );
+    assert.match(modelReadme, /FP32\s+\| WASM/);
+    assert.match(englishModels, /FP32\s+\| 143,216,104 bytes \| WASM/);
+    assert.match(chineseModels, /FP32 \| 143,216,104 字节 \| WASM/);
+  });
 });
