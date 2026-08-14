@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -197,19 +198,35 @@ def build_variant_report(
     model_path: Path,
     fp32_path: Path,
     fp16_path: Path,
-    int8_path: Path,
+    accepted_variant_report_path: Path,
     fixtures_lock: Path,
     browser_evidence: dict[str, Any],
 ) -> dict[str, Any]:
+    accepted_report = json.loads(
+        accepted_variant_report_path.read_text(encoding="utf-8")
+    )
+    if accepted_report.get("schemaVersion") != 1:
+        raise ValueError("Unsupported accepted variant report schema")
+    if (
+        accepted_report.get("thresholds", {}).get("int8")
+        != VARIANT_THRESHOLDS["int8"]
+    ):
+        raise ValueError("Accepted INT8 thresholds do not match current thresholds")
+    accepted_int8 = accepted_report.get("variants", {}).get("int8")
+    if not isinstance(accepted_int8, dict):
+        raise ValueError("Accepted INT8 validation evidence is missing")
+    if (
+        accepted_int8.get("pass") is not False
+        or accepted_int8.get("included") is not False
+    ):
+        raise ValueError("Accepted INT8 evidence must remain rejected and excluded")
+    int8 = deepcopy(accepted_int8)
+
     fp16 = evaluate_variant(
         model_path, fp16_path, fixtures_lock, VARIANT_THRESHOLDS["fp16"]["iou"]
     )
-    int8 = evaluate_variant(
-        model_path, int8_path, fixtures_lock, VARIANT_THRESHOLDS["int8"]["iou"]
-    )
     fp32_bytes = fp32_path.stat().st_size
     fp16.update(_file_metadata(fp16_path, fp32_bytes))
-    int8.update(_file_metadata(int8_path, fp32_bytes))
     fp16["blockedOps"] = DEFAULT_BLOCKED_OPS
     import onnx
 
@@ -238,7 +255,6 @@ def build_variant_report(
         }
     ]
     fp16["browser"] = {"webgpu": browser_evidence.get("fp16Webgpu", {"status": "pending"})}
-    int8["browser"] = {"wasm": browser_evidence.get("int8Wasm", {"status": "pending"})}
     fp16_browser_errors = _browser_evidence_errors(
         fp16["browser"]["webgpu"], fp16_path, "fp16"
     )
@@ -246,15 +262,6 @@ def build_variant_report(
     fp16["pass"] = _passes(fp16, "fp16") and not fp16_browser_errors
     fp16["included"] = fp16["pass"]
     fp16["cpu"]["acceptanceStatus"] = "passed" if _passes(fp16, "fp16") else "failed"
-
-    int8_browser_errors = _browser_evidence_errors(
-        int8["browser"]["wasm"], int8_path, "int8"
-    )
-    int8["browser"]["wasm"]["validationErrors"] = int8_browser_errors
-    int8["pass"] = _passes(int8, "int8") and not int8_browser_errors
-    int8["included"] = int8["pass"]
-    int8["cpu"]["acceptanceStatus"] = "passed" if _passes(int8, "int8") else "failed"
-    int8["exclusionReasons"] = [] if int8["pass"] else _exclusion_reasons(int8, "int8")
 
     return {
         "schemaVersion": 1,
@@ -375,7 +382,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", required=True, type=Path)
     parser.add_argument("--fp32", required=True, type=Path)
     parser.add_argument("--fp16", required=True, type=Path)
-    parser.add_argument("--int8", required=True, type=Path)
+    parser.add_argument("--accepted-variant-report", required=True, type=Path)
     parser.add_argument("--fixtures-lock", required=True, type=Path)
     parser.add_argument("--browser-evidence", type=Path)
     parser.add_argument("--output", required=True, type=Path)
@@ -393,7 +400,7 @@ def main() -> None:
         args.model.resolve(),
         args.fp32.resolve(),
         args.fp16.resolve(),
-        args.int8.resolve(),
+        args.accepted_variant_report.resolve(),
         args.fixtures_lock.resolve(),
         evidence,
     )

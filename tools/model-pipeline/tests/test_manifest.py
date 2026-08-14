@@ -13,11 +13,14 @@ from ppdoclayout.build_manifest import build_manifest, canonical_json
 
 ROOT = Path(__file__).parents[3]
 PIPELINE_DIR = ROOT / "tools" / "model-pipeline"
-MODEL_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.0"
+MODEL_VERSION = "1.0.1"
+RELEASE_TAG = "v1.0.1-models"
+MODEL_DIR = ROOT / "models" / "pp-doclayoutv3" / MODEL_VERSION
 MANIFEST_PATH = MODEL_DIR / "manifest.json"
 CONTRACT_PATH = PIPELINE_DIR / "artifacts" / "model-contract.json"
-FP32_REPORT_PATH = PIPELINE_DIR / "reports" / "fp32-validation.json"
-VARIANT_REPORT_PATH = PIPELINE_DIR / "reports" / "variant-validation.json"
+FP32_REPORT_PATH = PIPELINE_DIR / "reports" / MODEL_VERSION / "fp32-validation.json"
+VARIANT_REPORT_PATH = PIPELINE_DIR / "reports" / MODEL_VERSION / "variant-validation.json"
+BROWSER_REPORT_PATH = PIPELINE_DIR / "reports" / MODEL_VERSION / "browser-evidence.json"
 EXPECTED_OUTPUTS = ["logits", "pred_boxes", "order_logits", "out_masks"]
 EXPECTED_VARIANTS = {
     "fp16": {
@@ -25,12 +28,19 @@ EXPECTED_VARIANTS = {
         "sha256": "463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2",
     },
     "fp32": {
-        "bytes": 143216104,
-        "sha256": "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b",
+        "bytes": 142574928,
+        "sha256": "476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269",
     },
 }
 SOURCE_SHA256 = "5ea422c6cc5fe759a47e1357c35639b58173508e025a3131cbe4b6ac59e2b85e"
+HISTORICAL_FP32_SHA256 = (
+    "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b"
+)
 RELEASE_BASE = (
+    "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
+    f"releases/download/{RELEASE_TAG}/"
+)
+HISTORICAL_RELEASE_BASE = (
     "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
     "releases/download/v1.0.0-models/"
 )
@@ -53,12 +63,16 @@ def build_from_paths(
     contract_path: Path = CONTRACT_PATH,
     fp32_report_path: Path = FP32_REPORT_PATH,
     variant_report_path: Path = VARIANT_REPORT_PATH,
+    browser_report_path: Path = BROWSER_REPORT_PATH,
 ) -> dict:
     return build_manifest(
         contract_path=contract_path,
         fp32_report_path=fp32_report_path,
         variant_report_path=variant_report_path,
+        browser_report_path=browser_report_path,
         model_dir=MODEL_DIR,
+        model_version=MODEL_VERSION,
+        release_tag=RELEASE_TAG,
     )
 
 
@@ -67,7 +81,7 @@ def test_manifest_has_stable_browser_runtime_contract() -> None:
 
     assert manifest["schemaVersion"] == 1
     assert manifest["model"]["id"] == "pp-doclayoutv3"
-    assert manifest["model"]["version"] == "1.0.0"
+    assert manifest["model"]["version"] == MODEL_VERSION
     assert manifest["minSdkVersion"] == "1.0.0"
     assert len(manifest["labels"]) == 25
     assert manifest["input"] == {
@@ -157,18 +171,38 @@ def test_rejected_int8_is_not_publishable() -> None:
     assert "int8" not in {variant["id"] for variant in manifest["variants"]}
 
 
+def test_fp32_requires_strict_wasm_and_webgpu_evidence(tmp_path: Path) -> None:
+    evidence = json.loads(BROWSER_REPORT_PATH.read_text(encoding="utf-8"))
+    evidence["fp32Webgpu"]["fallbacks"] = [{"provider": "wasm"}]
+    path = tmp_path / "browser-evidence.json"
+    path.write_text(json.dumps(evidence), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="fallback"):
+        build_from_paths(browser_report_path=path)
+
+
+def test_manifest_advertises_validated_fp32_for_both_backends() -> None:
+    manifest = build_from_paths()
+    fp32 = next(item for item in manifest["variants"] if item["id"] == "fp32")
+
+    assert manifest["model"]["version"] == MODEL_VERSION
+    assert manifest["variantPriority"] == ["fp16", "fp32"]
+    assert fp32["backendCompatibility"] == ["wasm", "webgpu"]
+    assert fp32["url"].endswith(f"/{RELEASE_TAG}/model-fp32.onnx")
+
+
 def test_model_readme_documents_distribution_and_reproducibility() -> None:
     readme = (ROOT / "models" / "README.md").read_text(encoding="utf-8")
 
     assert readme.startswith("# 模型文件")
     assert "Model files" in readme
     assert "143216104" in readme
-    assert EXPECTED_VARIANTS["fp32"]["sha256"] in readme
+    assert HISTORICAL_FP32_SHA256 in readme
     assert "74279796" in readme
     assert EXPECTED_VARIANTS["fp16"]["sha256"] in readme
     assert "INT8" in readme and "不发布" in readme
     assert "python.exe -m ppdoclayout.build_manifest" in readme
-    assert RELEASE_BASE in readme
+    assert HISTORICAL_RELEASE_BASE in readme
     assert "latest" in readme
     assert "自定义微调模型" in readme
     assert "Apache-2.0" in readme
