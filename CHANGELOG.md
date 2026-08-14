@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.0.4
+
 - Corrected the validated default backend matrix to WebGPU FP16 and WASM FP32, made manual Demo selections strict, and exposed detailed runtime fallback causes.
 
 ## 1.0.3
