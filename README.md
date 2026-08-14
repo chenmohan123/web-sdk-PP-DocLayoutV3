@@ -36,7 +36,9 @@ try {
 
 ## 手动选择与自定义模型
 
-`backend` 可设为 `auto`、`webgpu`、`wasm`；`precision` 可设为 `auto`、`fp16`、`fp32`。`allowFallback` 默认为 `true`，严格模式可设为 `false`。用户可传清单 URL、清单对象，或内存中的 `{ manifest, data }`；自定义模型必须遵循相同输入、输出和后处理契约。
+`backend` 可设为 `auto`、`webgpu`、`wasm`；`precision` 可设为 `auto`、`fp16`、`fp32`。全自动选择时 `allowFallback` 默认为 `true`；显式指定后端或精度时默认为 `false`，需要跨有效候选回退可主动设为 `true`。用户可传清单 URL、清单对象，或内存中的 `{ manifest, data }`；自定义模型必须遵循相同输入、输出和后处理契约。
+
+默认模型的支持矩阵为：WebGPU 支持 FP16 和 FP32，CPU/WASM 仅支持 FP32。使用默认模型时，SDK 会以 `CAPABILITY_UNSUPPORTED` 拒绝显式的 `backend: "wasm", precision: "fp16"` 组合；`allowFallback` 不会覆盖清单中不存在的后端/精度组合。在线 Demo 选择 CPU 时会禁用 FP16；若先选 FP16 再切换 CPU，会自动改为 FP32 并显示提示。自定义清单若包含已验证的 WASM FP16 变体，SDK 和 Demo 仍允许该组合。
 
 默认模型：FP16 为 74,279,796 字节，仅用于 WebGPU；FP32 为 143,216,104 字节，支持 WebGPU 与 WASM。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。
 

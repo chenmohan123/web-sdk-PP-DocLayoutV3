@@ -35,6 +35,7 @@ await detector.dispose();
 - `backend: "auto"` 优先使用 WebGPU，不可用时回退到 WASM（CPU）。也可手动指定 `"webgpu"` 或 `"wasm"`。
 - `precision: "auto"` 在兼容的 WebGPU 环境优先 FP16，否则使用 FP32。也可手动指定 `"fp16"` 或 `"fp32"`。
 - FP16 模型用于 WebGPU；FP32 模型支持 WASM 与 WebGPU。
+- CPU 即 WASM 后端，默认模型仅支持 CPU/WASM + FP32。使用默认模型时，显式请求 CPU/WASM + FP16 会抛出 `CAPABILITY_UNSUPPORTED`，不会跨精度或后端静默回退；包含已验证 WASM FP16 变体的自定义清单仍受支持。
 
 ## 自定义模型
 
@@ -48,7 +49,7 @@ const detector = await createDocLayout({
 
 ## 资源管理
 
-模型加载进度通过 `onProgress` 回调提供。可捕获结构化的 `DocLayoutError` 并读取 `code` 与 `details`。SDK 支持模型缓存；可以通过 detector 的缓存方法查询或清理。使用结束后必须调用 `dispose()` 释放 Worker、ONNX Runtime session 与 GPU/CPU 资源。
+模型加载进度通过 `onProgress` 回调提供。`phase: "model"`、`status: "progress"` 事件中的 `loadedBytes` 和可选的 `totalBytes` 仅表示网络下载字节，不代表完整初始化百分比，也不包含完整性校验或 Session 创建。响应没有 `Content-Length` 时 `totalBytes` 可能缺失，缓存、内存或自定义二进制模型也可能不产生字节进度。可捕获结构化的 `DocLayoutError` 并读取 `code` 与 `details`。SDK 支持模型缓存；可以通过 detector 的缓存方法查询或清理。使用结束后必须调用 `dispose()` 释放 Worker、ONNX Runtime session 与 GPU/CPU 资源。
 
 ## 微信环境
 
@@ -96,6 +97,7 @@ Detailed initialization timings are available through `detector.loadTimings`. `t
 - `backend: "auto"` prefers WebGPU and falls back to WASM (CPU). Use `"webgpu"` or `"wasm"` for an explicit choice.
 - `precision: "auto"` prefers FP16 on compatible WebGPU devices and otherwise uses FP32. Use `"fp16"` or `"fp32"` for an explicit choice.
 - The FP16 model targets WebGPU. The FP32 model supports WASM and WebGPU.
+- CPU uses the WASM backend, and the default model supports CPU/WASM with FP32 only. With the default model, explicit CPU/WASM + FP16 requests throw `CAPABILITY_UNSUPPORTED` instead of silently switching precision or backend; custom manifests with a validated WASM FP16 variant remain supported.
 
 ### Custom models
 
@@ -109,7 +111,7 @@ const detector = await createDocLayout({
 
 ### Resource management
 
-Use `onProgress` for model loading progress. Structured failures are exposed as `DocLayoutError` with `code` and `details`. Model cache entries can be listed or cleared through the detector. Always call `dispose()` when finished to release the Worker, ONNX Runtime session, and GPU/CPU resources.
+Use `onProgress` for model loading progress. On `phase: "model"`, `status: "progress"` events, `loadedBytes` and the optional `totalBytes` describe network-transfer bytes only; they are not an overall initialization percentage and exclude integrity verification and Session creation. `totalBytes` can be absent without a `Content-Length` response header, while cache, memory, or custom binary model sources may emit no byte progress. Structured failures are exposed as `DocLayoutError` with `code` and `details`. Model cache entries can be listed or cleared through the detector. Always call `dispose()` when finished to release the Worker, ONNX Runtime session, and GPU/CPU resources.
 
 ### WeChat environments
 

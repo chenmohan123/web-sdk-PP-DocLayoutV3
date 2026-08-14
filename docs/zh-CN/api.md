@@ -10,12 +10,16 @@
 
 - `backend`: `"auto" | "webgpu" | "wasm"`
 - `precision`: `"auto" | "fp16" | "fp32" | "int8"`；默认清单不包含 INT8
-- `allowFallback`: 会话失败时是否尝试下一候选，默认 `true`
+- `allowFallback`: 会话失败时是否尝试下一有效候选；全自动选择时默认 `true`，显式指定后端或精度时默认 `false`
 - `model`: 清单 URL、清单对象或 `{ manifest, data }`
 - `cache`: 是否使用模型缓存
 - `signal`: 取消加载
 - `onProgress`: 接收 capabilities、manifest、model、session、fallback、ready 等阶段
 - `ort.wasm`: WASM 路径与线程选项
+
+当 `phase: "model"` 且 `status: "progress"` 时，事件中的 `loadedBytes` 和可选的 `totalBytes` 仅表示模型网络下载字节，不是完整初始化进度；它们不包含完整性校验或 ONNX Runtime Session 创建。响应没有 `Content-Length` 时 `totalBytes` 可能缺失，缓存、内存或自定义二进制模型也可能不产生字节进度。
+
+默认模型中，`webgpu` 支持 `fp16` 和 `fp32`，`wasm`（CPU）仅支持 `fp32`。显式组合 `backend: "wasm", precision: "fp16"` 会抛出 `CAPABILITY_UNSUPPORTED`；`allowFallback` 只处理有效候选的运行时失败，不会改写无效组合。
 
 ```ts
 import { createDocLayout } from "web-sdk-pp-doclayoutv3";

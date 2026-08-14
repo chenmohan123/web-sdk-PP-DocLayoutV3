@@ -110,6 +110,45 @@ describe("selectExecutionPlan", () => {
     expect(plan.selected.reason).toMatch(/fallback/i);
   });
 
+  it("rejects FP16 when CPU/WASM is explicitly selected", () => {
+    let caught: unknown;
+    try {
+      selectExecutionPlan(
+        { backend: "wasm", precision: "fp16", allowFallback: true },
+        capabilities(),
+        manifest.variants
+      );
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(DocLayoutError);
+    expect(caught).toMatchObject({
+      code: "CAPABILITY_UNSUPPORTED",
+      details: { allowFallback: true, backend: "wasm", precision: "fp16" }
+    });
+  });
+
+  it("allows a validated custom FP16 variant on CPU/WASM", () => {
+    const wasmFp16: ModelVariant = {
+      ...manifest.variants.find((variant) => variant.id === "fp16")!,
+      backendCompatibility: ["wasm"],
+      id: "wasm-fp16"
+    };
+
+    const plan = selectExecutionPlan(
+      { backend: "wasm", precision: "fp16", allowFallback: true },
+      capabilities(),
+      [...manifest.variants, wasmFp16]
+    );
+
+    expect(plan.selected).toMatchObject({
+      precision: "fp16",
+      provider: "wasm",
+      variantId: "wasm-fp16"
+    });
+  });
+
   it("selects WASM INT8 before WASM FP32 when WebGPU is unavailable", () => {
     const plan = selectExecutionPlan({}, capabilities({ webgpu: false, webgpuFp16: false }), [
       ...manifest.variants,

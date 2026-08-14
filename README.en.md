@@ -36,7 +36,9 @@ After initialization, `detector.loadTimings` exposes the timing breakdown. `tota
 
 ## Manual selection and custom models
 
-Set `backend` to `auto`, `webgpu`, or `wasm`, and `precision` to `auto`, `fp16`, or `fp32`. `allowFallback` defaults to `true`; set it to `false` for strict selection. A model can be a manifest URL, a manifest object, or an in-memory `{ manifest, data }` pair. Custom models must preserve the documented tensor and postprocessing contract.
+Set `backend` to `auto`, `webgpu`, or `wasm`, and `precision` to `auto`, `fp16`, or `fp32`. `allowFallback` defaults to `true` for fully automatic selection and `false` when a backend or precision is explicit; set it to `true` to permit fallback across valid candidates. A model can be a manifest URL, a manifest object, or an in-memory `{ manifest, data }` pair. Custom models must preserve the documented tensor and postprocessing contract.
+
+The default support matrix is WebGPU with FP16 or FP32, and CPU/WASM with FP32 only. With the default model, the SDK rejects an explicit `backend: "wasm", precision: "fp16"` combination with `CAPABILITY_UNSUPPORTED`; `allowFallback` does not override a backend/precision pair absent from the manifest. The live Demo disables FP16 while CPU is selected. Switching from FP16 to CPU selects FP32 and shows a notice. A custom manifest with a validated WASM FP16 variant remains supported by both the SDK and Demo.
 
 The default FP16 model is 74,279,796 bytes and targets WebGPU. The FP32 model is 143,216,104 bytes and supports WebGPU and WASM. The upstream PaddlePaddle `PP-DocLayoutV3_safetensors` model is Apache-2.0; see [Models](docs/en/models.md) and [Third-Party Notices](THIRD_PARTY_NOTICES.md).
 
