@@ -20,7 +20,6 @@ from ppdoclayout.postprocess_reference import (
     OUTPUT_NAMES,
     as_transformers_output,
     compare_postprocessed,
-    tensor_metrics,
 )
 
 
@@ -50,7 +49,10 @@ def sha256_file(path: Path) -> str:
 
 
 def validate_fp32(
-    model_path: Path, onnx_path: Path, fixtures_lock: Path
+    model_path: Path,
+    accepted_onnx_path: Path,
+    onnx_path: Path,
+    fixtures_lock: Path,
 ) -> dict[str, Any]:
     lock = json.loads(fixtures_lock.read_text(encoding="utf-8"))
     fixtures_dir = fixtures_lock.parent / "images"
@@ -62,7 +64,10 @@ def validate_fp32(
     model = AutoModelForObjectDetection.from_pretrained(
         model_path, local_files_only=True
     ).eval()
-    session = ort.InferenceSession(
+    accepted_session = ort.InferenceSession(
+        str(accepted_onnx_path), providers=["CPUExecutionProvider"]
+    )
+    candidate_session = ort.InferenceSession(
         str(onnx_path), providers=["CPUExecutionProvider"]
     )
 
@@ -73,38 +78,85 @@ def validate_fp32(
                 image = opened.convert("RGB")
                 inputs = processor(images=image, return_tensors="pt")
                 official_output = model(**inputs)
-                onnx_values = session.run(
-                    list(OUTPUT_NAMES),
-                    {"pixel_values": inputs["pixel_values"].cpu().numpy()},
+                pixel_values = inputs["pixel_values"].cpu().numpy()
+                accepted_values = accepted_session.run(
+                    list(OUTPUT_NAMES), {"pixel_values": pixel_values}
                 )
-                onnx_outputs = dict(zip(OUTPUT_NAMES, onnx_values))
+                candidate_values = candidate_session.run(
+                    list(OUTPUT_NAMES),
+                    {"pixel_values": pixel_values},
+                )
+                accepted_outputs = dict(zip(OUTPUT_NAMES, accepted_values))
+                candidate_outputs = dict(zip(OUTPUT_NAMES, candidate_values))
                 target_sizes = [image.size[::-1]]
                 official_result = processor.post_process_object_detection(
                     official_output,
                     threshold=THRESHOLD,
                     target_sizes=target_sizes,
                 )[0]
-                onnx_result = processor.post_process_object_detection(
-                    as_transformers_output(onnx_outputs),
+                accepted_result = processor.post_process_object_detection(
+                    as_transformers_output(accepted_outputs),
+                    threshold=THRESHOLD,
+                    target_sizes=target_sizes,
+                )[0]
+                candidate_result = processor.post_process_object_detection(
+                    as_transformers_output(candidate_outputs),
                     threshold=THRESHOLD,
                     target_sizes=target_sizes,
                 )[0]
 
-            comparison = compare_postprocessed(official_result, onnx_result)
-            raw_metrics = {
-                name: tensor_metrics(
-                    getattr(official_output, name).detach().cpu().numpy(),
-                    onnx_outputs[name],
+            comparison = compare_postprocessed(official_result, candidate_result)
+            accepted_comparison = compare_postprocessed(
+                accepted_result, candidate_result
+            )
+            raw_outputs = {
+                name: {
+                    "acceptedSha256": hashlib.sha256(
+                        accepted_value.tobytes()
+                    ).hexdigest(),
+                    "candidateSha256": hashlib.sha256(
+                        candidate_value.tobytes()
+                    ).hexdigest(),
+                    "bitIdentical": bool(
+                        np.array_equal(accepted_value, candidate_value)
+                    ),
+                    "dtype": str(candidate_value.dtype),
+                    "maxAbsoluteDelta": float(
+                        np.max(np.abs(accepted_value - candidate_value))
+                    )
+                    if accepted_value.size
+                    else 0.0,
+                    "shape": list(candidate_value.shape),
+                }
+                for name, accepted_value, candidate_value in zip(
+                    OUTPUT_NAMES, accepted_values, candidate_values, strict=True
                 )
-                for name in OUTPUT_NAMES
             }
             comparison.update(
                 {
+                    "acceptedDetectionCount": accepted_comparison[
+                        "detectionCountOfficial"
+                    ],
+                    "onnxDetectionCount": accepted_comparison[
+                        "detectionCountOnnx"
+                    ],
+                    "acceptedLabelSequenceEqual": accepted_comparison[
+                        "labelSequenceEqual"
+                    ],
+                    "acceptedReadingOrderEqual": accepted_comparison[
+                        "readingOrderEqual"
+                    ],
                     "filename": fixture["filename"],
                     "sha256": fixture["sha256"],
                     "width": fixture["width"],
                     "height": fixture["height"],
-                    "rawOutputs": raw_metrics,
+                    "rawOutputs": {
+                        "allBitIdentical": all(
+                            item["bitIdentical"]
+                            for item in raw_outputs.values()
+                        ),
+                        "outputs": raw_outputs,
+                    },
                 }
             )
             comparison["pass"] = _fixture_passes(comparison)
@@ -115,6 +167,7 @@ def validate_fp32(
         "threshold": THRESHOLD,
         "thresholds": PARITY_THRESHOLDS,
         "sourceHashes": {
+            "acceptedOnnx": sha256_file(accepted_onnx_path),
             "modelSafetensors": sha256_file(model_path / "model.safetensors"),
             "onnx": sha256_file(onnx_path),
         },
@@ -142,7 +195,10 @@ def _verified_fixtures(
 
 def _fixture_passes(report: dict[str, Any]) -> bool:
     return bool(
-        report["labelSequenceEqual"]
+        report["acceptedDetectionCount"] == report["onnxDetectionCount"]
+        and report["acceptedLabelSequenceEqual"]
+        and report["acceptedReadingOrderEqual"]
+        and report["labelSequenceEqual"]
         and report["readingOrderEqual"]
         and not report["unmatchedOfficial"]
         and not report["unmatchedOnnx"]
@@ -178,6 +234,7 @@ def _paddle_status() -> dict[str, str]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate FP32 ONNX parity")
     parser.add_argument("--model", required=True, type=Path)
+    parser.add_argument("--accepted-onnx", required=True, type=Path)
     parser.add_argument("--onnx", required=True, type=Path)
     parser.add_argument("--fixtures-lock", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
@@ -187,7 +244,10 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     report = validate_fp32(
-        args.model.resolve(), args.onnx.resolve(), args.fixtures_lock.resolve()
+        args.model.resolve(),
+        args.accepted_onnx.resolve(),
+        args.onnx.resolve(),
+        args.fixtures_lock.resolve(),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     write_report(args.output, report)
