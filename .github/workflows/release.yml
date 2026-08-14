@@ -40,6 +40,22 @@ jobs:
         working-directory: packages/sdk
         run: npm publish --access public --provenance
       - name: Record published integrity
+        shell: bash
         run: |
-          echo '## npm integrity' >> "$GITHUB_STEP_SUMMARY"
-          npm view web-sdk-pp-doclayoutv3@"${GITHUB_REF_NAME#v}" version dist.integrity --json | tee -a "$GITHUB_STEP_SUMMARY"
+          set -o pipefail
+          package="web-sdk-pp-doclayoutv3@${GITHUB_REF_NAME#v}"
+          for attempt in {1..5}; do
+            if metadata="$(npm view "$package" version dist.integrity --json)"; then
+              {
+                echo '## npm integrity'
+                echo "$metadata"
+              } | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if (( attempt < 5 )); then
+              echo "npm registry has not exposed $package yet; retrying in 3 seconds..." >&2
+              sleep 3
+            fi
+          done
+          echo "Failed to read published integrity for $package after 5 attempts." >&2
+          exit 1
