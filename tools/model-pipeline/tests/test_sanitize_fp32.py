@@ -84,6 +84,7 @@ def test_rejects_missing_positional_initializer(tmp_path: Path) -> None:
     output = tmp_path / "output.onnx"
     model = source_model()
     del model.graph.initializer[0]
+    del model.graph.node[0].input[0]
     write_source(source, model)
 
     with pytest.raises(ValueError, match="exactly"):
@@ -97,6 +98,7 @@ def test_rejects_renamed_positional_initializer(tmp_path: Path) -> None:
     output = tmp_path / "output.onnx"
     model = source_model()
     model.graph.initializer[0].name = "renamed"
+    model.graph.node[0].input[0] = "renamed"
     write_source(source, model)
 
     with pytest.raises(ValueError, match="exactly"):
