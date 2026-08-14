@@ -140,8 +140,7 @@
     },
     {
       "backendCompatibility": [
-        "wasm",
-        "webgpu"
+        "wasm"
       ],
       "bytes": 143216104,
       "filename": "model-fp32.onnx",

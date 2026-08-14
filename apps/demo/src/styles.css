@@ -437,6 +437,7 @@ button {
 .fallback-row small {
   color: #82908c;
   font-size: 11px;
+  overflow-wrap: anywhere;
 }
 .metric-list {
   display: grid;
