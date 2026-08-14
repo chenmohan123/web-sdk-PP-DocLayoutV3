@@ -32,11 +32,7 @@
             "candidateSha256": "e4133d98a74db6ccfe23940501bd0244be713af040a1465124529e0f8281142b",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              25
-            ]
+            "shape": [1, 300, 25]
           },
           "order_logits": {
             "acceptedSha256": "ee1887bf86d95b06a7b2c55fa4c94e02776d7c16130cf6ce4270786cd33c12e5",
@@ -44,11 +40,7 @@
             "candidateSha256": "ee1887bf86d95b06a7b2c55fa4c94e02776d7c16130cf6ce4270786cd33c12e5",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              300
-            ]
+            "shape": [1, 300, 300]
           },
           "out_masks": {
             "acceptedSha256": "494abcc172eccfc3427b7dfca80d906e1a4d019a7af399becc080f8503ed80ef",
@@ -56,12 +48,7 @@
             "candidateSha256": "494abcc172eccfc3427b7dfca80d906e1a4d019a7af399becc080f8503ed80ef",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              200,
-              200
-            ]
+            "shape": [1, 300, 200, 200]
           },
           "pred_boxes": {
             "acceptedSha256": "4f72bfd2294edaf7f1b4141d9f6078b098b92cdf7be72eac947e356051d70d7b",
@@ -69,11 +56,7 @@
             "candidateSha256": "4f72bfd2294edaf7f1b4141d9f6078b098b92cdf7be72eac947e356051d70d7b",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              4
-            ]
+            "shape": [1, 300, 4]
           }
         }
       },
@@ -106,11 +89,7 @@
             "candidateSha256": "5fce7480a5f6ecbe926bbed9b93aade165fedf9de47d39caabe41e2e623e5e55",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              25
-            ]
+            "shape": [1, 300, 25]
           },
           "order_logits": {
             "acceptedSha256": "fe70871e6e847638b70942ddd123ba8a219655e84fa4fbc722f97a963b27ef33",
@@ -118,11 +97,7 @@
             "candidateSha256": "fe70871e6e847638b70942ddd123ba8a219655e84fa4fbc722f97a963b27ef33",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              300
-            ]
+            "shape": [1, 300, 300]
           },
           "out_masks": {
             "acceptedSha256": "c25be644690feb8ae9bb1f218edeb6b569b341134f9667763e5305e3513d9563",
@@ -130,12 +105,7 @@
             "candidateSha256": "c25be644690feb8ae9bb1f218edeb6b569b341134f9667763e5305e3513d9563",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              200,
-              200
-            ]
+            "shape": [1, 300, 200, 200]
           },
           "pred_boxes": {
             "acceptedSha256": "66a9d7e1de1591d1666ff4b55394f4529d99681308bb9583bdb5dc4f32c27e4e",
@@ -143,11 +113,7 @@
             "candidateSha256": "66a9d7e1de1591d1666ff4b55394f4529d99681308bb9583bdb5dc4f32c27e4e",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              4
-            ]
+            "shape": [1, 300, 4]
           }
         }
       },
@@ -180,11 +146,7 @@
             "candidateSha256": "d69d92e4d0066136c71a99a7daa9968629c1668b21fbb357dd6133cffd212104",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              25
-            ]
+            "shape": [1, 300, 25]
           },
           "order_logits": {
             "acceptedSha256": "b05f2433ebf57aab16b1e58769fd13887a37b26b31e3309b34366da151bc8c95",
@@ -192,11 +154,7 @@
             "candidateSha256": "b05f2433ebf57aab16b1e58769fd13887a37b26b31e3309b34366da151bc8c95",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              300
-            ]
+            "shape": [1, 300, 300]
           },
           "out_masks": {
             "acceptedSha256": "8f9a13d537b60255e4f654f0415ef3642874f3deb0ad9d03f448e77a7be2f7eb",
@@ -204,12 +162,7 @@
             "candidateSha256": "8f9a13d537b60255e4f654f0415ef3642874f3deb0ad9d03f448e77a7be2f7eb",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              200,
-              200
-            ]
+            "shape": [1, 300, 200, 200]
           },
           "pred_boxes": {
             "acceptedSha256": "9795d8be3223d62eac914b4588b418177065102e4888c4cbd4e16b2b88b0fca3",
@@ -217,11 +170,7 @@
             "candidateSha256": "9795d8be3223d62eac914b4588b418177065102e4888c4cbd4e16b2b88b0fca3",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              4
-            ]
+            "shape": [1, 300, 4]
           }
         }
       },
@@ -254,11 +203,7 @@
             "candidateSha256": "ff761ba437202de2aabb28bd557bf30f07365e079d8e83e7157a72f890e2779e",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              25
-            ]
+            "shape": [1, 300, 25]
           },
           "order_logits": {
             "acceptedSha256": "9fa299dfa5f12f0425286cfaad7147887c0c184661c3971eb5731fae5c0e2274",
@@ -266,11 +211,7 @@
             "candidateSha256": "9fa299dfa5f12f0425286cfaad7147887c0c184661c3971eb5731fae5c0e2274",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              300
-            ]
+            "shape": [1, 300, 300]
           },
           "out_masks": {
             "acceptedSha256": "18c48f9938beb0c3e527768630148d793f667e195bef16fe6d5f9f16018b5ad6",
@@ -278,12 +219,7 @@
             "candidateSha256": "18c48f9938beb0c3e527768630148d793f667e195bef16fe6d5f9f16018b5ad6",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              200,
-              200
-            ]
+            "shape": [1, 300, 200, 200]
           },
           "pred_boxes": {
             "acceptedSha256": "3592393014e402b2bcaf7f89e07a9020e6d69913705c0095401c62c72a276a2e",
@@ -291,11 +227,7 @@
             "candidateSha256": "3592393014e402b2bcaf7f89e07a9020e6d69913705c0095401c62c72a276a2e",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              4
-            ]
+            "shape": [1, 300, 4]
           }
         }
       },
@@ -328,11 +260,7 @@
             "candidateSha256": "dae5933ceecea367ac8b4c5778e471bd8f372bff91593ec054b8c5e5daba557b",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              25
-            ]
+            "shape": [1, 300, 25]
           },
           "order_logits": {
             "acceptedSha256": "0c600a04387f1f0ac88f279ecdde51d5315fdd105409ff7247b99d3e429dd624",
@@ -340,11 +268,7 @@
             "candidateSha256": "0c600a04387f1f0ac88f279ecdde51d5315fdd105409ff7247b99d3e429dd624",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              300
-            ]
+            "shape": [1, 300, 300]
           },
           "out_masks": {
             "acceptedSha256": "4f166c99f61dfc69e53a0637543b4a5d7faf75f971203c041af059559fa9a71c",
@@ -352,12 +276,7 @@
             "candidateSha256": "4f166c99f61dfc69e53a0637543b4a5d7faf75f971203c041af059559fa9a71c",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              200,
-              200
-            ]
+            "shape": [1, 300, 200, 200]
           },
           "pred_boxes": {
             "acceptedSha256": "32c2ee356e4f4780542ee2ec60373d38429a01f60090f52d6f35cbd5841456f2",
@@ -365,11 +284,7 @@
             "candidateSha256": "32c2ee356e4f4780542ee2ec60373d38429a01f60090f52d6f35cbd5841456f2",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              4
-            ]
+            "shape": [1, 300, 4]
           }
         }
       },
@@ -402,11 +317,7 @@
             "candidateSha256": "a22dc8e94aa4e809480c29aedbeef057e2e7d0a3b694cc63231235a2ae0f17cb",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              25
-            ]
+            "shape": [1, 300, 25]
           },
           "order_logits": {
             "acceptedSha256": "4e4e6af629a74b8d84c3caa465fd5d84590c74c7e1033b2d3317a6c7d9952933",
@@ -414,11 +325,7 @@
             "candidateSha256": "4e4e6af629a74b8d84c3caa465fd5d84590c74c7e1033b2d3317a6c7d9952933",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              300
-            ]
+            "shape": [1, 300, 300]
           },
           "out_masks": {
             "acceptedSha256": "73e2bd39e4ab3363d48106cb7aab38869c20f00dc51e582e24f493e9ee651aae",
@@ -426,12 +333,7 @@
             "candidateSha256": "73e2bd39e4ab3363d48106cb7aab38869c20f00dc51e582e24f493e9ee651aae",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              200,
-              200
-            ]
+            "shape": [1, 300, 200, 200]
           },
           "pred_boxes": {
             "acceptedSha256": "e2a4d30dee1acc953e7637201c11501bb8dea51ed857bc88d93c627a502c9513",
@@ -439,11 +341,7 @@
             "candidateSha256": "e2a4d30dee1acc953e7637201c11501bb8dea51ed857bc88d93c627a502c9513",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              4
-            ]
+            "shape": [1, 300, 4]
           }
         }
       },
@@ -476,11 +374,7 @@
             "candidateSha256": "9292025c692bf595631a317965035be42e574caf7c27f9f5a47b9b140b21ceca",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              25
-            ]
+            "shape": [1, 300, 25]
           },
           "order_logits": {
             "acceptedSha256": "83256b094d74df5e84153923390f1ee9c0b4a53dec38d961ce4578db537b1a6d",
@@ -488,11 +382,7 @@
             "candidateSha256": "83256b094d74df5e84153923390f1ee9c0b4a53dec38d961ce4578db537b1a6d",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              300
-            ]
+            "shape": [1, 300, 300]
           },
           "out_masks": {
             "acceptedSha256": "5bfcfee296f00fb650ae37161d26518a1fbf2c0f1d6bed024b02a663a35e79c8",
@@ -500,12 +390,7 @@
             "candidateSha256": "5bfcfee296f00fb650ae37161d26518a1fbf2c0f1d6bed024b02a663a35e79c8",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              200,
-              200
-            ]
+            "shape": [1, 300, 200, 200]
           },
           "pred_boxes": {
             "acceptedSha256": "8dffcef7a09ae707ec68239245bbcc8708532bac7e5b3bcc5fd269b11be907e5",
@@ -513,11 +398,7 @@
             "candidateSha256": "8dffcef7a09ae707ec68239245bbcc8708532bac7e5b3bcc5fd269b11be907e5",
             "dtype": "float32",
             "maxAbsoluteDelta": 0.0,
-            "shape": [
-              1,
-              300,
-              4
-            ]
+            "shape": [1, 300, 4]
           }
         }
       },

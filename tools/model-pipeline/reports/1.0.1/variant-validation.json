@@ -54,9 +54,7 @@
           }
         }
       ],
-      "blockedOps": [
-        "Resize"
-      ],
+      "blockedOps": ["Resize"],
       "browser": {
         "webgpu": {
           "adapter": {
@@ -112,12 +110,7 @@
           },
           "executionProvider": "webgpu",
           "input": {
-            "dimensions": [
-              1,
-              3,
-              800,
-              800
-            ],
+            "dimensions": [1, 3, 800, 800],
             "name": "pixel_values",
             "type": "float32"
           },
@@ -127,42 +120,25 @@
           "outputs": {
             "logits": {
               "allFinite": true,
-              "dimensions": [
-                1,
-                300,
-                25
-              ],
+              "dimensions": [1, 300, 25],
               "sha256": "2d1c470358fd8162ac3e6025f99658c4727a62e5a80eea1b6199989bebf1337f",
               "type": "float32"
             },
             "order_logits": {
               "allFinite": true,
-              "dimensions": [
-                1,
-                300,
-                300
-              ],
+              "dimensions": [1, 300, 300],
               "sha256": "f039615990d24938fb35c9dfe142be13846caa48002c7c37beed61f37970c4d2",
               "type": "float32"
             },
             "out_masks": {
               "allFinite": true,
-              "dimensions": [
-                1,
-                300,
-                200,
-                200
-              ],
+              "dimensions": [1, 300, 200, 200],
               "sha256": "8e27be8e4b2294a27028b15e7c03679364f1bf2f158e41c5dbe7c67a9be47ad8",
               "type": "float32"
             },
             "pred_boxes": {
               "allFinite": true,
-              "dimensions": [
-                1,
-                300,
-                4
-              ],
+              "dimensions": [1, 300, 4],
               "sha256": "fd8ec5511d6b5f840ec86967a8912aa483873ce43d28e6119ff3692cf79ae9b5",
               "type": "float32"
             }
@@ -260,9 +236,7 @@
         "wasm": {
           "reason": "CPU precision acceptance failed before browser validation",
           "status": "skipped",
-          "validationErrors": [
-            "browser wasm validation did not pass"
-          ]
+          "validationErrors": ["browser wasm validation did not pass"]
         }
       },
       "bytes": 45313310,
