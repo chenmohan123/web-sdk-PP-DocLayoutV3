@@ -74,7 +74,7 @@ describe("release workflow contract", () => {
     });
   });
 
-  test("keeps the 1.0.3 package, runtime, and changelog versions aligned", () => {
+  test("keeps the 1.0.4 package, runtime, and changelog versions aligned", () => {
     const packageMetadata = JSON.parse(
       readFileSync(resolve(repositoryRoot, "packages/sdk/package.json"), "utf8")
     );
@@ -84,9 +84,9 @@ describe("release workflow contract", () => {
     );
     const changelog = readFileSync(resolve(repositoryRoot, "CHANGELOG.md"), "utf8");
 
-    assert.equal(packageMetadata.version, "1.0.3");
-    assert.match(runtime, /CURRENT_SDK_VERSION = "1\.0\.3"/);
-    assert.match(changelog, /^## 1\.0\.3$/m);
+    assert.equal(packageMetadata.version, "1.0.4");
+    assert.match(runtime, /CURRENT_SDK_VERSION = "1\.0\.4"/);
+    assert.match(changelog, /^## 1\.0\.4$/m);
   });
 
   test("recognizes standard list-form GitHub Action steps", () => {
