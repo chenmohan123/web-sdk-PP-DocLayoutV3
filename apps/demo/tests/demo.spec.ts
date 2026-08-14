@@ -106,7 +106,7 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   );
   await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("target", "_blank");
   await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("rel", "noreferrer");
-  await expect(page.getByText("SDK 1.0.2", { exact: true })).toBeVisible();
+  await expect(page.getByText("SDK 1.0.3", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "English", exact: true })).toBeVisible();
   await expect(page.getByRole("group", { name: "运行后端" })).toBeVisible();
   await expect(page.getByRole("group", { name: "模型精度" })).toBeVisible();

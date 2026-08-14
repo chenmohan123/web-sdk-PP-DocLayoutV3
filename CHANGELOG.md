@@ -2,9 +2,14 @@
 
 ## Unreleased
 
-- Prevented explicit CPU/WASM + FP16 selection because the validated FP16 model is WebGPU-only.
-- Updated the Demo to disable FP16 for CPU and explain automatic switching to FP32.
-- Synchronized the backend/precision support matrix across SDK and repository documentation.
+## 1.0.3
+
+- Fixed explicit backend selection so CPU/WASM requests no longer fall back to WebGPU, and reject unsupported explicit CPU/WASM + FP16 combinations.
+- Updated the Demo to disable FP16 for CPU, explain automatic FP32 selection, and show fallback history before long detection result lists.
+- Separated model download progress from model loading and grouped initialization and per-detection timings for clearer performance reporting.
+- Reorganized the Demo into a denser responsive layout with four sample documents below the image result and a direct GitHub repository link.
+- Synchronized the backend/precision support matrix and timing guidance across the SDK README and bilingual repository documentation.
+- Updated the development esbuild resolution to 0.28.2 and added a regression check for GHSA-g7r4-m6w7-qqqr.
 
 ## 1.0.2
 
