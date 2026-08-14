@@ -8,14 +8,31 @@ import onnx
 import pytest
 from onnx import TensorProto, helper, numpy_helper
 
-from ppdoclayout.sanitize_fp32 import sanitize_webgpu_fp32
+from ppdoclayout.sanitize_fp32 import (
+    POSITIONAL_NAMES,
+    _double_names,
+    sanitize_webgpu_fp32,
+)
 
 
-POSITIONAL_NAMES = ("sin", "cos", "sin_1", "cos_1")
+ROOT = Path(__file__).parents[3]
+SOURCE_FP32 = ROOT / "models" / "pp-doclayoutv3" / "1.0.0" / "model-fp32.onnx"
 
 
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def initializer_hashes(
+    model: onnx.ModelProto, excluded: set[str]
+) -> dict[str, str]:
+    return {
+        value.name: hashlib.sha256(
+            value.SerializeToString(deterministic=True)
+        ).hexdigest()
+        for value in model.graph.initializer
+        if value.name not in excluded
+    }
 
 
 def source_model(*, extra_double: bool = False, cast_to: int = TensorProto.FLOAT) -> onnx.ModelProto:
@@ -207,3 +224,25 @@ def test_is_byte_reproducible(tmp_path: Path) -> None:
     sanitize_webgpu_fp32(source, second)
 
     assert first.read_bytes() == second.read_bytes()
+
+
+def test_real_model_preserves_contract_and_learned_parameters(tmp_path: Path) -> None:
+    output = tmp_path / "model-fp32.onnx"
+    sanitize_webgpu_fp32(SOURCE_FP32, output)
+    source = onnx.load(SOURCE_FP32, load_external_data=False)
+    candidate = onnx.load(output, load_external_data=False)
+
+    assert [(item.domain, item.version) for item in candidate.opset_import] == [
+        ("", 18)
+    ]
+    assert [value.SerializeToString() for value in candidate.graph.input] == [
+        value.SerializeToString() for value in source.graph.input
+    ]
+    assert [value.SerializeToString() for value in candidate.graph.output] == [
+        value.SerializeToString() for value in source.graph.output
+    ]
+    assert initializer_hashes(candidate, set(POSITIONAL_NAMES)) == initializer_hashes(
+        source, set(POSITIONAL_NAMES)
+    )
+    inferred = onnx.shape_inference.infer_shapes(candidate, strict_mode=True)
+    assert not _double_names(inferred)
