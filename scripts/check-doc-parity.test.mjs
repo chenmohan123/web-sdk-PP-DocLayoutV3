@@ -42,4 +42,24 @@ describe("documentation contract", () => {
     assert.match(englishModels, /FP32\s+\| 143,216,104 bytes \| WASM/);
     assert.match(chineseModels, /FP32 \| 143,216,104 字节 \| WASM/);
   });
+
+  it("records model 1.0.1 sanitation provenance in both languages", () => {
+    const modelReadme = readFileSync(new URL("models/README.md", repositoryRoot), "utf8");
+    const englishConversion = readFileSync(
+      new URL("docs/en/conversion.md", repositoryRoot),
+      "utf8"
+    );
+    const chineseConversion = readFileSync(
+      new URL("docs/zh-CN/conversion.md", repositoryRoot),
+      "utf8"
+    );
+
+    for (const document of [modelReadme, englishConversion, chineseConversion]) {
+      assert.match(document, /1\.0\.1/);
+      assert.match(document, /v1\.0\.1-models/);
+      assert.match(document, /sin.*cos.*sin_1.*cos_1/s);
+      assert.match(document, /625.*64/s);
+      assert.match(document, /FP64.*不支持|FP64.*not supported/is);
+    }
+  });
 });
