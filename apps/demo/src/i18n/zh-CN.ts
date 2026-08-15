@@ -44,7 +44,7 @@ export const zhCN = {
   clearCache: "清理缓存",
   cacheCleared: "缓存已清理",
   cpuFp16Unsupported: "CPU 当前仅支持 FP32，已为你切换模型精度。",
-  gpuFp32Unsupported: "GPU 默认模型当前仅验证了 FP16，已为你切换模型精度。",
+  precisionAdjusted: "当前模型不支持该后端下的此精度。",
   custom: "自定义 manifest",
   customTitle: "自定义模型",
   customHint: "粘贴 manifest JSON；模型二进制需在 manifest 中声明或通过 SDK 提供。",

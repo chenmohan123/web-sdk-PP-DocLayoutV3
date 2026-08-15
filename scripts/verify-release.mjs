@@ -154,8 +154,13 @@ function verifyStaticContract() {
   );
   requireMatch(
     read("scripts/stage-pages-models.mjs"),
+    /releases\/download\/v1\.0\.1-models/,
+    "Pages model staging must use the immutable v1.0.1-models release"
+  );
+  requireMatch(
+    read("scripts/stage-pages-models.mjs"),
     /releases\/download\/v1\.0\.0-models/,
-    "Pages model staging must use the immutable v1.0.0-models release"
+    "Pages model staging must retain the immutable v1.0.0-models release"
   );
   requireMatch(pages, /pages:\s+write/, "Pages deploy job needs pages: write");
   requireMatch(pages, /pages:\s+read/, "Pages build job needs pages: read");
@@ -217,7 +222,7 @@ function verifyStaticContract() {
     fail("npm publishing must never run from develop");
   }
 
-  const manifest = JSON.parse(read("models/pp-doclayoutv3/1.0.0/manifest.json"));
+  const manifest = JSON.parse(read("models/pp-doclayoutv3/1.0.1/manifest.json"));
   if (manifest.variants.length !== 2) fail("manifest must contain exactly FP16 and FP32 variants");
   for (const variant of manifest.variants) {
     if (!/^[a-f0-9]{64}$/.test(variant.sha256)) fail(`${variant.id} has an invalid SHA-256`);
@@ -426,7 +431,7 @@ if (!["--models", "--release"].includes(mode) && value !== undefined)
   fail(`${mode} does not accept a value`);
 
 const staticManifest = verifyStaticContract();
-const modelVersion = mode === "--models" ? value : "1.0.0";
+const modelVersion = mode === "--models" ? value : "1.0.1";
 const manifest = mode === "--static" ? staticManifest : await verifyModels(modelVersion);
 if (mode === "--release") verifyTag(value);
 if (mode === undefined || mode === "--release") {

@@ -10,7 +10,7 @@ Models are large assets. Recommended policy:
 - Give hash-addressed ONNX files long immutable caching; use controlled short caching or a versioned URL for manifests.
 - Preserve `Content-Length` so download progress is accurate.
 - Allow IndexedDB. The SDK can run when it is unavailable, but may download again.
-- Before mobile-network downloads, disclose 74,279,796 bytes for FP16 and 143,216,104 bytes for FP32.
+- Before mobile-network downloads, disclose 74,279,796 bytes for FP16 and 142,574,928 bytes for FP32.
 
 Multithreaded WASM requires:
 

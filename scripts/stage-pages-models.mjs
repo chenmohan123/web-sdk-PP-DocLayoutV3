@@ -4,9 +4,17 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const MODEL_RELEASE_ROOT =
-  "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models";
+  "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models";
 export const MODEL_PUBLIC_ROOT =
-  "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.0";
+  "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.1";
+export const PAGE_MODEL_RELEASES = [
+  {
+    version: "1.0.0",
+    releaseRoot:
+      "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models"
+  },
+  { version: "1.0.1", releaseRoot: MODEL_RELEASE_ROOT }
+];
 
 async function requireOk(response, url) {
   if (!response.ok) throw new Error(`Unable to download ${url}: HTTP ${response.status}`);
@@ -55,10 +63,24 @@ export async function stagePagesModels({
   return staged;
 }
 
+export async function stageAllPagesModels({ fetchImpl = fetch, outputRoot }) {
+  const staged = [];
+  for (const model of PAGE_MODEL_RELEASES) {
+    const manifest = await stagePagesModels({
+      fetchImpl,
+      outputRoot: resolve(outputRoot, model.version),
+      publicRoot: `https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/${model.version}`,
+      releaseRoot: model.releaseRoot
+    });
+    staged.push({ manifest, model });
+  }
+  return staged;
+}
+
 const modulePath = fileURLToPath(import.meta.url);
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === modulePath) {
   const repositoryRoot = resolve(dirname(modulePath), "..");
-  await stagePagesModels({
-    outputRoot: resolve(repositoryRoot, "apps/demo/dist/models/v1.0.0")
+  await stageAllPagesModels({
+    outputRoot: resolve(repositoryRoot, "apps/demo/dist/models")
   });
 }

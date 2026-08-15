@@ -172,7 +172,7 @@ export function App(): ReactElement {
     setBackend(next);
     if (nextPrecision !== precision) {
       setPrecision(nextPrecision);
-      setNotice(next === "webgpu" ? copy.gpuFp32Unsupported : copy.cpuFp16Unsupported);
+      setNotice(next === "webgpu" ? copy.precisionAdjusted : copy.cpuFp16Unsupported);
     }
   };
 
@@ -315,7 +315,7 @@ export function App(): ReactElement {
                   title={
                     unsupported
                       ? backend === "webgpu"
-                        ? copy.gpuFp32Unsupported
+                        ? copy.precisionAdjusted
                         : copy.cpuFp16Unsupported
                       : undefined
                   }

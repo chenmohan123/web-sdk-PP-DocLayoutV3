@@ -19,7 +19,7 @@
 
 当 `phase: "model"` 且 `status: "progress"` 时，事件中的 `loadedBytes` 和可选的 `totalBytes` 仅表示模型网络下载字节，不是完整初始化进度；它们不包含完整性校验或 ONNX Runtime Session 创建。响应没有 `Content-Length` 时 `totalBytes` 可能缺失，缓存、内存或自定义二进制模型也可能不产生字节进度。
 
-默认模型中，`webgpu` 仅支持 `fp16`，`wasm`（CPU）仅支持 `fp32`。清单中不存在的显式组合会抛出 `CAPABILITY_UNSUPPORTED`；`allowFallback` 只处理有效候选的运行时失败，不会改写无效组合。Demo 仅在“自动后端 + 自动精度”时允许回退，任何手动后端或精度选择都会严格执行。
+默认模型 `1.0.1` 中，`webgpu` 支持 `fp16` 和已验证的 `fp32`，`wasm`（CPU）支持 `fp32`。自动模式在 `shader-f16` 可用时优先 WebGPU FP16，没有该能力时可使用 WebGPU FP32，运行时失败后再回退到 WASM FP32。清单中不存在的显式组合会抛出 `CAPABILITY_UNSUPPORTED`；`allowFallback` 只处理有效候选的运行时失败，不会改写无效组合。Demo 仅在“自动后端 + 自动精度”时允许回退，任何手动后端或精度选择都会严格执行。原始模型是 float32，不支持 FP64 推理。
 
 ```ts
 import { createDocLayout } from "web-sdk-pp-doclayoutv3";
