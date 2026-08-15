@@ -1,0 +1,736 @@
+{
+  "schemaVersion": 1,
+  "fp16Webgpu": {
+    "status": "passed",
+    "adapter": {
+      "architecture": "blackwell",
+      "description": null,
+      "device": null,
+      "isFallbackAdapter": null,
+      "subgroupMaxSize": 32,
+      "subgroupMinSize": 32,
+      "vendor": "nvidia"
+    },
+    "adapterFeatures": [
+      "bgra8unorm-storage",
+      "clip-distances",
+      "core-features-and-limits",
+      "depth-clip-control",
+      "depth32float-stencil8",
+      "dual-source-blending",
+      "float32-blendable",
+      "float32-filterable",
+      "indirect-first-instance",
+      "primitive-index",
+      "rg11b10ufloat-renderable",
+      "shader-f16",
+      "subgroups",
+      "texture-component-swizzle",
+      "texture-compression-bc",
+      "texture-compression-bc-sliced-3d",
+      "texture-formats-tier1",
+      "texture-formats-tier2",
+      "timestamp-query"
+    ],
+    "browser": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+      "userAgentData": {
+        "brands": [
+          {
+            "brand": "Not=A?Brand",
+            "version": "99"
+          },
+          {
+            "brand": "Google Chrome",
+            "version": "151"
+          },
+          {
+            "brand": "Chromium",
+            "version": "151"
+          }
+        ],
+        "mobile": false,
+        "platform": "Windows"
+      }
+    },
+    "executionProvider": "webgpu",
+    "input": {
+      "dimensions": [1, 3, 800, 800],
+      "name": "pixel_values",
+      "type": "float32"
+    },
+    "modelBytes": 74279796,
+    "modelSha256": "463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2",
+    "onnxruntimeWebVersion": "1.27.0",
+    "outputs": {
+      "logits": {
+        "allFinite": true,
+        "dimensions": [1, 300, 25],
+        "sha256": "2d1c470358fd8162ac3e6025f99658c4727a62e5a80eea1b6199989bebf1337f",
+        "type": "float32"
+      },
+      "order_logits": {
+        "allFinite": true,
+        "dimensions": [1, 300, 300],
+        "sha256": "f039615990d24938fb35c9dfe142be13846caa48002c7c37beed61f37970c4d2",
+        "type": "float32"
+      },
+      "out_masks": {
+        "allFinite": true,
+        "dimensions": [1, 300, 200, 200],
+        "sha256": "8e27be8e4b2294a27028b15e7c03679364f1bf2f158e41c5dbe7c67a9be47ad8",
+        "type": "float32"
+      },
+      "pred_boxes": {
+        "allFinite": true,
+        "dimensions": [1, 300, 4],
+        "sha256": "fd8ec5511d6b5f840ec86967a8912aa483873ce43d28e6119ff3692cf79ae9b5",
+        "type": "float32"
+      }
+    },
+    "timingsMs": {
+      "download": 439.9899999946356,
+      "inference": 681.9950000047684,
+      "sessionCreate": 1785.0250000059605
+    },
+    "validatedAt": "2026-08-11T09:25:16.542Z"
+  },
+  "fp32Wasm": {
+    "schemaVersion": 1,
+    "status": "passed",
+    "acceptedModelSha256": "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b",
+    "executionProvider": "wasm",
+    "precision": "fp32",
+    "fallbacks": [],
+    "modelBytes": 142574928,
+    "modelSha256": "476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269",
+    "onnxruntimeWebVersion": "1.27.0",
+    "adapter": null,
+    "adapterFeatures": [],
+    "browser": {
+      "name": "Chromium",
+      "version": "151.0.7922.34",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36"
+    },
+    "operatingSystem": "win32 10.0.26200",
+    "fixtures": [
+      {
+        "acceptedOutputSha256": "98601e9b45ffca68a280c95604d67f40bca747aefa7f07ec502369969dfd4025",
+        "detectionCount": 12,
+        "expectedDetectionCount": 12,
+        "filename": "curved-document.jpg",
+        "fixtureSha256": "fce39d864ff7b0612f7073415c2a7c656f7790a26f96d539831f1bb1a994a069",
+        "labelSequenceEqual": true,
+        "outputSha256": "98601e9b45ffca68a280c95604d67f40bca747aefa7f07ec502369969dfd4025",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 10.409999996423721,
+          "inferenceMs": 7663.39999999851,
+          "postprocessMs": 39.59000000357628,
+          "preprocessMs": 130.2800000011921,
+          "totalMs": 7852.52499999851
+        }
+      },
+      {
+        "acceptedOutputSha256": "8bba1fb0a794a86ec0b2f4d1b1425d28e000a49beab399e4c55bbb04b4cf8cf4",
+        "detectionCount": 59,
+        "expectedDetectionCount": 59,
+        "filename": "doc-formula.png",
+        "fixtureSha256": "6b07d28527dc9e930804fa73df562f1a81599c6b8a1a8bbc2a80742fa9f26e80",
+        "labelSequenceEqual": true,
+        "outputSha256": "8bba1fb0a794a86ec0b2f4d1b1425d28e000a49beab399e4c55bbb04b4cf8cf4",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 9.110000006854534,
+          "inferenceMs": 7679.560000002384,
+          "postprocessMs": 33.74000000208616,
+          "preprocessMs": 108.30499999970198,
+          "totalMs": 7839.179999999702
+        }
+      },
+      {
+        "acceptedOutputSha256": "da3c2a041cc94c4b5616637b7acd9af116c0882befd434920ebe8aaf96be626d",
+        "detectionCount": 44,
+        "expectedDetectionCount": 44,
+        "filename": "image-layout.jpg",
+        "fixtureSha256": "cfebd4e0716da8ef01ad29c6f5bf7ed0dcc7d3a07bd38e32219c3b10645798de",
+        "labelSequenceEqual": true,
+        "outputSha256": "da3c2a041cc94c4b5616637b7acd9af116c0882befd434920ebe8aaf96be626d",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 25.179999999701977,
+          "inferenceMs": 7650.9000000059605,
+          "postprocessMs": 58.375,
+          "preprocessMs": 108.12999999523163,
+          "totalMs": 7851.259999997914
+        }
+      },
+      {
+        "acceptedOutputSha256": "c6051575214356859bcb9f87be446f27f32dc405a22bdc99ef9f887866c5ddb7",
+        "detectionCount": 13,
+        "expectedDetectionCount": 13,
+        "filename": "layout-demo.jpg",
+        "fixtureSha256": "785b7d19f158dcb636342dd3378ed3a4cddb7333d2d71688f0baa5c25a88ad51",
+        "labelSequenceEqual": true,
+        "outputSha256": "c6051575214356859bcb9f87be446f27f32dc405a22bdc99ef9f887866c5ddb7",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 30.03499999642372,
+          "inferenceMs": 7656.109999999404,
+          "postprocessMs": 96.92999999970198,
+          "preprocessMs": 170.16999999433756,
+          "totalMs": 7961.7099999934435
+        }
+      },
+      {
+        "acceptedOutputSha256": "b036ef27908bd3b94406d9a3106cb5ef6ecca8030874f2fceacac7a0a6407a90",
+        "detectionCount": 13,
+        "expectedDetectionCount": 13,
+        "filename": "screen-photo.jpg",
+        "fixtureSha256": "f27a8ad40192f2bff4bcc3605beaddf246bc35b07355e688defde1a2de333aa1",
+        "labelSequenceEqual": true,
+        "outputSha256": "b036ef27908bd3b94406d9a3106cb5ef6ecca8030874f2fceacac7a0a6407a90",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 11.574999995529652,
+          "inferenceMs": 7703.579999998212,
+          "postprocessMs": 40.46999999880791,
+          "preprocessMs": 123.03999999910593,
+          "totalMs": 7887.454999998212
+        }
+      },
+      {
+        "acceptedOutputSha256": "07f0c613f0d87b91597984e01e83acdca5c5bf440d3efcc19873153b9250fa82",
+        "detectionCount": 13,
+        "expectedDetectionCount": 13,
+        "filename": "skew-document.jpg",
+        "fixtureSha256": "4ae0d5bebbe152a9cca8add806e376b3eb3314c3a55d6b7ccba70d9c4de97a1e",
+        "labelSequenceEqual": true,
+        "outputSha256": "07f0c613f0d87b91597984e01e83acdca5c5bf440d3efcc19873153b9250fa82",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 11.339999996125698,
+          "inferenceMs": 7624.465000003576,
+          "postprocessMs": 52.63500000536442,
+          "preprocessMs": 124.5899999961257,
+          "totalMs": 7821.585000000894
+        }
+      },
+      {
+        "acceptedOutputSha256": "8ff528db91eb3893ec1fbf50d69ac23aac17bc2aefec79e70cf0c11f0602550a",
+        "detectionCount": 1,
+        "expectedDetectionCount": 1,
+        "filename": "table.png",
+        "fixtureSha256": "6d50148ceccb2d5cecc50b084b5105e3167f2d55a8899b29e04c3ebe46e88fa8",
+        "labelSequenceEqual": true,
+        "outputSha256": "8ff528db91eb3893ec1fbf50d69ac23aac17bc2aefec79e70cf0c11f0602550a",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 3.030000001192093,
+          "inferenceMs": 7697.104999996722,
+          "postprocessMs": 55.03499999642372,
+          "preprocessMs": 74.86999999731779,
+          "totalMs": 7838.77499999851
+        },
+        "referenceMetrics": {
+          "iou": 0.9999961699392192,
+          "maxScoreDelta": 0.000013727193068024945,
+          "meanPolygonPointDistancePixels": 0
+        },
+        "referenceThresholds": {
+          "iou": 0.95,
+          "maxScoreDelta": 0.02,
+          "meanPolygonPointDistancePixels": 2
+        }
+      }
+    ],
+    "timingsMs": {
+      "coldLoad": {
+        "capabilitiesMs": 3.7400000020861626,
+        "integrityMs": 374.54500000178814,
+        "manifestMs": 1.2549999952316284,
+        "modelCacheMs": 0.6650000065565109,
+        "modelDownloadMs": 1105.3500000014901,
+        "modelMs": 1880.4549999982119,
+        "modelSource": "network",
+        "sessionMs": 1531.2849999964237,
+        "totalMs": 3417.314999997616
+      },
+      "warmLoad": {
+        "capabilitiesMs": 0.5850000008940697,
+        "integrityMs": 352.85499999672174,
+        "manifestMs": 0.10999999940395355,
+        "modelCacheMs": 74.875,
+        "modelDownloadMs": 0,
+        "modelMs": 427.80500000715256,
+        "modelSource": "cache",
+        "sessionMs": 488.1549999937415,
+        "totalMs": 916.7250000014901
+      }
+    },
+    "sdkCommit": "000707fe10d33a5e6797cd144e18ff68dc73f50d",
+    "capabilities": {
+      "crossOriginIsolated": true,
+      "diagnostics": [
+        "webgpu: unavailable because no adapter was returned",
+        "webgpu-fp16: shader-f16 is unavailable",
+        "wasm: supported",
+        "wasm-simd: supported",
+        "wasm-threads: supported",
+        "worker: unavailable in this environment"
+      ],
+      "wasm": true,
+      "wasmSimd": true,
+      "wasmThreads": true,
+      "webgpu": false,
+      "webgpuFp16": false,
+      "worker": false
+    },
+    "cpu": "Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz",
+    "generatedAt": "2026-08-14T19:09:41.586Z",
+    "id": "wasm-fp32"
+  },
+  "fp32Webgpu": {
+    "schemaVersion": 1,
+    "status": "passed",
+    "acceptedModelSha256": "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b",
+    "executionProvider": "webgpu",
+    "precision": "fp32",
+    "fallbacks": [],
+    "modelBytes": 142574928,
+    "modelSha256": "476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269",
+    "onnxruntimeWebVersion": "1.27.0",
+    "adapter": {
+      "architecture": "blackwell",
+      "description": null,
+      "device": null,
+      "vendor": "nvidia"
+    },
+    "adapterFeatures": [
+      "bgra8unorm-storage",
+      "clip-distances",
+      "core-features-and-limits",
+      "depth-clip-control",
+      "depth32float-stencil8",
+      "dual-source-blending",
+      "float32-blendable",
+      "float32-filterable",
+      "indirect-first-instance",
+      "primitive-index",
+      "rg11b10ufloat-renderable",
+      "shader-f16",
+      "subgroups",
+      "texture-component-swizzle",
+      "texture-compression-bc",
+      "texture-compression-bc-sliced-3d",
+      "texture-formats-tier1",
+      "texture-formats-tier2",
+      "timestamp-query"
+    ],
+    "browser": {
+      "name": "Chromium",
+      "version": "151.0.7922.138",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36"
+    },
+    "operatingSystem": "win32 10.0.26200",
+    "fixtures": [
+      {
+        "acceptedOutputSha256": "98601e9b45ffca68a280c95604d67f40bca747aefa7f07ec502369969dfd4025",
+        "detectionCount": 12,
+        "expectedDetectionCount": 12,
+        "filename": "curved-document.jpg",
+        "fixtureSha256": "fce39d864ff7b0612f7073415c2a7c656f7790a26f96d539831f1bb1a994a069",
+        "labelSequenceEqual": true,
+        "outputSha256": "49d017eb3a0946b85dbf0076cf3fc8af88ad12faa1c46b2e5063b54f0b082393",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0.00030517578125,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0.0000016508409746984753
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 10.104999996721745,
+          "inferenceMs": 5305.939999997616,
+          "postprocessMs": 70.9050000011921,
+          "preprocessMs": 134.60000000149012,
+          "totalMs": 5532.594999998808
+        }
+      },
+      {
+        "acceptedOutputSha256": "8bba1fb0a794a86ec0b2f4d1b1425d28e000a49beab399e4c55bbb04b4cf8cf4",
+        "detectionCount": 59,
+        "expectedDetectionCount": 59,
+        "filename": "doc-formula.png",
+        "fixtureSha256": "6b07d28527dc9e930804fa73df562f1a81599c6b8a1a8bbc2a80742fa9f26e80",
+        "labelSequenceEqual": true,
+        "outputSha256": "70e57bf726376f2e3aad8fd35a6d492d679b6b38087df95de2648aee09babc51",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0.0003662109375,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0.000001028899655031168
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 7.435000002384186,
+          "inferenceMs": 279.95000000298023,
+          "postprocessMs": 59.94500000029802,
+          "preprocessMs": 115.23999999463558,
+          "totalMs": 472.6200000047684
+        }
+      },
+      {
+        "acceptedOutputSha256": "da3c2a041cc94c4b5616637b7acd9af116c0882befd434920ebe8aaf96be626d",
+        "detectionCount": 44,
+        "expectedDetectionCount": 44,
+        "filename": "image-layout.jpg",
+        "fixtureSha256": "cfebd4e0716da8ef01ad29c6f5bf7ed0dcc7d3a07bd38e32219c3b10645798de",
+        "labelSequenceEqual": true,
+        "outputSha256": "16320eaccc62ae6d9509d498ade7996febe9fa72cc7543f716c91d8577b06b00",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0.00048828125,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0.0000013091050572455742
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 23.509999997913837,
+          "inferenceMs": 272.554999999702,
+          "postprocessMs": 87.42999999970198,
+          "preprocessMs": 105.24500000476837,
+          "totalMs": 498.9349999949336
+        }
+      },
+      {
+        "acceptedOutputSha256": "c6051575214356859bcb9f87be446f27f32dc405a22bdc99ef9f887866c5ddb7",
+        "detectionCount": 13,
+        "expectedDetectionCount": 13,
+        "filename": "layout-demo.jpg",
+        "fixtureSha256": "785b7d19f158dcb636342dd3378ed3a4cddb7333d2d71688f0baa5c25a88ad51",
+        "labelSequenceEqual": true,
+        "outputSha256": "24d11a2ed203d8ee72ca4e14e803cab560ef57855976ead40efa65a07bd0fbb7",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0.000640869140625,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 9.07715355213945e-7
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 28.810000002384186,
+          "inferenceMs": 275.41499999910593,
+          "postprocessMs": 120.25999999791384,
+          "preprocessMs": 213.1600000038743,
+          "totalMs": 649.9800000041723
+        }
+      },
+      {
+        "acceptedOutputSha256": "b036ef27908bd3b94406d9a3106cb5ef6ecca8030874f2fceacac7a0a6407a90",
+        "detectionCount": 13,
+        "expectedDetectionCount": 13,
+        "filename": "screen-photo.jpg",
+        "fixtureSha256": "f27a8ad40192f2bff4bcc3605beaddf246bc35b07355e688defde1a2de333aa1",
+        "labelSequenceEqual": true,
+        "outputSha256": "6f0fe242016734de274a9ac9d002ee166694e8360cb52cc3cb1d0b4000d1d160",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0.0003662109375,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 6.820948376118352e-7
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 11.094999998807907,
+          "inferenceMs": 263.5649999976158,
+          "postprocessMs": 48.474999994039536,
+          "preprocessMs": 125.89499999582767,
+          "totalMs": 459.28999999910593
+        }
+      },
+      {
+        "acceptedOutputSha256": "07f0c613f0d87b91597984e01e83acdca5c5bf440d3efcc19873153b9250fa82",
+        "detectionCount": 13,
+        "expectedDetectionCount": 13,
+        "filename": "skew-document.jpg",
+        "fixtureSha256": "4ae0d5bebbe152a9cca8add806e376b3eb3314c3a55d6b7ccba70d9c4de97a1e",
+        "labelSequenceEqual": true,
+        "outputSha256": "840d7c61343deee9fa966b541e17a19671d5987aa27280ecec8ca2943c133c47",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0.00042724609375,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 0.000001394110166863527
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 11.559999994933605,
+          "inferenceMs": 296.1850000023842,
+          "postprocessMs": 42.184999994933605,
+          "preprocessMs": 130.05499999970198,
+          "totalMs": 491.1299999952316
+        }
+      },
+      {
+        "acceptedOutputSha256": "8ff528db91eb3893ec1fbf50d69ac23aac17bc2aefec79e70cf0c11f0602550a",
+        "detectionCount": 1,
+        "expectedDetectionCount": 1,
+        "filename": "table.png",
+        "fixtureSha256": "6d50148ceccb2d5cecc50b084b5105e3167f2d55a8899b29e04c3ebe46e88fa8",
+        "labelSequenceEqual": true,
+        "outputSha256": "7978ca0ec7143f98fc24ef2f4613c72d785a82ca4a1b31bcf97fc1952ffb9e8c",
+        "parityMetrics": {
+          "maxBoxCoordinateDeltaPixels": 0.0000616908073425293,
+          "maxPolygonCoordinateDeltaPixels": 0,
+          "maxScoreDelta": 1.3716245295114504e-7
+        },
+        "parityThresholds": {
+          "maxBoxCoordinateDeltaPixels": 1,
+          "maxPolygonCoordinateDeltaPixels": 1.5,
+          "maxScoreDelta": 0.001
+        },
+        "parity": "passed",
+        "readingOrderEqual": true,
+        "timings": {
+          "decodeMs": 2.894999995827675,
+          "inferenceMs": 278.054999999702,
+          "postprocessMs": 39.74499999731779,
+          "preprocessMs": 84.19500000029802,
+          "totalMs": 413.9699999988079
+        },
+        "referenceMetrics": {
+          "iou": 0.9999962574460338,
+          "maxScoreDelta": 0.00001386435552097609,
+          "meanPolygonPointDistancePixels": 0
+        },
+        "referenceThresholds": {
+          "iou": 0.95,
+          "maxScoreDelta": 0.02,
+          "meanPolygonPointDistancePixels": 2
+        }
+      }
+    ],
+    "timingsMs": {
+      "coldLoad": {
+        "capabilitiesMs": 83.23000000417233,
+        "integrityMs": 364.6900000050664,
+        "manifestMs": 1.1050000041723251,
+        "modelCacheMs": 0.6649999991059303,
+        "modelDownloadMs": 1039.9349999949336,
+        "modelMs": 1792.8499999940395,
+        "modelSource": "network",
+        "sessionMs": 1653.2999999970198,
+        "totalMs": 3531.1350000053644
+      },
+      "warmLoad": {
+        "capabilitiesMs": 0.5700000002980232,
+        "integrityMs": 356.2550000026822,
+        "manifestMs": 0.08999999612569809,
+        "modelCacheMs": 109.79999999701977,
+        "modelDownloadMs": 0,
+        "modelMs": 466.1850000023842,
+        "modelSource": "cache",
+        "sessionMs": 1042.445000000298,
+        "totalMs": 1509.3650000020862
+      }
+    },
+    "sdkCommit": "000707fe10d33a5e6797cd144e18ff68dc73f50d",
+    "capabilities": {
+      "crossOriginIsolated": true,
+      "diagnostics": [
+        "webgpu: supported by an acquired adapter",
+        "webgpu-fp16: shader-f16 is supported",
+        "wasm: supported",
+        "wasm-simd: supported",
+        "wasm-threads: supported",
+        "worker: supported"
+      ],
+      "wasm": true,
+      "wasmSimd": true,
+      "wasmThreads": true,
+      "webgpu": true,
+      "webgpuFp16": true,
+      "worker": true
+    },
+    "cpu": "Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz",
+    "generatedAt": "2026-08-14T19:06:49.32Z",
+    "id": "webgpu-fp32"
+  },
+  "fp16Wasm": {
+    "status": "passed",
+    "browser": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+      "userAgentData": {
+        "brands": [
+          {
+            "brand": "Not=A?Brand",
+            "version": "99"
+          },
+          {
+            "brand": "Google Chrome",
+            "version": "151"
+          },
+          {
+            "brand": "Chromium",
+            "version": "151"
+          }
+        ],
+        "mobile": false,
+        "platform": "Windows"
+      }
+    },
+    "executionProvider": "wasm",
+    "input": {
+      "dimensions": [1, 3, 800, 800],
+      "name": "pixel_values",
+      "type": "float32"
+    },
+    "modelBytes": 74279796,
+    "modelSha256": "463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2",
+    "onnxruntimeWebVersion": "1.27.0",
+    "outputs": {
+      "logits": {
+        "allFinite": true,
+        "dimensions": [1, 300, 25],
+        "sha256": "6945c387c449705c7ecaeb1bc288be91ed1e94d4627a7a059220041be5b414f9",
+        "type": "float32"
+      },
+      "pred_boxes": {
+        "allFinite": true,
+        "dimensions": [1, 300, 4],
+        "sha256": "804c0b0ee668baf15235985c8559600b820527d0e685c1c898cd12eb61fa09df",
+        "type": "float32"
+      },
+      "order_logits": {
+        "allFinite": true,
+        "dimensions": [1, 300, 300],
+        "sha256": "2c647b666dc96b6d0d83dece321e258bb633a3b1d42ea97c4cd58b1b0667cba7",
+        "type": "float32"
+      },
+      "out_masks": {
+        "allFinite": true,
+        "dimensions": [1, 300, 200, 200],
+        "sha256": "e7196a08c7cddaf4fe63121497934c91aae2635f7cf1d1c915720cb185669ced",
+        "type": "float32"
+      }
+    },
+    "timingsMs": {
+      "download": 577.9399999976158,
+      "inference": 3323.2699999958277,
+      "sessionCreate": 1205.9300000071526
+    },
+    "validatedAt": "2026-08-15T08:33:57.749Z"
+  },
+  "int8Wasm": {
+    "status": "skipped",
+    "reason": "CPU precision acceptance failed before browser validation"
+  }
+}

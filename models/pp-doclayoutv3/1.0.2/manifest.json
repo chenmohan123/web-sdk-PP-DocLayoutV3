@@ -42,7 +42,7 @@
     "id": "pp-doclayoutv3",
     "modelType": "pp_doclayout_v3",
     "parameterCount": 33175165,
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "outputs": [
     {
@@ -123,6 +123,7 @@
   "variants": [
     {
       "backendCompatibility": [
+        "wasm",
         "webgpu"
       ],
       "bytes": 74279796,
@@ -135,7 +136,7 @@
       "validation": {
         "included": true,
         "pass": true,
-        "report": "tools/model-pipeline/reports/1.0.1/variant-validation.json"
+        "report": "tools/model-pipeline/reports/1.0.2/variant-validation.json"
       }
     },
     {
@@ -153,7 +154,7 @@
       "validation": {
         "included": true,
         "pass": true,
-        "report": "tools/model-pipeline/reports/1.0.1/fp32-validation.json"
+        "report": "tools/model-pipeline/reports/1.0.2/fp32-validation.json"
       }
     }
   ]

@@ -11,7 +11,7 @@ import type { DocLayoutCapabilities, ModelVariant } from "../src/types";
 const manifest = parseModelManifest(
   JSON.parse(
     readFileSync(
-      new URL("../../../models/pp-doclayoutv3/1.0.1/manifest.json", import.meta.url),
+      new URL("../../../models/pp-doclayoutv3/1.0.2/manifest.json", import.meta.url),
       "utf8"
     )
   )
@@ -61,15 +61,39 @@ describe("selectExecutionPlan", () => {
     expect(plan.candidates.every((candidate) => candidate.reason.length > 0)).toBe(true);
   });
 
-  it("uses WASM FP16 when shader-f16 is missing", () => {
+  it("uses WebGPU FP32 when shader-f16 is missing", () => {
     const plan = selectExecutionPlan({}, capabilities({ webgpuFp16: false }), manifest.variants);
 
-    expect(plan.selected).toMatchObject({ provider: "wasm", precision: "fp16" });
+    expect(plan.selected).toMatchObject({ provider: "webgpu", precision: "fp32" });
     expect(plan.candidates[0]).toMatchObject({ status: "skipped" });
     expect(plan.candidates[0]!.reason).toMatch(/shader-f16/);
   });
 
-  it("skips absent FP16 and INT8 variants and falls back to WASM FP32", () => {
+  it("uses WebGPU FP32 when WebGPU exists without shader-f16", () => {
+    const plan = selectExecutionPlan(
+      {},
+      capabilities({ webgpu: true, webgpuFp16: false }),
+      manifest.variants
+    );
+
+    expect(plan.selected).toMatchObject({ provider: "webgpu", precision: "fp32" });
+  });
+
+  it("keeps explicit WebGPU FP32 strict", () => {
+    const plan = selectExecutionPlan(
+      { allowFallback: false, backend: "webgpu", precision: "fp32" },
+      capabilities({ webgpu: true, webgpuFp16: false }),
+      manifest.variants
+    );
+
+    expect(plan.selected).toMatchObject({
+      provider: "webgpu",
+      precision: "fp32",
+      variantId: "fp32"
+    });
+  });
+
+  it("skips an absent INT8 variant and falls back to WASM FP32", () => {
     const plan = selectExecutionPlan(
       {},
       capabilities({ webgpu: false, webgpuFp16: false }),

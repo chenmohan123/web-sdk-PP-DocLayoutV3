@@ -38,15 +38,15 @@ try {
 
 `backend` 可设为 `auto`、`webgpu`、`wasm`；`precision` 可设为 `auto`、`fp16`、`fp32`。全自动选择时 `allowFallback` 默认为 `true`；显式指定后端或精度时默认为 `false`，需要跨有效候选回退可主动设为 `true`。用户可传清单 URL、清单对象，或内存中的 `{ manifest, data }`；自定义模型必须遵循相同输入、输出和后处理契约。
 
-默认模型的支持矩阵为：WebGPU + FP16、CPU/WASM + FP16、CPU/WASM + FP32。FP16 模型在 CPU 上更小，但不一定比 FP32 更快。使用默认模型时，SDK 会以 `CAPABILITY_UNSUPPORTED` 拒绝清单中不存在的显式组合；`allowFallback` 只会尝试清单中的有效候选。在线 Demo 仅在“自动后端 + 自动精度”时允许运行时回退；手动选择任一后端或精度后会严格执行，GPU 模式禁用 FP32，CPU 模式同时支持 FP16 与 FP32。自动候选顺序为 WebGPU FP16、WebGPU FP32（若清单提供）、WASM FP16、WASM INT8（若通过验收）、WASM FP32。自定义清单的组合仍以其已验证变体为准。
+默认模型 `1.0.2` 的支持矩阵为：WebGPU 和 CPU/WASM 均支持 FP16，WebGPU 和 CPU/WASM 均支持已验证的 FP32。全自动模式在具备 `shader-f16` 时优先 WebGPU FP16；没有该能力时可使用 WebGPU FP32，运行时失败后再尝试 WASM/CPU FP16 和 FP32。使用默认模型时，SDK 会以 `CAPABILITY_UNSUPPORTED` 拒绝清单中不存在的显式组合；`allowFallback` 只会尝试清单中的有效候选。在线 Demo 仅在“自动后端 + 自动精度”时允许运行时回退；手动选择任一后端或精度后会严格执行。自定义清单若包含已通过验证的其他组合，SDK 和 Demo 仍允许对应组合。
 
-默认模型：FP16 为 74,279,796 字节，可用于 WebGPU 和 WASM/CPU；FP32 为 143,216,104 字节，用于 WASM/CPU。FP16 已通过 CPU 精度验收、真实浏览器 WASM 和真实 WebGPU 验证；FP32 已通过数值对齐与浏览器 WASM 验证，尚未记录物理 WebGPU FP32 验证。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。
+默认模型 `1.0.2`：FP16 为 74,279,796 字节，FP32 为 142,574,928 字节；二进制继续使用不可变的 `v1.0.1-models`。FP16 通过 CPU 精度验收、真实浏览器 WASM 和真实 WebGPU 验证；FP32 已通过 7 张授权图片的数值对齐、浏览器 WASM 和物理 WebGPU 验证。上游模型是 float32，不支持 FP64 推理。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。历史 `1.0.0`、`1.0.1` 模型清单和 SDK `1.0.5` 保持不变。
 
 ## 部署与隐私
 
-推理在用户浏览器本地完成，SDK 不会把文档图片上传到项目服务器。默认模型需要 HTTPS 下载和正确的 CORS 响应；模型缓存使用 IndexedDB。若要启用多线程 WASM，请配置 COOP/COEP 形成 `crossOriginIsolated` 环境。首次加载会下载约 71 MB 或 137 MB 模型，请在移动网络场景明确提示用户。
+推理在用户浏览器本地完成，SDK 不会把文档图片上传到项目服务器。默认模型需要 HTTPS 下载和正确的 CORS 响应；模型缓存使用 IndexedDB。若要启用多线程 WASM，请配置 COOP/COEP 形成 `crossOriginIsolated` 环境。首次加载会下载约 71 MiB 或 136 MiB 模型，请在移动网络场景明确提示用户。
 
-已记录的真实 WebGPU 验证环境为 Windows、Chrome 151、NVIDIA Blackwell、ONNX Runtime Web 1.27.0；FP16 单次样本的下载、会话创建和推理分别约 440 ms、1785 ms、682 ms。这不是跨设备基准，正式矩阵将在 1.0.0 发布验证中提供。
+已记录的真实 WebGPU 验证环境为 Windows、Chrome 151、NVIDIA Blackwell、ONNX Runtime Web 1.27.0；FP16 已通过单次样本的物理 WebGPU 验证，FP32 已通过 7 张授权图片的物理 WebGPU 验证。这不是跨设备基准，具体耗时仍会受硬件、浏览器、缓存和网络影响。
 
 ## 文档
 

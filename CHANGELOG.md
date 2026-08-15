@@ -2,10 +2,15 @@
 
 ## Unreleased
 
+## 1.0.6
+
+- Added validated CPU/WASM support for the bundled FP16 model through immutable model manifest `1.0.2`, reusing the published `1.0.1` model binaries.
+- Kept WebGPU FP16 and FP32 support while expanding the default CPU/WASM matrix to FP16 and FP32.
+
 ## 1.0.5
 
-- Added validated CPU/WASM support for the bundled FP16 model through the immutable `1.0.1` model manifest.
-- Kept the published `1.0.0` model contract unchanged while reusing its byte-identical FP16 and FP32 model assets.
+- Adopted immutable PP-DocLayoutV3 model `1.0.1`, enabling validated strict WebGPU FP32 execution while retaining WebGPU FP16 as the preferred automatic path.
+- Versioned model validation evidence and Pages staging so historical `1.0.0` assets remain unchanged.
 
 ## 1.0.4
 

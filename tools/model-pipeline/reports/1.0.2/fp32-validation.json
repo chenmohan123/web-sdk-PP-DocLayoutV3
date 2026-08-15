@@ -1,0 +1,429 @@
+{
+  "environment": {
+    "numpy": "2.4.6",
+    "onnxruntime": "1.28.0",
+    "opencv-python-headless": "5.0.0.93",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.15",
+    "torch": "2.13.0+cpu",
+    "transformers": "5.15.0"
+  },
+  "fixtures": [
+    {
+      "acceptedDetectionCount": 12,
+      "acceptedLabelSequenceEqual": true,
+      "acceptedReadingOrderEqual": true,
+      "detectionCountOfficial": 12,
+      "detectionCountOnnx": 12,
+      "filename": "curved-document.jpg",
+      "height": 1273,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.00020837783813476562,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.6689300537109375e-6,
+      "onnxDetectionCount": 12,
+      "pass": true,
+      "rawOutputs": {
+        "allBitIdentical": true,
+        "outputs": {
+          "logits": {
+            "acceptedSha256": "e4133d98a74db6ccfe23940501bd0244be713af040a1465124529e0f8281142b",
+            "bitIdentical": true,
+            "candidateSha256": "e4133d98a74db6ccfe23940501bd0244be713af040a1465124529e0f8281142b",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 25]
+          },
+          "order_logits": {
+            "acceptedSha256": "ee1887bf86d95b06a7b2c55fa4c94e02776d7c16130cf6ce4270786cd33c12e5",
+            "bitIdentical": true,
+            "candidateSha256": "ee1887bf86d95b06a7b2c55fa4c94e02776d7c16130cf6ce4270786cd33c12e5",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 300]
+          },
+          "out_masks": {
+            "acceptedSha256": "494abcc172eccfc3427b7dfca80d906e1a4d019a7af399becc080f8503ed80ef",
+            "bitIdentical": true,
+            "candidateSha256": "494abcc172eccfc3427b7dfca80d906e1a4d019a7af399becc080f8503ed80ef",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 200, 200]
+          },
+          "pred_boxes": {
+            "acceptedSha256": "4f72bfd2294edaf7f1b4141d9f6078b098b92cdf7be72eac947e356051d70d7b",
+            "bitIdentical": true,
+            "candidateSha256": "4f72bfd2294edaf7f1b4141d9f6078b098b92cdf7be72eac947e356051d70d7b",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 4]
+          }
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "fce39d864ff7b0612f7073415c2a7c656f7790a26f96d539831f1bb1a994a069",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 900
+    },
+    {
+      "acceptedDetectionCount": 59,
+      "acceptedLabelSequenceEqual": true,
+      "acceptedReadingOrderEqual": true,
+      "detectionCountOfficial": 59,
+      "detectionCountOnnx": 59,
+      "filename": "doc-formula.png",
+      "height": 1056,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.00030517578125,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.8477439880371094e-6,
+      "onnxDetectionCount": 59,
+      "pass": true,
+      "rawOutputs": {
+        "allBitIdentical": true,
+        "outputs": {
+          "logits": {
+            "acceptedSha256": "5fce7480a5f6ecbe926bbed9b93aade165fedf9de47d39caabe41e2e623e5e55",
+            "bitIdentical": true,
+            "candidateSha256": "5fce7480a5f6ecbe926bbed9b93aade165fedf9de47d39caabe41e2e623e5e55",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 25]
+          },
+          "order_logits": {
+            "acceptedSha256": "fe70871e6e847638b70942ddd123ba8a219655e84fa4fbc722f97a963b27ef33",
+            "bitIdentical": true,
+            "candidateSha256": "fe70871e6e847638b70942ddd123ba8a219655e84fa4fbc722f97a963b27ef33",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 300]
+          },
+          "out_masks": {
+            "acceptedSha256": "c25be644690feb8ae9bb1f218edeb6b569b341134f9667763e5305e3513d9563",
+            "bitIdentical": true,
+            "candidateSha256": "c25be644690feb8ae9bb1f218edeb6b569b341134f9667763e5305e3513d9563",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 200, 200]
+          },
+          "pred_boxes": {
+            "acceptedSha256": "66a9d7e1de1591d1666ff4b55394f4529d99681308bb9583bdb5dc4f32c27e4e",
+            "bitIdentical": true,
+            "candidateSha256": "66a9d7e1de1591d1666ff4b55394f4529d99681308bb9583bdb5dc4f32c27e4e",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 4]
+          }
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "6b07d28527dc9e930804fa73df562f1a81599c6b8a1a8bbc2a80742fa9f26e80",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 816
+    },
+    {
+      "acceptedDetectionCount": 44,
+      "acceptedLabelSequenceEqual": true,
+      "acceptedReadingOrderEqual": true,
+      "detectionCountOfficial": 44,
+      "detectionCountOnnx": 44,
+      "filename": "image-layout.jpg",
+      "height": 757,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.00048828125,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.3113021850585938e-6,
+      "onnxDetectionCount": 44,
+      "pass": true,
+      "rawOutputs": {
+        "allBitIdentical": true,
+        "outputs": {
+          "logits": {
+            "acceptedSha256": "d69d92e4d0066136c71a99a7daa9968629c1668b21fbb357dd6133cffd212104",
+            "bitIdentical": true,
+            "candidateSha256": "d69d92e4d0066136c71a99a7daa9968629c1668b21fbb357dd6133cffd212104",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 25]
+          },
+          "order_logits": {
+            "acceptedSha256": "b05f2433ebf57aab16b1e58769fd13887a37b26b31e3309b34366da151bc8c95",
+            "bitIdentical": true,
+            "candidateSha256": "b05f2433ebf57aab16b1e58769fd13887a37b26b31e3309b34366da151bc8c95",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 300]
+          },
+          "out_masks": {
+            "acceptedSha256": "8f9a13d537b60255e4f654f0415ef3642874f3deb0ad9d03f448e77a7be2f7eb",
+            "bitIdentical": true,
+            "candidateSha256": "8f9a13d537b60255e4f654f0415ef3642874f3deb0ad9d03f448e77a7be2f7eb",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 200, 200]
+          },
+          "pred_boxes": {
+            "acceptedSha256": "9795d8be3223d62eac914b4588b418177065102e4888c4cbd4e16b2b88b0fca3",
+            "bitIdentical": true,
+            "candidateSha256": "9795d8be3223d62eac914b4588b418177065102e4888c4cbd4e16b2b88b0fca3",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 4]
+          }
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "cfebd4e0716da8ef01ad29c6f5bf7ed0dcc7d3a07bd38e32219c3b10645798de",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 1659
+    },
+    {
+      "acceptedDetectionCount": 13,
+      "acceptedLabelSequenceEqual": true,
+      "acceptedReadingOrderEqual": true,
+      "detectionCountOfficial": 13,
+      "detectionCountOnnx": 13,
+      "filename": "layout-demo.jpg",
+      "height": 2339,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.000244140625,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.7285346984863281e-6,
+      "onnxDetectionCount": 13,
+      "pass": true,
+      "rawOutputs": {
+        "allBitIdentical": true,
+        "outputs": {
+          "logits": {
+            "acceptedSha256": "ff761ba437202de2aabb28bd557bf30f07365e079d8e83e7157a72f890e2779e",
+            "bitIdentical": true,
+            "candidateSha256": "ff761ba437202de2aabb28bd557bf30f07365e079d8e83e7157a72f890e2779e",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 25]
+          },
+          "order_logits": {
+            "acceptedSha256": "9fa299dfa5f12f0425286cfaad7147887c0c184661c3971eb5731fae5c0e2274",
+            "bitIdentical": true,
+            "candidateSha256": "9fa299dfa5f12f0425286cfaad7147887c0c184661c3971eb5731fae5c0e2274",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 300]
+          },
+          "out_masks": {
+            "acceptedSha256": "18c48f9938beb0c3e527768630148d793f667e195bef16fe6d5f9f16018b5ad6",
+            "bitIdentical": true,
+            "candidateSha256": "18c48f9938beb0c3e527768630148d793f667e195bef16fe6d5f9f16018b5ad6",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 200, 200]
+          },
+          "pred_boxes": {
+            "acceptedSha256": "3592393014e402b2bcaf7f89e07a9020e6d69913705c0095401c62c72a276a2e",
+            "bitIdentical": true,
+            "candidateSha256": "3592393014e402b2bcaf7f89e07a9020e6d69913705c0095401c62c72a276a2e",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 4]
+          }
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "785b7d19f158dcb636342dd3378ed3a4cddb7333d2d71688f0baa5c25a88ad51",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 1654
+    },
+    {
+      "acceptedDetectionCount": 13,
+      "acceptedLabelSequenceEqual": true,
+      "acceptedReadingOrderEqual": true,
+      "detectionCountOfficial": 13,
+      "detectionCountOnnx": 13,
+      "filename": "screen-photo.jpg",
+      "height": 1400,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.000244140625,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 5.960464477539062e-7,
+      "onnxDetectionCount": 13,
+      "pass": true,
+      "rawOutputs": {
+        "allBitIdentical": true,
+        "outputs": {
+          "logits": {
+            "acceptedSha256": "dae5933ceecea367ac8b4c5778e471bd8f372bff91593ec054b8c5e5daba557b",
+            "bitIdentical": true,
+            "candidateSha256": "dae5933ceecea367ac8b4c5778e471bd8f372bff91593ec054b8c5e5daba557b",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 25]
+          },
+          "order_logits": {
+            "acceptedSha256": "0c600a04387f1f0ac88f279ecdde51d5315fdd105409ff7247b99d3e429dd624",
+            "bitIdentical": true,
+            "candidateSha256": "0c600a04387f1f0ac88f279ecdde51d5315fdd105409ff7247b99d3e429dd624",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 300]
+          },
+          "out_masks": {
+            "acceptedSha256": "4f166c99f61dfc69e53a0637543b4a5d7faf75f971203c041af059559fa9a71c",
+            "bitIdentical": true,
+            "candidateSha256": "4f166c99f61dfc69e53a0637543b4a5d7faf75f971203c041af059559fa9a71c",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 200, 200]
+          },
+          "pred_boxes": {
+            "acceptedSha256": "32c2ee356e4f4780542ee2ec60373d38429a01f60090f52d6f35cbd5841456f2",
+            "bitIdentical": true,
+            "candidateSha256": "32c2ee356e4f4780542ee2ec60373d38429a01f60090f52d6f35cbd5841456f2",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 4]
+          }
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "f27a8ad40192f2bff4bcc3605beaddf246bc35b07355e688defde1a2de333aa1",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 1000
+    },
+    {
+      "acceptedDetectionCount": 13,
+      "acceptedLabelSequenceEqual": true,
+      "acceptedReadingOrderEqual": true,
+      "detectionCountOfficial": 13,
+      "detectionCountOnnx": 13,
+      "filename": "skew-document.jpg",
+      "height": 1386,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 0.000244140625,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.1920928955078125e-6,
+      "onnxDetectionCount": 13,
+      "pass": true,
+      "rawOutputs": {
+        "allBitIdentical": true,
+        "outputs": {
+          "logits": {
+            "acceptedSha256": "a22dc8e94aa4e809480c29aedbeef057e2e7d0a3b694cc63231235a2ae0f17cb",
+            "bitIdentical": true,
+            "candidateSha256": "a22dc8e94aa4e809480c29aedbeef057e2e7d0a3b694cc63231235a2ae0f17cb",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 25]
+          },
+          "order_logits": {
+            "acceptedSha256": "4e4e6af629a74b8d84c3caa465fd5d84590c74c7e1033b2d3317a6c7d9952933",
+            "bitIdentical": true,
+            "candidateSha256": "4e4e6af629a74b8d84c3caa465fd5d84590c74c7e1033b2d3317a6c7d9952933",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 300]
+          },
+          "out_masks": {
+            "acceptedSha256": "73e2bd39e4ab3363d48106cb7aab38869c20f00dc51e582e24f493e9ee651aae",
+            "bitIdentical": true,
+            "candidateSha256": "73e2bd39e4ab3363d48106cb7aab38869c20f00dc51e582e24f493e9ee651aae",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 200, 200]
+          },
+          "pred_boxes": {
+            "acceptedSha256": "e2a4d30dee1acc953e7637201c11501bb8dea51ed857bc88d93c627a502c9513",
+            "bitIdentical": true,
+            "candidateSha256": "e2a4d30dee1acc953e7637201c11501bb8dea51ed857bc88d93c627a502c9513",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 4]
+          }
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "4ae0d5bebbe152a9cca8add806e376b3eb3314c3a55d6b7ccba70d9c4de97a1e",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 1068
+    },
+    {
+      "acceptedDetectionCount": 1,
+      "acceptedLabelSequenceEqual": true,
+      "acceptedReadingOrderEqual": true,
+      "detectionCountOfficial": 1,
+      "detectionCountOnnx": 1,
+      "filename": "table.png",
+      "height": 345,
+      "labelSequenceEqual": true,
+      "maxBoxCoordinateDeltaPixels": 6.103515625e-5,
+      "maxPolygonCoordinateDeltaPixels": 0.0,
+      "maxScoreDelta": 1.1920928955078125e-7,
+      "onnxDetectionCount": 1,
+      "pass": true,
+      "rawOutputs": {
+        "allBitIdentical": true,
+        "outputs": {
+          "logits": {
+            "acceptedSha256": "9292025c692bf595631a317965035be42e574caf7c27f9f5a47b9b140b21ceca",
+            "bitIdentical": true,
+            "candidateSha256": "9292025c692bf595631a317965035be42e574caf7c27f9f5a47b9b140b21ceca",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 25]
+          },
+          "order_logits": {
+            "acceptedSha256": "83256b094d74df5e84153923390f1ee9c0b4a53dec38d961ce4578db537b1a6d",
+            "bitIdentical": true,
+            "candidateSha256": "83256b094d74df5e84153923390f1ee9c0b4a53dec38d961ce4578db537b1a6d",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 300]
+          },
+          "out_masks": {
+            "acceptedSha256": "5bfcfee296f00fb650ae37161d26518a1fbf2c0f1d6bed024b02a663a35e79c8",
+            "bitIdentical": true,
+            "candidateSha256": "5bfcfee296f00fb650ae37161d26518a1fbf2c0f1d6bed024b02a663a35e79c8",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 200, 200]
+          },
+          "pred_boxes": {
+            "acceptedSha256": "8dffcef7a09ae707ec68239245bbcc8708532bac7e5b3bcc5fd269b11be907e5",
+            "bitIdentical": true,
+            "candidateSha256": "8dffcef7a09ae707ec68239245bbcc8708532bac7e5b3bcc5fd269b11be907e5",
+            "dtype": "float32",
+            "maxAbsoluteDelta": 0.0,
+            "shape": [1, 300, 4]
+          }
+        }
+      },
+      "readingOrderEqual": true,
+      "sha256": "6d50148ceccb2d5cecc50b084b5105e3167f2d55a8899b29e04c3ebe46e88fa8",
+      "unmatchedOfficial": [],
+      "unmatchedOnnx": [],
+      "width": 550
+    }
+  ],
+  "overallPass": true,
+  "paddleReference": {
+    "reason": "PaddlePaddle is not installed in the isolated Python 3.11 environment",
+    "status": "unavailable"
+  },
+  "schemaVersion": 1,
+  "sourceHashes": {
+    "acceptedOnnx": "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b",
+    "modelSafetensors": "5ea422c6cc5fe759a47e1357c35639b58173508e025a3131cbe4b6ac59e2b85e",
+    "onnx": "476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269"
+  },
+  "threshold": 0.5,
+  "thresholds": {
+    "boxCoordinateDeltaPixels": 1.0,
+    "polygonCoordinateDeltaPixels": 1.5,
+    "scoreDelta": 0.001
+  }
+}

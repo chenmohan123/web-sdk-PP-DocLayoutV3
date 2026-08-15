@@ -7,9 +7,9 @@ import { describe, test } from "node:test";
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const benchmarkRoot = join(repositoryRoot, "benchmarks/1.0.0");
 
-function readJson(name) {
-  const path = join(benchmarkRoot, name);
-  assert.ok(existsSync(path), `missing benchmark artifact: benchmarks/1.0.0/${name}`);
+function readJson(name, version = "1.0.0") {
+  const path = join(repositoryRoot, "benchmarks", version, name);
+  assert.ok(existsSync(path), `missing benchmark artifact: benchmarks/${version}/${name}`);
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
@@ -21,10 +21,12 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(workflow, /tests\/browser\/benchmark\.spec\.ts/);
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?wasm-fp32/);
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?webgpu-fp16/);
+    assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?webgpu-fp32/);
+    assert.match(workflow, /name:\s*benchmark-webgpu-fp32/);
     assert.match(workflow, /runs-on:\s*\[self-hosted, windows, x64, webgpu-hardware\]/);
     assert.match(workflow, /benchmark\.spec\.ts/);
     const artifactWorkflows = [
-      ["benchmark.yml", workflow, 3],
+      ["benchmark.yml", workflow, 4],
       ["ci.yml", readFileSync(join(repositoryRoot, ".github/workflows/ci.yml"), "utf8"), 1],
       [
         "model-validation.yml",
@@ -99,6 +101,42 @@ describe("1.0.0 benchmark release contract", () => {
     assert.equal(report.githubActions.runId, 31614796054);
     assert.match(report.githubActions.url, /actions\/runs\/31614796054$/);
     assert.deepEqual(report.responsiveScreenshots.viewports, [390, 768, 1440, 1920]);
+  });
+
+  test("publishes seven-fixture evidence for model 1.0.1 FP32 runtimes", () => {
+    const fixtureLock = JSON.parse(
+      readFileSync(join(repositoryRoot, "tools/model-pipeline/fixtures/fixtures.lock.json"), "utf8")
+    );
+    const fixtureHashes = new Map(
+      fixtureLock.fixtures.map((fixture) => [fixture.filename, fixture.sha256])
+    );
+    const thresholds = {
+      maxBoxCoordinateDeltaPixels: 1,
+      maxPolygonCoordinateDeltaPixels: 1.5,
+      maxScoreDelta: 0.001
+    };
+    for (const name of ["wasm-fp32.json", "webgpu-fp32.json"]) {
+      const report = readJson(name, "1.0.1");
+      assert.equal(report.status, "passed");
+      assert.equal(report.fallbacks.length, 0);
+      assert.equal(report.fixtures.length, 7);
+      for (const fixture of report.fixtures) {
+        assert.equal(fixture.parity, "passed");
+        assert.equal(fixture.fixtureSha256, fixtureHashes.get(fixture.filename));
+        assert.match(fixture.acceptedOutputSha256, /^[a-f0-9]{64}$/);
+        assert.match(fixture.outputSha256, /^[a-f0-9]{64}$/);
+        assert.deepEqual(fixture.parityThresholds, thresholds);
+        assert.ok(
+          fixture.parityMetrics.maxBoxCoordinateDeltaPixels <=
+            thresholds.maxBoxCoordinateDeltaPixels
+        );
+        assert.ok(
+          fixture.parityMetrics.maxPolygonCoordinateDeltaPixels <=
+            thresholds.maxPolygonCoordinateDeltaPixels
+        );
+        assert.ok(fixture.parityMetrics.maxScoreDelta <= thresholds.maxScoreDelta);
+      }
+    }
   });
 
   test("documents evidence provenance and unsupported variants", () => {

@@ -15,8 +15,14 @@ from ppdoclayout import variant_validation
 
 
 ROOT = Path(__file__).parents[3]
-MODEL_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.0"
-REPORT_PATH = ROOT / "tools" / "model-pipeline" / "reports" / "variant-validation.json"
+OLD_MODEL_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.0"
+MODEL_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.1"
+REPORT_PATH = (
+    ROOT / "tools" / "model-pipeline" / "reports" / "1.0.2" / "variant-validation.json"
+)
+ACCEPTED_REPORT_PATH = (
+    ROOT / "tools" / "model-pipeline" / "reports" / "variant-validation.json"
+)
 
 
 def test_fp32_semantic_casts_are_preserved() -> None:
@@ -84,9 +90,56 @@ def test_fp16_conversion_is_byte_reproducible(tmp_path: Path) -> None:
     regenerated = tmp_path / "model-fp16.onnx"
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", module="onnxconverter_common.float16")
-        convert_fp16(MODEL_DIR / "model-fp32.onnx", regenerated)
+        convert_fp16(OLD_MODEL_DIR / "model-fp32.onnx", regenerated)
 
     assert sha256_file(regenerated) == sha256_file(MODEL_DIR / "model-fp16.onnx")
+
+
+def test_model_1_0_1_reuses_accepted_fp16_bytes() -> None:
+    assert (MODEL_DIR / "model-fp16.onnx").read_bytes() == (
+        OLD_MODEL_DIR / "model-fp16.onnx"
+    ).read_bytes()
+
+
+def test_rejected_int8_evidence_is_carried_forward_without_binary() -> None:
+    accepted = json.loads(ACCEPTED_REPORT_PATH.read_text(encoding="utf-8"))["variants"][
+        "int8"
+    ]
+    candidate = json.loads(REPORT_PATH.read_text(encoding="utf-8"))["variants"]["int8"]
+
+    assert accepted["pass"] is False
+    assert accepted["included"] is False
+    assert candidate == accepted
+    assert not (MODEL_DIR / "model-int8.onnx").exists()
+
+
+def test_validation_cli_uses_accepted_int8_report(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "variant_validation",
+            "--model",
+            str(tmp_path / "model"),
+            "--fp32",
+            str(tmp_path / "fp32.onnx"),
+            "--fp16",
+            str(tmp_path / "fp16.onnx"),
+            "--accepted-variant-report",
+            str(tmp_path / "accepted.json"),
+            "--fixtures-lock",
+            str(tmp_path / "fixtures.json"),
+            "--output",
+            str(tmp_path / "report.json"),
+        ],
+    )
+
+    args = variant_validation.parse_args()
+
+    assert args.accepted_variant_report == tmp_path / "accepted.json"
+    assert not hasattr(args, "int8")
 
 
 def test_report_and_browser_evidence_are_bound_to_fp16_artifact() -> None:
@@ -207,7 +260,7 @@ def test_int8_accepts_speed_alternative_when_size_is_over_limit() -> None:
 def test_validation_cli_fails_without_passing_browser_evidence(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    paths = [tmp_path / name for name in ("model", "fp32", "fp16", "int8", "lock")]
+    paths = [tmp_path / name for name in ("model", "fp32", "fp16", "accepted", "lock")]
     for path in paths:
         path.write_bytes(b"placeholder")
     monkeypatch.setattr(
@@ -217,7 +270,7 @@ def test_validation_cli_fails_without_passing_browser_evidence(
             model=paths[0],
             fp32=paths[1],
             fp16=paths[2],
-            int8=paths[3],
+            accepted_variant_report=paths[3],
             fixtures_lock=paths[4],
             browser_evidence=None,
             output=tmp_path / "report.json",

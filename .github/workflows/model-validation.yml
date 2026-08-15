@@ -3,8 +3,18 @@ name: Model validation and assets
 on:
   workflow_dispatch:
     inputs:
+      model_version:
+        description: Model version to validate and publish
+        required: true
+        type: string
+        default: "1.0.2"
+      release_tag:
+        description: Immutable GitHub Release tag
+        required: true
+        type: string
+        default: "v1.0.2-models"
       upload_assets:
-        description: Upload the verified 1.0.1 manifest and reports to v1.0.1-models
+        description: Create the immutable compatibility manifest release
         required: true
         type: boolean
         default: false
@@ -19,6 +29,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           lfs: true
+          ref: ${{ github.sha }}
       - uses: pnpm/action-setup@v6
         with:
           version: 11.16.0
@@ -27,17 +38,37 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Validate immutable release identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${RELEASE_TAG}" != "v${MODEL_VERSION}-models" ]]; then
+            echo "Release tag must be v${MODEL_VERSION}-models." >&2
+            exit 1
+          fi
+          if [[ "${UPLOAD_ASSETS}" == "true" && "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Model assets may only be published from refs/heads/main." >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]]; then
+            echo "Checked out commit does not match GITHUB_SHA." >&2
+            exit 1
+          fi
+        env:
+          MODEL_VERSION: ${{ inputs.model_version }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          UPLOAD_ASSETS: ${{ inputs.upload_assets }}
       - name: Verify model hashes and validation reports
-        run: node scripts/verify-release.mjs --models
+        run: node scripts/verify-release.mjs --models "${{ inputs.model_version }}"
       - uses: actions/upload-artifact@v7
         with:
-          name: pp-doclayoutv3-model-validation
+          name: pp-doclayoutv3-${{ inputs.model_version }}-validation
           if-no-files-found: error
           path: |
-            models/pp-doclayoutv3/1.0.1/manifest.json
-            tools/model-pipeline/reports/browser-evidence.json
-            tools/model-pipeline/reports/fp32-validation.json
-            tools/model-pipeline/reports/variant-validation.json
+            models/pp-doclayoutv3/${{ inputs.model_version }}/manifest.json
+            tools/model-pipeline/reports/${{ inputs.model_version }}/browser-evidence.json
+            tools/model-pipeline/reports/${{ inputs.model_version }}/fp32-validation.json
+            tools/model-pipeline/reports/${{ inputs.model_version }}/variant-validation.json
 
   upload-model-assets:
     if: github.ref == 'refs/heads/main' && inputs.upload_assets
@@ -49,6 +80,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           lfs: true
+          ref: ${{ github.sha }}
       - uses: pnpm/action-setup@v6
         with:
           version: 11.16.0
@@ -57,29 +89,53 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: node scripts/verify-release.mjs --models
-      - name: Publish the new compatibility manifest and evidence
+      - run: node scripts/verify-release.mjs --models "${{ inputs.model_version }}"
+      - name: Create immutable model release
         shell: bash
         run: |
           set -euo pipefail
-          model_tag="v1.0.1-models"
-          if gh release view "$model_tag" >/dev/null 2>&1; then
-            git fetch --force origin "refs/tags/$model_tag:refs/tags/$model_tag"
-            tag_sha="$(git rev-list -n 1 "$model_tag")"
-            if [[ "$tag_sha" != "$GITHUB_SHA" ]]; then
-              echo "$model_tag points to $tag_sha, expected verified commit $GITHUB_SHA" >&2
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Model assets may only be published from refs/heads/main." >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]]; then
+            echo "Checked out commit does not match GITHUB_SHA." >&2
+            exit 1
+          fi
+          git fetch --no-tags origin main
+          if [[ "$(git rev-parse origin/main)" != "${GITHUB_SHA}" ]]; then
+            echo "GITHUB_SHA is not the current origin/main commit." >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            git fetch --force origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+            tag_sha="$(git rev-list -n 1 "${RELEASE_TAG}")"
+            if [[ "${tag_sha}" != "${GITHUB_SHA}" ]]; then
+              echo "${RELEASE_TAG} points to ${tag_sha}, expected verified commit ${GITHUB_SHA}." >&2
               exit 1
             fi
+            echo "Git tag ${RELEASE_TAG} already exists; it will not be reused." >&2
+            exit 1
           else
-            gh release create "$model_tag" \
-              --target "$GITHUB_SHA" \
-              --title "PP-DocLayoutV3 model manifest 1.0.1" \
-              --notes "Adds validated CPU/WASM compatibility for the unchanged FP16 model. Model binaries remain in v1.0.0-models."
+            tag_status=$?
+            if [[ "${tag_status}" -ne 2 ]]; then
+              echo "Unable to verify whether Git tag ${RELEASE_TAG} exists." >&2
+              exit "${tag_status}"
+            fi
           fi
-          gh release upload "$model_tag" \
-            models/pp-doclayoutv3/1.0.1/manifest.json \
-            tools/model-pipeline/reports/browser-evidence.json \
-            tools/model-pipeline/reports/fp32-validation.json \
-            tools/model-pipeline/reports/variant-validation.json
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists; immutable assets will not be overwritten." >&2
+            exit 1
+          fi
+          gh release create "${RELEASE_TAG}" \
+            "models/pp-doclayoutv3/${MODEL_VERSION}/manifest.json" \
+            "tools/model-pipeline/reports/${MODEL_VERSION}/browser-evidence.json" \
+            "tools/model-pipeline/reports/${MODEL_VERSION}/fp32-validation.json" \
+            "tools/model-pipeline/reports/${MODEL_VERSION}/variant-validation.json" \
+            --target "${GITHUB_SHA}" \
+            --title "PP-DocLayoutV3 model manifest ${MODEL_VERSION}" \
+            --notes "Adds validated CPU/WASM compatibility for unchanged model binaries in v1.0.1-models."
         env:
           GH_TOKEN: ${{ github.token }}
+          MODEL_VERSION: ${{ inputs.model_version }}
+          RELEASE_TAG: ${{ inputs.release_tag }}

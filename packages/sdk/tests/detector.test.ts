@@ -19,7 +19,7 @@ import type { InferenceExecutor } from "../src/worker/worker-bridge";
 const manifest = parseModelManifest(
   JSON.parse(
     readFileSync(
-      new URL("../../../models/pp-doclayoutv3/1.0.1/manifest.json", import.meta.url),
+      new URL("../../../models/pp-doclayoutv3/1.0.2/manifest.json", import.meta.url),
       "utf8"
     )
   )
@@ -102,7 +102,7 @@ describe("createDocLayout", () => {
     const deps = dependencies();
 
     expect(DEFAULT_MANIFEST_URL).toBe(
-      "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.1/manifest.json"
+      "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.2/manifest.json"
     );
 
     const detector = await createDocLayoutWithDependencies({}, deps);
@@ -180,7 +180,7 @@ describe("createDocLayout", () => {
     });
 
     expect(createExecutor).toHaveBeenCalledTimes(2);
-    expect(result.runtime).toMatchObject({ backend: "wasm", precision: "fp16" });
+    expect(result.runtime).toMatchObject({ backend: "webgpu", precision: "fp32" });
     expect(result.runtime.fallbacks).toHaveLength(1);
     expect(result.runtime.fallbacks[0]).toMatchObject({
       code: "SESSION_CREATE_FAILED",
