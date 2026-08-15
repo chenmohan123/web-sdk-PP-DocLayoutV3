@@ -33,9 +33,9 @@ await detector.dispose();
 ## 运行后端与精度
 
 - `backend: "auto"` 优先使用 WebGPU，不可用时回退到 WASM（CPU）。也可手动指定 `"webgpu"` 或 `"wasm"`。
-- `precision: "auto"` 在兼容的 WebGPU 环境优先 FP16，否则使用 WASM/CPU + FP32。也可手动指定 `"fp16"` 或 `"fp32"`。
-- FP16 模型用于 WebGPU；FP32 模型用于 WASM/CPU。
-- 默认模型仅支持 WebGPU + FP16 与 WASM/CPU + FP32。使用默认模型时，显式请求未声明的组合会抛出 `CAPABILITY_UNSUPPORTED`，不会改写无效组合；包含已验证 WebGPU FP32 或 WASM FP16 变体的自定义清单仍受支持。
+- `precision: "auto"` 在有 `shader-f16` 的 WebGPU 环境优先 FP16，没有该能力时可使用 WebGPU FP32，必要时回退到 WASM/CPU + FP32。也可手动指定 `"fp16"` 或 `"fp32"`。
+- 默认模型 `1.0.1` 的 FP16 和 FP32 变体均支持 WebGPU，FP32 也支持 WASM/CPU。
+- 使用默认模型时，显式请求清单中未声明的组合会抛出 `CAPABILITY_UNSUPPORTED`，不会改写无效组合；自定义清单可在单独验证后声明其他组合。上游模型是 float32，不支持 FP64；FP32 约为 FP16 两倍大小并可能更慢、更占显存。
 
 ## 自定义模型
 
@@ -95,9 +95,9 @@ Detailed initialization timings are available through `detector.loadTimings`. `t
 ### Backend and precision
 
 - `backend: "auto"` prefers WebGPU and falls back to WASM (CPU). Use `"webgpu"` or `"wasm"` for an explicit choice.
-- `precision: "auto"` prefers FP16 on compatible WebGPU devices and otherwise uses FP32 on WASM/CPU. Use `"fp16"` or `"fp32"` for an explicit choice.
-- The FP16 model targets WebGPU. The FP32 model targets WASM/CPU.
-- The default model supports WebGPU + FP16 and WASM/CPU + FP32 only. Explicit pairs absent from the default manifest throw `CAPABILITY_UNSUPPORTED` instead of rewriting an invalid pair; custom manifests with validated WebGPU FP32 or WASM FP16 variants remain supported.
+- `precision: "auto"` prefers FP16 on WebGPU with `shader-f16`, can use WebGPU FP32 without it, and falls back to FP32 on WASM/CPU when needed. Use `"fp16"` or `"fp32"` for an explicit choice.
+- The default `1.0.1` model supports FP16 and FP32 on WebGPU; FP32 also supports WASM/CPU.
+- Explicit pairs absent from the default manifest throw `CAPABILITY_UNSUPPORTED` instead of rewriting an invalid pair. The upstream model is float32, not FP64; FP64 inference is unsupported. FP32 is about twice the size of FP16 and may be slower or use more GPU memory.
 
 ### Custom models
 

@@ -172,7 +172,7 @@ for (const required of [
   "IndexedDB",
   "Apache-2.0",
   "74,279,796",
-  "143,216,104"
+  "142,574,928"
 ]) {
   assert(combinedReadmes.includes(required), `README coverage is missing: ${required}`);
 }

@@ -4,7 +4,7 @@ export type BackendPreference = "auto" | ModelBackend;
 export type PrecisionPreference = "auto" | "fp16" | "fp32";
 
 const DEFAULT_SUPPORT = {
-  webgpu: ["fp16"],
+  webgpu: ["fp16", "fp32"],
   wasm: ["fp32"]
 } as const;
 

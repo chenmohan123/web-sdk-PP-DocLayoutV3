@@ -45,7 +45,8 @@ function runPackageManager(args: readonly string[], cwd: string): string {
   return execFileSync(process.execPath, [packageManagerPath, ...args], {
     cwd,
     encoding: "utf8",
-    stdio: "pipe"
+    stdio: "pipe",
+    env: { ...process.env, CI: "true" }
   });
 }
 

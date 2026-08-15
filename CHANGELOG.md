@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.5
+
+- Adopted immutable PP-DocLayoutV3 model `1.0.1`, enabling validated strict WebGPU FP32 execution while retaining WebGPU FP16 as the preferred automatic path.
+- Versioned model validation evidence and Pages staging so historical `1.0.0` assets remain unchanged.
+
 ## 1.0.4
 
 - Corrected the validated default backend matrix to WebGPU FP16 and WASM FP32, made manual Demo selections strict, and exposed detailed runtime fallback causes.

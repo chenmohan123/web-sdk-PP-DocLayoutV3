@@ -81,10 +81,10 @@ test("keeps manual choices strict and uses only validated default pairs", async 
     backendFallback: false,
     precisionFallback: false,
     gpuFp16: true,
-    gpuFp32: false,
+    gpuFp32: true,
     wasmFp16: false,
     wasmFp32: true,
-    gpuCorrection: "fp16",
+    gpuCorrection: "fp32",
     wasmCorrection: "fp32",
     runtimeError: "ONNX session-create failed for webgpu: unsupported WebGPU operator",
     fallbackCause: "adapter allocation failed"
@@ -157,7 +157,7 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   );
   await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("target", "_blank");
   await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("rel", "noreferrer");
-  await expect(page.getByText("SDK 1.0.4", { exact: true })).toBeVisible();
+  await expect(page.getByText("SDK 1.0.5", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "English", exact: true })).toBeVisible();
   await expect(page.getByRole("group", { name: "运行后端" })).toBeVisible();
   await expect(page.getByRole("group", { name: "模型精度" })).toBeVisible();
@@ -237,14 +237,12 @@ test("enforces the validated default model matrix in controls", async ({ page })
 
   await precision.getByRole("button", { name: "FP32" }).click();
   await backend.getByRole("button", { name: "GPU" }).click();
-  await expect(precision.getByRole("button", { name: "FP32" })).toBeDisabled();
-  await expect(precision.getByRole("button", { name: "FP16" })).toHaveAttribute(
+  await expect(precision.getByRole("button", { name: "FP32" })).toBeEnabled();
+  await expect(precision.getByRole("button", { name: "FP32" })).toHaveAttribute(
     "aria-pressed",
     "true"
   );
-  await expect(page.getByTestId("notice")).toContainText(
-    "GPU 默认模型当前仅验证了 FP16，已为你切换模型精度"
-  );
+  await expect(page.getByTestId("notice")).toHaveCount(0);
 
   await backend.getByRole("button", { name: "自动" }).click();
   await precision.getByRole("button", { name: "FP16" }).click();
