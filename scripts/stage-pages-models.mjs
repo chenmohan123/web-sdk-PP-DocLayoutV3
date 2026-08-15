@@ -66,10 +66,11 @@ export async function stagePagesModels({
 export async function stageAllPagesModels({ fetchImpl = fetch, outputRoot }) {
   const staged = [];
   for (const model of PAGE_MODEL_RELEASES) {
+    const publicVersion = `v${model.version}`;
     const manifest = await stagePagesModels({
       fetchImpl,
-      outputRoot: resolve(outputRoot, model.version),
-      publicRoot: `https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/${model.version}`,
+      outputRoot: resolve(outputRoot, publicVersion),
+      publicRoot: `https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/${publicVersion}`,
       releaseRoot: model.releaseRoot
     });
     staged.push({ manifest, model });
