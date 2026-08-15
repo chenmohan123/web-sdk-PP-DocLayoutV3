@@ -19,9 +19,9 @@ describe("documentation contract", () => {
     const chineseReadme = readFileSync(new URL("README.md", repositoryRoot), "utf8");
     const englishReadme = readFileSync(new URL("README.en.md", repositoryRoot), "utf8");
 
-    assert.match(chineseReadme, /默认模型 `1\.0\.1`：FP16/);
+    assert.match(chineseReadme, /默认模型 `1\.0\.2`：FP16/);
     assert.doesNotMatch(chineseReadme, /默认 1\.0\.0 模型/);
-    assert.match(englishReadme, /The default `1\.0\.1` model/);
+    assert.match(englishReadme, /The default `1\.0\.2` model/);
     assert.doesNotMatch(englishReadme, /The default 1\.0\.0 FP16 model/);
   });
 
@@ -32,10 +32,10 @@ describe("documentation contract", () => {
     const englishModels = readFileSync(new URL("docs/en/models.md", repositoryRoot), "utf8");
     const chineseModels = readFileSync(new URL("docs/zh-CN/models.md", repositoryRoot), "utf8");
 
-    assert.match(rootReadme, /默认模型 `1\.0\.1`.*WebGPU 支持 FP16 和已验证的 FP32/s);
-    assert.match(packageReadme, /默认模型 `1\.0\.1`.*FP16 和 FP32 变体均支持 WebGPU/s);
-    assert.match(packageReadme, /The default `1\.0\.1` model supports FP16 and FP32 on WebGPU/);
-    assert.match(modelReadme, /FP32\s+\| WASM/);
+    assert.match(rootReadme, /WebGPU 和 CPU\/WASM 均支持 FP16/s);
+    assert.match(packageReadme, /FP16 和 FP32 变体均支持 WebGPU 和 WASM\/CPU/);
+    assert.match(packageReadme, /supports FP16 and FP32 on both WebGPU and WASM\/CPU/);
+    assert.match(modelReadme, /FP32\s+\| WASM、WebGPU/);
     assert.match(englishModels, /FP32\s+\| 142,574,928 bytes \| WASM, WebGPU/);
     assert.match(chineseModels, /FP32 \| 142,574,928 字节 \| WASM、WebGPU/);
   });

@@ -2,7 +2,7 @@
 
 [English](README.en.md)
 
-在浏览器中运行 PP-DocLayoutV3 的 TypeScript SDK，基于 ONNX Runtime Web。SDK 默认加载版本化模型清单，优先选择 WebGPU 和 FP16；能力不足或会话创建失败时，全自动模式可回退到 WASM/CPU 和 FP32。
+在浏览器中运行 PP-DocLayoutV3 的 TypeScript SDK，基于 ONNX Runtime Web。SDK 默认加载版本化模型清单，优先选择 WebGPU 和 FP16；能力不足或会话创建失败时，全自动模式可回退到 WASM/CPU 和 FP16，再回退到 FP32。
 
 > 当前支持 PC、移动端浏览器、微信公众号 H5 和微信小程序 `web-view` 页面。不支持微信小程序原生推理。
 
@@ -38,9 +38,9 @@ try {
 
 `backend` 可设为 `auto`、`webgpu`、`wasm`；`precision` 可设为 `auto`、`fp16`、`fp32`。全自动选择时 `allowFallback` 默认为 `true`；显式指定后端或精度时默认为 `false`，需要跨有效候选回退可主动设为 `true`。用户可传清单 URL、清单对象，或内存中的 `{ manifest, data }`；自定义模型必须遵循相同输入、输出和后处理契约。
 
-默认模型 `1.0.1` 的支持矩阵为：WebGPU 支持 FP16 和已验证的 FP32，CPU/WASM 支持 FP32。全自动模式在具备 `shader-f16` 时优先 WebGPU FP16；没有 `shader-f16` 时可使用 WebGPU FP32，运行时失败时再回退到 WASM/CPU FP32。使用默认模型时，SDK 会以 `CAPABILITY_UNSUPPORTED` 拒绝清单中不存在的显式组合；`allowFallback` 只会尝试清单中的有效候选。在线 Demo 仅在“自动后端 + 自动精度”时允许运行时回退；手动选择任一后端或精度后会严格执行，CPU 模式仍不支持 FP16，切换后端时若当前精度无效会改选已验证精度并显示提示。自定义清单若包含已通过验证的其他组合，SDK 和 Demo 仍允许对应组合。
+默认模型 `1.0.2` 的支持矩阵为：WebGPU 和 CPU/WASM 均支持 FP16，WebGPU 和 CPU/WASM 均支持已验证的 FP32。全自动模式在具备 `shader-f16` 时优先 WebGPU FP16；没有该能力时可使用 WebGPU FP32，运行时失败后再尝试 WASM/CPU FP16 和 FP32。使用默认模型时，SDK 会以 `CAPABILITY_UNSUPPORTED` 拒绝清单中不存在的显式组合；`allowFallback` 只会尝试清单中的有效候选。在线 Demo 仅在“自动后端 + 自动精度”时允许运行时回退；手动选择任一后端或精度后会严格执行。自定义清单若包含已通过验证的其他组合，SDK 和 Demo 仍允许对应组合。
 
-默认模型 `1.0.1`：FP16 为 74,279,796 字节，FP32 为 142,574,928 字节。FP16 的物理 WebGPU 证据来自单次样本；FP32 约为 FP16 的两倍，可能更慢并占用更多 GPU 内存，已通过 7 张授权图片的数值对齐、浏览器 WASM 和物理 WebGPU 验证。上游模型是 float32，不支持 FP64 推理。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。历史 `1.0.0` 模型和 SDK `1.0.4` 保持不变。
+默认模型 `1.0.2`：FP16 为 74,279,796 字节，FP32 为 142,574,928 字节；二进制继续使用不可变的 `v1.0.1-models`。FP16 通过 CPU 精度验收、真实浏览器 WASM 和真实 WebGPU 验证；FP32 已通过 7 张授权图片的数值对齐、浏览器 WASM 和物理 WebGPU 验证。上游模型是 float32，不支持 FP64 推理。模型使用 Apache-2.0，来源为 PaddlePaddle `PP-DocLayoutV3_safetensors`，详见 [模型文档](docs/zh-CN/models.md) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。历史 `1.0.0`、`1.0.1` 模型清单和 SDK `1.0.5` 保持不变。
 
 ## 部署与隐私
 

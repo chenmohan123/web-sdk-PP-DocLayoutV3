@@ -7,7 +7,7 @@ import type {
   TensorSpec
 } from "../types";
 
-export const CURRENT_SDK_VERSION = "1.0.5";
+export const CURRENT_SDK_VERSION = "1.0.6";
 
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const VERSION_PATTERN =

@@ -4,16 +4,21 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const MODEL_RELEASE_ROOT =
-  "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models";
+  "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.2-models";
 export const MODEL_PUBLIC_ROOT =
-  "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.1";
+  "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.2";
 export const PAGE_MODEL_RELEASES = [
   {
     version: "1.0.0",
     releaseRoot:
       "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models"
   },
-  { version: "1.0.1", releaseRoot: MODEL_RELEASE_ROOT }
+  {
+    version: "1.0.1",
+    releaseRoot:
+      "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models"
+  },
+  { version: "1.0.2", releaseRoot: MODEL_RELEASE_ROOT }
 ];
 
 async function requireOk(response, url) {
@@ -26,6 +31,24 @@ function requireFilename(filename) {
     throw new Error(`Unsafe or unexpected model filename: ${String(filename)}`);
   }
   return filename;
+}
+
+function requireAssetUrl(value, filename) {
+  if (typeof value !== "string") {
+    throw new Error(`Unsafe or unexpected model URL: ${String(value)}`);
+  }
+  const url = new URL(value);
+  const expectedPath = new RegExp(
+    `^/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v\\d+\\.\\d+\\.\\d+-models/${filename}$`
+  );
+  if (
+    url.protocol !== "https:" ||
+    url.hostname !== "github.com" ||
+    !expectedPath.test(url.pathname)
+  ) {
+    throw new Error(`Unsafe or unexpected model URL: ${value}`);
+  }
+  return url.href;
 }
 
 export async function stagePagesModels({
@@ -46,7 +69,7 @@ export async function stagePagesModels({
   const variants = [];
   for (const variant of manifest.variants) {
     const filename = requireFilename(variant.filename);
-    const assetUrl = `${releaseRoot}/${filename}`;
+    const assetUrl = requireAssetUrl(variant.url, filename);
     const response = await requireOk(await fetchImpl(assetUrl), assetUrl);
     const bytes = Buffer.from(await response.arrayBuffer());
     if (bytes.byteLength !== variant.bytes) {

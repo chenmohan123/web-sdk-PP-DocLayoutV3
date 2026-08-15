@@ -34,6 +34,7 @@ interface CandidateDefinition {
 const AUTOMATIC_ORDER: readonly CandidateDefinition[] = [
   { provider: "webgpu", precision: "fp16" },
   { provider: "webgpu", precision: "fp32" },
+  { provider: "wasm", precision: "fp16" },
   { provider: "wasm", precision: "int8" },
   { provider: "wasm", precision: "fp32" }
 ];

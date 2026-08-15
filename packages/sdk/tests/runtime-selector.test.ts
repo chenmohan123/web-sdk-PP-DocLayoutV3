@@ -11,7 +11,7 @@ import type { DocLayoutCapabilities, ModelVariant } from "../src/types";
 const manifest = parseModelManifest(
   JSON.parse(
     readFileSync(
-      new URL("../../../models/pp-doclayoutv3/1.0.1/manifest.json", import.meta.url),
+      new URL("../../../models/pp-doclayoutv3/1.0.2/manifest.json", import.meta.url),
       "utf8"
     )
   )
@@ -48,6 +48,7 @@ describe("selectExecutionPlan", () => {
     expect(plan.candidates.map(({ provider, precision }) => [provider, precision])).toEqual([
       ["webgpu", "fp16"],
       ["webgpu", "fp32"],
+      ["wasm", "fp16"],
       ["wasm", "int8"],
       ["wasm", "fp32"]
     ]);
@@ -96,12 +97,13 @@ describe("selectExecutionPlan", () => {
     const plan = selectExecutionPlan(
       {},
       capabilities({ webgpu: false, webgpuFp16: false }),
-      manifest.variants
+      manifest.variants.filter((variant) => variant.id !== "fp16")
     );
 
     expect(plan.selected).toMatchObject({ provider: "wasm", precision: "fp32" });
     expect(plan.candidates[2]).toMatchObject({ status: "skipped", variantId: null });
     expect(plan.candidates[2]!.reason).toMatch(/variant/i);
+    expect(plan.candidates[3]).toMatchObject({ status: "skipped", variantId: null });
   });
 
   it("does not fall back from explicit WebGPU mode", () => {
@@ -130,26 +132,21 @@ describe("selectExecutionPlan", () => {
       manifest.variants
     );
 
-    expect(plan.selected).toMatchObject({ provider: "webgpu", precision: "fp32" });
-    expect(plan.selected.reason).toMatch(/fallback/i);
+    expect(plan.selected).toMatchObject({ provider: "wasm", precision: "fp16" });
+    expect(plan.selected.reason).toMatch(/selected/i);
   });
 
-  it("rejects FP16 when CPU/WASM is explicitly selected", () => {
-    let caught: unknown;
-    try {
-      selectExecutionPlan(
-        { backend: "wasm", precision: "fp16", allowFallback: true },
-        capabilities(),
-        manifest.variants
-      );
-    } catch (error) {
-      caught = error;
-    }
+  it("selects FP16 when CPU/WASM is explicitly selected", () => {
+    const plan = selectExecutionPlan(
+      { backend: "wasm", precision: "fp16", allowFallback: true },
+      capabilities(),
+      manifest.variants
+    );
 
-    expect(caught).toBeInstanceOf(DocLayoutError);
-    expect(caught).toMatchObject({
-      code: "CAPABILITY_UNSUPPORTED",
-      details: { allowFallback: true, backend: "wasm", precision: "fp16" }
+    expect(plan.selected).toMatchObject({
+      provider: "wasm",
+      precision: "fp16",
+      variantId: "fp16"
     });
   });
 
@@ -163,7 +160,7 @@ describe("selectExecutionPlan", () => {
     const plan = selectExecutionPlan(
       { backend: "wasm", precision: "fp16", allowFallback: true },
       capabilities(),
-      [...manifest.variants, wasmFp16]
+      [...manifest.variants.filter((variant) => variant.id !== "fp16"), wasmFp16]
     );
 
     expect(plan.selected).toMatchObject({
@@ -175,7 +172,7 @@ describe("selectExecutionPlan", () => {
 
   it("selects WASM INT8 before WASM FP32 when WebGPU is unavailable", () => {
     const plan = selectExecutionPlan({}, capabilities({ webgpu: false, webgpuFp16: false }), [
-      ...manifest.variants,
+      ...manifest.variants.filter((variant) => variant.id !== "fp16"),
       int8Variant
     ]);
 
@@ -183,6 +180,20 @@ describe("selectExecutionPlan", () => {
       provider: "wasm",
       precision: "int8",
       variantId: "int8"
+    });
+  });
+
+  it("prefers WASM FP16 over FP32 when WebGPU is unavailable", () => {
+    const plan = selectExecutionPlan(
+      {},
+      capabilities({ webgpu: false, webgpuFp16: false }),
+      manifest.variants
+    );
+
+    expect(plan.selected).toMatchObject({
+      provider: "wasm",
+      precision: "fp16",
+      variantId: "fp16"
     });
   });
 });

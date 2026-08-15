@@ -20,7 +20,7 @@ python -m ppdoclayout.build_manifest
 
 上游 `torch_dtype` 是 float32，不是 FP64 推理；FP64 推理不支持。sanitizer 只把位置编码路径中的四个 DOUBLE initializer `sin`、`cos`、`sin_1`、`cos_1` 转为 FLOAT，每个形状都是 `[625, 64]`，并保留原有 FLOAT Cast。学习参数以及图输入输出契约不变。源 FP32 SHA-256 为 `fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b`，sanitized 产物 SHA-256 为 `476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269`。
 
-模型 `1.0.1` 已发布到不可覆盖的 `v1.0.1-models` release。FP32 在 7 张授权图片上通过 CPU parity、严格浏览器 WASM 和物理 WebGPU，且没有 fallback。FP16 与已验收的 `1.0.0` FP16 文件字节完全一致。历史 `v1.0.0-models` 资产保持不变。
+模型 `1.0.1` 已发布到不可覆盖的 `v1.0.1-models` release。FP32 在 7 张授权图片上通过 CPU parity、严格浏览器 WASM 和物理 WebGPU，且没有 fallback。FP16 与已验收的 `1.0.0` FP16 文件字节完全一致，并通过 CPU 精度验收及真实浏览器 WASM、WebGPU 运行。历史 `v1.0.0-models` 资产保持不变。
 
 在仓库根目录复现 sanitized 图：
 

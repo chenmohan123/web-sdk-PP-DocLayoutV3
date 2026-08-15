@@ -2,20 +2,28 @@
 
 ## 中文
 
-本目录保存 PP-DocLayoutV3 的版本化 ONNX 产物和由构建脚本生成的清单。默认 SDK 使用 `pp-doclayoutv3/1.0.1/`；`1.0.0` 资产通过 Git LFS 和 `v1.0.0-models` GitHub Release 保持历史不变。
+本目录保存 PP-DocLayoutV3 的版本化 ONNX 产物和由构建脚本生成的清单。默认 SDK 使用 `pp-doclayoutv3/1.0.2/manifest.json`；它复用 `v1.0.1-models` 中不可变的 FP16、FP32 二进制，只增加经过真实浏览器验证的 CPU/WASM FP16 兼容性。`1.0.0` 和 `1.0.1` 清单保持历史不变。
 
-### 1.0.0 变体
+### 1.0.2 默认清单
 
-| 文件              | 精度                    | 兼容后端 |    字节数 | SHA-256                                                            | 状态                                                        |
-| ----------------- | ----------------------- | -------- | --------: | ------------------------------------------------------------------ | ----------------------------------------------------------- |
-| `model-fp16.onnx` | FP16（图边界保持 FP32） | WebGPU   |  74279796 | `463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2` | CPU 精度验收和真实浏览器 WebGPU 验证通过，已纳入 1.0.0 清单 |
-| `model-fp32.onnx` | FP32                    | WASM     | 143216104 | `fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b` | 官方实现对齐和浏览器 WASM 验证通过，已纳入 1.0.0 清单       |
+| 文件              | 精度                    | 兼容后端     |    字节数 | SHA-256                                                            | 状态                                                              |
+| ----------------- | ----------------------- | ------------ | --------: | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `model-fp16.onnx` | FP16（图边界保持 FP32） | WASM、WebGPU |  74279796 | `463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2` | CPU 精度验收及真实浏览器 WASM、WebGPU 验证通过，已纳入 1.0.2 清单 |
+| `model-fp32.onnx` | FP32                    | WASM、WebGPU | 142574928 | `476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269` | 7 张授权图片、严格 WASM 和物理 WebGPU 均通过，已纳入 1.0.2 清单   |
 
-INT8 候选没有通过精度验收，浏览器 WASM 验证因此未执行；它不发布，也不会写入默认清单。当前 `1.0.1` 清单声明 FP16、FP32 均兼容 WebGPU，FP32 也兼容 WASM/CPU，并已通过严格浏览器 WASM 与物理 WebGPU 验证。
+INT8 候选没有通过精度验收，浏览器 WASM 验证因此未执行；它不发布，也不会写入默认清单。当前 `1.0.2` 清单声明 FP16、FP32 均兼容 WebGPU 和 WASM/CPU；历史 `1.0.1` 清单仍保持 FP16 仅支持 WebGPU、FP32 支持 WASM 和 WebGPU。
 
-固定版本下载前缀：
+不可变模型文件下载前缀：
+
+`https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models/`
+
+历史 `1.0.0` 模型文件下载前缀：
 
 `https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/`
+
+`1.0.2` manifest 发布前缀：
+
+`https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.2-models/`
 
 默认清单和模型 URL 绝不使用可变的 `latest` 地址。文件下载后应先按清单中的字节数和 SHA-256 校验，再创建 ONNX Runtime session。
 
@@ -51,7 +59,7 @@ Set-Location tools/model-pipeline
 ..\..\.venv-model\Scripts\python.exe -m ppdoclayout.build_manifest
 ```
 
-生成器会检查输入输出名称与形状、opset、文件大小、SHA-256 及验证状态；任何不一致都会终止生成。SDK 的后续实现将支持用户提供自定义微调模型清单，但自定义模型必须声明并满足同一运行时契约，不能假定与本清单兼容。
+生成器默认读取 `1.0.1` 模型二进制与 `1.0.2` 验证报告，并输出 `1.0.2/manifest.json`。它会检查输入输出名称与形状、opset、文件大小、SHA-256 及验证状态；任何不一致都会终止生成。SDK 支持用户提供自定义微调模型清单，但自定义模型必须声明并满足同一运行时契约，不能假定与本清单兼容。
 
 ### 来源与许可
 
@@ -59,9 +67,9 @@ Set-Location tools/model-pipeline
 
 ## English
 
-This directory contains versioned PP-DocLayoutV3 ONNX artifacts and a generated manifest. The historical version 1.0.0 manifest includes its validated FP16 WebGPU variant and FP32 WASM/CPU fallback. The current version 1.0.1 manifest adds a sanitized FP32 artifact validated on both WASM and physical WebGPU; the rejected INT8 candidate remains undistributed and absent from the default manifest.
+This directory contains versioned PP-DocLayoutV3 ONNX artifacts and generated manifests. Historical versions 1.0.0 and 1.0.1 remain unchanged. The default 1.0.2 manifest reuses immutable 1.0.1 binaries, retains the sanitized FP32 artifact validated on WASM and physical WebGPU, and adds validated FP16 WASM/CPU compatibility; the rejected INT8 candidate remains undistributed and absent from the default manifest.
 
-The ONNX files are available through Git LFS and are intended for publication at the immutable `v1.0.0-models` GitHub Release URLs above. Regenerate `manifest.json` with the command above; the generator binds report claims to the actual ONNX size, SHA-256, graph contract, and opset. Planned SDK support for custom fine-tuned manifests will require the same explicit runtime contract.
+The ONNX files are available through Git LFS and immutable GitHub Release URLs. The compatibility-only `v1.0.2-models` release carries its manifest and evidence without duplicating the `v1.0.1-models` binaries. Regenerate the current manifest with the command above; the generator binds report claims to the actual ONNX size, SHA-256, graph contract, opset, and browser execution providers. Custom fine-tuned manifests require the same explicit runtime contract.
 
 ### Model 1.0.1 WebGPU FP32 provenance
 

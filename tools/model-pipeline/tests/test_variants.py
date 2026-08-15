@@ -18,7 +18,7 @@ ROOT = Path(__file__).parents[3]
 OLD_MODEL_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.0"
 MODEL_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.1"
 REPORT_PATH = (
-    ROOT / "tools" / "model-pipeline" / "reports" / "1.0.1" / "variant-validation.json"
+    ROOT / "tools" / "model-pipeline" / "reports" / "1.0.2" / "variant-validation.json"
 )
 ACCEPTED_REPORT_PATH = (
     ROOT / "tools" / "model-pipeline" / "reports" / "variant-validation.json"
@@ -144,20 +144,28 @@ def test_validation_cli_uses_accepted_int8_report(
 
 def test_report_and_browser_evidence_are_bound_to_fp16_artifact() -> None:
     report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
-    evidence = json.loads(
+    browser_evidence = json.loads(
         (REPORT_PATH.parent / "browser-evidence.json").read_text(encoding="utf-8")
-    )["fp16Webgpu"]
+    )
+    webgpu_evidence = browser_evidence["fp16Webgpu"]
+    wasm_evidence = browser_evidence["fp16Wasm"]
     fp16_path = MODEL_DIR / "model-fp16.onnx"
 
     assert report["variants"]["fp16"]["bytes"] == fp16_path.stat().st_size
     assert report["variants"]["fp16"]["sha256"] == sha256_file(fp16_path)
     assert report["source"]["fp32Sha256"] == sha256_file(MODEL_DIR / "model-fp32.onnx")
-    assert evidence["modelBytes"] == fp16_path.stat().st_size
-    assert evidence["modelSha256"] == sha256_file(fp16_path)
-    assert evidence["onnxruntimeWebVersion"] == "1.27.0"
-    assert "shader-f16" in evidence["adapterFeatures"]
-    assert all(output["allFinite"] for output in evidence["outputs"].values())
-    assert all(len(output["sha256"]) == 64 for output in evidence["outputs"].values())
+    for backend, evidence in (
+        ("webgpu", webgpu_evidence),
+        ("wasm", wasm_evidence),
+    ):
+        assert evidence["status"] == "passed"
+        assert evidence["executionProvider"] == backend
+        assert evidence["modelBytes"] == fp16_path.stat().st_size
+        assert evidence["modelSha256"] == sha256_file(fp16_path)
+        assert evidence["onnxruntimeWebVersion"] == "1.27.0"
+        assert all(output["allFinite"] for output in evidence["outputs"].values())
+        assert all(len(output["sha256"]) == 64 for output in evidence["outputs"].values())
+    assert "shader-f16" in webgpu_evidence["adapterFeatures"]
 
     resize_evidence = report["variants"]["fp16"]["blockedOpEvidence"][0]
     assert resize_evidence["opType"] == "Resize"
@@ -166,7 +174,7 @@ def test_report_and_browser_evidence_are_bound_to_fp16_artifact() -> None:
     assert len(resize_evidence["withoutBlock"]["nodes"]) == 6
 
     sdk_package = json.loads((ROOT / "packages" / "sdk" / "package.json").read_text())
-    assert sdk_package["dependencies"]["onnxruntime-web"] == evidence[
+    assert sdk_package["dependencies"]["onnxruntime-web"] == webgpu_evidence[
         "onnxruntimeWebVersion"
     ]
 
@@ -186,7 +194,7 @@ def test_stale_browser_evidence_is_rejected(field: str, value: str) -> None:
     stale[field] = value
 
     assert variant_validation._browser_evidence_errors(
-        stale, MODEL_DIR / "model-fp16.onnx", "fp16"
+        stale, MODEL_DIR / "model-fp16.onnx", "fp16", "webgpu"
     )
 
 
@@ -198,9 +206,23 @@ def test_non_finite_browser_output_is_rejected() -> None:
     invalid["outputs"]["logits"]["allFinite"] = False
 
     errors = variant_validation._browser_evidence_errors(
-        invalid, MODEL_DIR / "model-fp16.onnx", "fp16"
+        invalid, MODEL_DIR / "model-fp16.onnx", "fp16", "webgpu"
     )
     assert any("non-finite" in error for error in errors)
+
+
+def test_wasm_browser_evidence_must_report_wasm_provider() -> None:
+    evidence = json.loads(
+        (REPORT_PATH.parent / "browser-evidence.json").read_text(encoding="utf-8")
+    )["fp16Webgpu"]
+    invalid = deepcopy(evidence)
+    invalid["executionProvider"] = "webgpu"
+
+    errors = variant_validation._browser_evidence_errors(
+        invalid, MODEL_DIR / "model-fp16.onnx", "fp16", "wasm"
+    )
+
+    assert any("not wasm" in error for error in errors)
 
 
 def test_false_positive_detections_fail_variant_acceptance() -> None:
@@ -275,6 +297,7 @@ def test_only_accepted_variants_are_publishable() -> None:
     assert fp16["maxScoreDelta"] <= 0.02
     assert fp16["meanPolygonPointDistancePixels"] <= 2.0
     assert fp16["browser"]["webgpu"]["status"] == "passed"
+    assert fp16["browser"]["wasm"]["status"] == "passed"
 
     int8_path = MODEL_DIR / "model-int8.onnx"
     int8 = report["variants"]["int8"]

@@ -2,7 +2,7 @@
 
 [中文](README.md)
 
-A TypeScript SDK that runs PP-DocLayoutV3 in the browser with ONNX Runtime Web. The default path loads a versioned manifest, prefers WebGPU with FP16, and can fall back to WASM/CPU with FP32 in fully automatic mode when capabilities or session creation require it.
+A TypeScript SDK that runs PP-DocLayoutV3 in the browser with ONNX Runtime Web. The default path loads a versioned manifest, prefers WebGPU with FP16, and can fall back to WASM/CPU with FP16 and then FP32 in fully automatic mode when capabilities or session creation require it.
 
 > Supported surfaces include desktop and mobile browsers, WeChat Official Account H5 pages, and mini-program `web-view` pages. It does not support native mini-program inference.
 
@@ -38,9 +38,9 @@ After initialization, `detector.loadTimings` exposes the timing breakdown. `tota
 
 Set `backend` to `auto`, `webgpu`, or `wasm`, and `precision` to `auto`, `fp16`, or `fp32`. `allowFallback` defaults to `true` for fully automatic selection and `false` when a backend or precision is explicit; set it to `true` to permit fallback across valid candidates. A model can be a manifest URL, a manifest object, or an in-memory `{ manifest, data }` pair. Custom models must preserve the documented tensor and postprocessing contract.
 
-The default `1.0.1` support matrix includes validated WebGPU FP16 and FP32, plus CPU/WASM FP32. Fully automatic selection prefers WebGPU FP16 when `shader-f16` is available; without `shader-f16` it can use WebGPU FP32, then fall back to WASM/CPU FP32 if runtime creation fails. The SDK rejects explicit pairs absent from the manifest with `CAPABILITY_UNSUPPORTED`; `allowFallback` only tries valid manifest candidates. The live Demo enables runtime fallback only for Auto backend + Auto precision. Any manual backend or precision choice is strict: CPU still does not support FP16, and changing backend corrects an invalid precision with a notice. Custom manifests with separately validated variants remain supported by both the SDK and Demo.
+The default `1.0.2` support matrix includes validated WebGPU FP16 and FP32, plus validated CPU/WASM FP16 and FP32. Fully automatic selection prefers WebGPU FP16 when `shader-f16` is available; without it, it can use WebGPU FP32 and then try WASM/CPU FP16 or FP32 if runtime creation fails. The SDK rejects explicit pairs absent from the manifest with `CAPABILITY_UNSUPPORTED`; `allowFallback` only tries valid manifest candidates. The live Demo enables runtime fallback only for Auto backend + Auto precision. Any manual backend or precision choice is strict. Custom manifests with separately validated variants remain supported by both the SDK and Demo.
 
-The default `1.0.1` model is 74,279,796 bytes for FP16 and 142,574,928 bytes for FP32. FP16 physical WebGPU evidence covers a single sample. FP32 is about twice the size of FP16, may be slower, and uses more GPU memory; it passed seven licensed fixtures in numerical parity, strict browser WASM, and physical WebGPU validation. The upstream model is float32, not FP64, and FP64 inference is unsupported. The PaddlePaddle `PP-DocLayoutV3_safetensors` model is Apache-2.0; see [Models](docs/en/models.md) and [Third-Party Notices](THIRD_PARTY_NOTICES.md). Historical model `1.0.0` and SDK `1.0.4` assets remain unchanged.
+The default `1.0.2` model is 74,279,796 bytes for FP16 and 142,574,928 bytes for FP32; its binaries remain in the immutable `v1.0.1-models` release. FP16 passed CPU precision acceptance plus real browser WASM and WebGPU validation. FP32 passed seven licensed fixtures in numerical parity, strict browser WASM, and physical WebGPU validation. The upstream model is float32, not FP64, and FP64 inference is unsupported. The PaddlePaddle `PP-DocLayoutV3_safetensors` model is Apache-2.0; see [Models](docs/en/models.md) and [Third-Party Notices](THIRD_PARTY_NOTICES.md). Historical model `1.0.0`, `1.0.1`, and SDK `1.0.5` assets remain unchanged.
 
 ## Deployment and privacy
 

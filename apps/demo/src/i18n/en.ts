@@ -46,7 +46,10 @@ export const en: Copy = {
   exportJson: "Export JSON",
   clearCache: "Clear cache",
   cacheCleared: "Cache cleared",
-  cpuFp16Unsupported: "CPU currently supports FP32 only. Model precision was switched for you.",
+  cpuFp16Unsupported:
+    "The current model does not validate FP16 on CPU. Model precision was switched for you.",
+  gpuFp32Unsupported:
+    "The current model does not validate FP32 on GPU. Model precision was switched for you.",
   precisionAdjusted: "The selected model does not support that precision on this backend.",
   custom: "Custom manifest",
   customTitle: "Custom model",

@@ -30,7 +30,7 @@ function verifyWithJsonMutation(relativePath, mutate) {
   }
 }
 
-function modelStagingFixture({ corruptFp32 = false } = {}) {
+function modelStagingFixture({ corruptFp32 = false, unsafeFp16Url = false } = {}) {
   const fp16 = Buffer.from("fp16-model");
   const fp32 = Buffer.from("fp32-model");
   const manifest = {
@@ -41,21 +41,29 @@ function modelStagingFixture({ corruptFp32 = false } = {}) {
         filename: "model-fp16.onnx",
         id: "fp16",
         sha256: sha256(fp16),
-        url: "https://release.invalid/model-fp16.onnx"
+        url: unsafeFp16Url
+          ? "https://evil.example/model-fp16.onnx"
+          : "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/model-fp16.onnx"
       },
       {
         bytes: fp32.byteLength,
         filename: "model-fp32.onnx",
         id: "fp32",
         sha256: sha256(fp32),
-        url: "https://release.invalid/model-fp32.onnx"
+        url: "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/model-fp32.onnx"
       }
     ]
   };
   const assets = new Map([
     ["https://release.test/manifest.json", JSON.stringify(manifest)],
-    ["https://release.test/model-fp16.onnx", fp16],
-    ["https://release.test/model-fp32.onnx", corruptFp32 ? Buffer.from("Fp32-model") : fp32]
+    [
+      "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/model-fp16.onnx",
+      fp16
+    ],
+    [
+      "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models/model-fp32.onnx",
+      corruptFp32 ? Buffer.from("Fp32-model") : fp32
+    ]
   ]);
   return {
     fp16,
@@ -79,14 +87,14 @@ describe("release workflow contract", () => {
     assert.match(output, /4 workflows, 2 model variants/);
   });
 
-  test("verifies model 1.0.1 as the SDK 1.0.5 default", () => {
+  test("verifies model 1.0.2 as the SDK 1.0.6 default", () => {
     const output = execFileSync(
       process.execPath,
-      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.1"],
+      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.2"],
       { cwd: repositoryRoot, encoding: "utf8" }
     );
 
-    assert.match(output, /model 1\.0\.1/);
+    assert.match(output, /model 1\.0\.2/);
   });
 
   test("creates the immutable model release without clobber", () => {
@@ -95,8 +103,8 @@ describe("release workflow contract", () => {
       "utf8"
     );
 
-    assert.match(workflow, /model_version:[\s\S]*default:\s*["']?1\.0\.1/);
-    assert.match(workflow, /release_tag:[\s\S]*default:\s*["']?v1\.0\.1-models/);
+    assert.match(workflow, /model_version:[\s\S]*default:\s*["']?1\.0\.2/);
+    assert.match(workflow, /release_tag:[\s\S]*default:\s*["']?v1\.0\.2-models/);
     assert.match(workflow, /gh release create/);
     assert.doesNotMatch(workflow, /--clobber/);
     assert.match(workflow, /GITHUB_REF[\s\S]*refs\/heads\/main/);
@@ -180,7 +188,7 @@ describe("release workflow contract", () => {
     });
   });
 
-  test("keeps the 1.0.5 package, runtime, and changelog versions aligned", () => {
+  test("keeps the 1.0.6 package, runtime, and changelog versions aligned", () => {
     const packageMetadata = JSON.parse(
       readFileSync(resolve(repositoryRoot, "packages/sdk/package.json"), "utf8")
     );
@@ -190,9 +198,31 @@ describe("release workflow contract", () => {
     );
     const changelog = readFileSync(resolve(repositoryRoot, "CHANGELOG.md"), "utf8");
 
-    assert.equal(packageMetadata.version, "1.0.5");
-    assert.match(runtime, /CURRENT_SDK_VERSION = "1\.0\.5"/);
-    assert.match(changelog, /^## 1\.0\.5$/m);
+    assert.equal(packageMetadata.version, "1.0.6");
+    assert.match(runtime, /CURRENT_SDK_VERSION = "1\.0\.6"/);
+    assert.match(changelog, /^## 1\.0\.6$/m);
+  });
+
+  test("binds the model manifest release to the verified main commit", () => {
+    const modelWorkflow = readFileSync(
+      resolve(repositoryRoot, ".github/workflows/model-validation.yml"),
+      "utf8"
+    );
+
+    assert.match(
+      modelWorkflow,
+      /upload-model-assets:\s*\n\s*if:\s*github\.ref == ['"]refs\/heads\/main['"] && inputs\.upload_assets/
+    );
+    assert.match(
+      modelWorkflow,
+      /gh release create "\$\{RELEASE_TAG\}"[\s\S]*--target "\$\{GITHUB_SHA\}"/
+    );
+    assert.match(
+      modelWorkflow,
+      /git fetch --force origin "refs\/tags\/\$\{RELEASE_TAG\}:refs\/tags\/\$\{RELEASE_TAG\}"/
+    );
+    assert.match(modelWorkflow, /tag_sha="\$\(git rev-list -n 1 "\$\{RELEASE_TAG\}"\)"/);
+    assert.match(modelWorkflow, /\[\[ "\$\{tag_sha\}" != "\$\{GITHUB_SHA\}" \]\]/);
   });
 
   test("recognizes standard list-form GitHub Action steps", () => {
@@ -339,12 +369,12 @@ describe("release workflow contract", () => {
       const staged = await stagePagesModels({
         fetchImpl: fixture.fetchImpl,
         outputRoot,
-        publicRoot: "https://pages.test/models/v1.0.1",
+        publicRoot: "https://pages.test/models/v1.0.2",
         releaseRoot: "https://release.test"
       });
 
-      assert.equal(staged.variants[0].url, "https://pages.test/models/v1.0.1/model-fp16.onnx");
-      assert.equal(staged.variants[1].url, "https://pages.test/models/v1.0.1/model-fp32.onnx");
+      assert.equal(staged.variants[0].url, "https://pages.test/models/v1.0.2/model-fp16.onnx");
+      assert.equal(staged.variants[1].url, "https://pages.test/models/v1.0.2/model-fp32.onnx");
       assert.deepEqual(readFileSync(resolve(outputRoot, "model-fp16.onnx")), fixture.fp16);
       assert.deepEqual(readFileSync(resolve(outputRoot, "model-fp32.onnx")), fixture.fp32);
       assert.deepEqual(
@@ -364,10 +394,10 @@ describe("release workflow contract", () => {
     const { stageAllPagesModels } = await import("./stage-pages-models.mjs");
     const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-model-versions-"));
     const fixture = modelStagingFixture();
-    const fetchImpl = (url) => {
-      const filename = new URL(String(url)).pathname.split("/").at(-1);
-      return fixture.fetchImpl(`https://release.test/${filename}`);
-    };
+    const fetchImpl = (url) =>
+      fixture.fetchImpl(
+        String(url).endsWith("/manifest.json") ? "https://release.test/manifest.json" : String(url)
+      );
 
     try {
       assert.match(stagingSource, /await stageAllPagesModels\(/);
@@ -375,9 +405,9 @@ describe("release workflow contract", () => {
 
       assert.deepEqual(
         staged.map(({ model }) => model.version),
-        ["1.0.0", "1.0.1"]
+        ["1.0.0", "1.0.1", "1.0.2"]
       );
-      for (const version of ["1.0.0", "1.0.1"]) {
+      for (const version of ["1.0.0", "1.0.1", "1.0.2"]) {
         const publicVersion = `v${version}`;
         const manifest = JSON.parse(
           readFileSync(resolve(outputRoot, publicVersion, "manifest.json"), "utf8")
@@ -409,10 +439,29 @@ describe("release workflow contract", () => {
         stagePagesModels({
           fetchImpl: fixture.fetchImpl,
           outputRoot,
-          publicRoot: "https://pages.test/models/v1.0.1",
+          publicRoot: "https://pages.test/models/v1.0.2",
           releaseRoot: "https://release.test"
         }),
         /model-fp32\.onnx SHA-256 mismatch/
+      );
+    } finally {
+      rmSync(outputRoot, { force: true, recursive: true });
+    }
+  });
+
+  test("rejects a staged model URL outside immutable repository releases", async () => {
+    const { stagePagesModels } = await import("./stage-pages-models.mjs");
+    const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-model-stage-"));
+    const fixture = modelStagingFixture({ unsafeFp16Url: true });
+    try {
+      await assert.rejects(
+        stagePagesModels({
+          fetchImpl: fixture.fetchImpl,
+          outputRoot,
+          publicRoot: "https://pages.test/models/v1.0.2",
+          releaseRoot: "https://release.test"
+        }),
+        /Unsafe or unexpected model URL/
       );
     } finally {
       rmSync(outputRoot, { force: true, recursive: true });

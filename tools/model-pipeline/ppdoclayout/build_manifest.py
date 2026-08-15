@@ -13,6 +13,7 @@ import onnx
 MODEL_ID = "pp-doclayoutv3"
 MIN_SDK_VERSION = "1.0.0"
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+RELEASE_TAG = re.compile(r"^v\d+\.\d+\.\d+-models$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 EXPECTED_INPUT_NAME = "pixel_values"
 EXPECTED_INPUT_SHAPE = [1, 3, 800, 800]
@@ -25,8 +26,8 @@ ROOT = Path(__file__).parents[3]
 def release_base_url(model_version: str, release_tag: str) -> str:
     if not SEMVER.fullmatch(model_version):
         raise ValueError(f"Invalid model version: {model_version}")
-    if release_tag != f"v{model_version}-models":
-        raise ValueError("Release tag must match model version")
+    if not RELEASE_TAG.fullmatch(release_tag):
+        raise ValueError(f"Invalid model release tag: {release_tag}")
     return (
         "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
         f"releases/download/{release_tag}/"
@@ -282,16 +283,23 @@ def build_manifest(
             raise ValueError("FP16 report byte size does not match the ONNX artifact")
         if fp16_report.get("sha256") != fp16["sha256"]:
             raise ValueError("FP16 report SHA-256 does not match the ONNX artifact")
-        browser = fp16_report.get("browser", {}).get("webgpu", {})
-        if browser.get("status") != "passed":
-            raise ValueError("FP16 browser validation did not pass")
-        if browser.get("modelBytes") != fp16["bytes"]:
-            raise ValueError("FP16 browser byte size does not match the ONNX artifact")
-        if browser.get("modelSha256") != fp16["sha256"]:
-            raise ValueError("FP16 browser SHA-256 does not match the ONNX artifact")
+        for backend in ("wasm", "webgpu"):
+            browser = fp16_report.get("browser", {}).get(backend, {})
+            if browser.get("status") != "passed":
+                raise ValueError(f"FP16 browser {backend} validation did not pass")
+            if browser.get("executionProvider") != backend:
+                raise ValueError(f"FP16 browser provider does not match {backend}")
+            if browser.get("modelBytes") != fp16["bytes"]:
+                raise ValueError(
+                    f"FP16 browser {backend} byte size does not match the ONNX artifact"
+                )
+            if browser.get("modelSha256") != fp16["sha256"]:
+                raise ValueError(
+                    f"FP16 browser {backend} SHA-256 does not match the ONNX artifact"
+                )
         variants.append(
             {
-                "backendCompatibility": ["webgpu"],
+                "backendCompatibility": ["wasm", "webgpu"],
                 "bytes": fp16["bytes"],
                 "filename": fp16_path.name,
                 "id": "fp16",
@@ -380,7 +388,8 @@ def write_manifest(
 def parse_args() -> argparse.Namespace:
     pipeline_dir = ROOT / "tools" / "model-pipeline"
     parser = argparse.ArgumentParser(description="Build the versioned model manifest")
-    parser.add_argument("--model-version", default="1.0.1")
+    parser.add_argument("--model-version", default="1.0.2")
+    parser.add_argument("--artifact-version", default="1.0.1")
     parser.add_argument("--release-tag", default="v1.0.1-models")
     parser.add_argument(
         "--contract",
@@ -401,13 +410,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-dir", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
-    model_dir = ROOT / "models" / MODEL_ID / args.model_version
+    if not SEMVER.fullmatch(args.artifact_version):
+        parser.error("--artifact-version must be semantic version X.Y.Z")
+    model_dir = ROOT / "models" / MODEL_ID / args.artifact_version
+    manifest_dir = ROOT / "models" / MODEL_ID / args.model_version
     report_dir = pipeline_dir / "reports" / args.model_version
     args.model_dir = args.model_dir or model_dir
     args.fp32_report = args.fp32_report or report_dir / "fp32-validation.json"
     args.variant_report = args.variant_report or report_dir / "variant-validation.json"
     args.browser_report = args.browser_report or report_dir / "browser-evidence.json"
-    args.output = args.output or model_dir / "manifest.json"
+    args.output = args.output or manifest_dir / "manifest.json"
     return args
 
 

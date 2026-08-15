@@ -7,7 +7,7 @@ import { CURRENT_SDK_VERSION, parseModelManifest } from "../src/model/manifest";
 
 const defaultManifest = JSON.parse(
   readFileSync(
-    new URL("../../../models/pp-doclayoutv3/1.0.1/manifest.json", import.meta.url),
+    new URL("../../../models/pp-doclayoutv3/1.0.2/manifest.json", import.meta.url),
     "utf8"
   )
 ) as unknown;
@@ -36,7 +36,7 @@ function expectManifestError(input: unknown, message: RegExp): void {
 
 describe("parseModelManifest", () => {
   it("reports the published SDK version", () => {
-    expect(CURRENT_SDK_VERSION).toBe("1.0.5");
+    expect(CURRENT_SDK_VERSION).toBe("1.0.6");
   });
 
   it("parses the generated default manifest without changing model semantics", () => {
@@ -67,7 +67,7 @@ describe("parseModelManifest", () => {
       }))
     ).toEqual([
       {
-        backendCompatibility: ["webgpu"],
+        backendCompatibility: ["wasm", "webgpu"],
         id: "fp16",
         precision: "fp16",
         url: "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models/model-fp16.onnx"
@@ -113,13 +113,13 @@ describe("parseModelManifest", () => {
 
   it("rejects a manifest requiring a newer SDK", () => {
     const manifest = copyManifest();
-    manifest.minSdkVersion = "1.0.6";
+    manifest.minSdkVersion = "1.0.7";
 
     const error = captureManifestError(manifest);
     expect(error.code).toBe("MODEL_INCOMPATIBLE");
     expect(error.details).toEqual({
-      currentSdkVersion: "1.0.5",
-      minSdkVersion: "1.0.6"
+      currentSdkVersion: "1.0.6",
+      minSdkVersion: "1.0.7"
     });
   });
 });
