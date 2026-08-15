@@ -378,19 +378,20 @@ describe("release workflow contract", () => {
         ["1.0.0", "1.0.1"]
       );
       for (const version of ["1.0.0", "1.0.1"]) {
+        const publicVersion = `v${version}`;
         const manifest = JSON.parse(
-          readFileSync(resolve(outputRoot, version, "manifest.json"), "utf8")
+          readFileSync(resolve(outputRoot, publicVersion, "manifest.json"), "utf8")
         );
         assert.equal(
           manifest.variants[0].url,
-          `https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/${version}/model-fp16.onnx`
+          `https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/${publicVersion}/model-fp16.onnx`
         );
         assert.deepEqual(
-          readFileSync(resolve(outputRoot, version, "model-fp16.onnx")),
+          readFileSync(resolve(outputRoot, publicVersion, "model-fp16.onnx")),
           fixture.fp16
         );
         assert.deepEqual(
-          readFileSync(resolve(outputRoot, version, "model-fp32.onnx")),
+          readFileSync(resolve(outputRoot, publicVersion, "model-fp32.onnx")),
           fixture.fp32
         );
       }
