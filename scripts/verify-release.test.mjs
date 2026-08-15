@@ -232,6 +232,7 @@ describe("release workflow contract", () => {
     assert.match(ci, /^\s*- uses: actions\/checkout@v7\r?$/m);
     assert.match(pages, /^\s*- uses: actions\/configure-pages@v6\r?$/m);
     assert.match(pages, /^\s*- uses: actions\/upload-pages-artifact@v5\r?$/m);
+    assert.match(pages, /^\s*uses: actions\/deploy-pages@v5\r?$/m);
 
     const setupNodeWorkflows = [
       ["benchmark.yml", 4],
