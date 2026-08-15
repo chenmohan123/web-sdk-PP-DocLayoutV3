@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.5
+
+- Added validated CPU/WASM support for the bundled FP16 model through the immutable `1.0.1` model manifest.
+- Kept the published `1.0.0` model contract unchanged while reusing its byte-identical FP16 and FP32 model assets.
+
 ## 1.0.4
 
 - Corrected the validated default backend matrix to WebGPU FP16 and WASM FP32, made manual Demo selections strict, and exposed detailed runtime fallback causes.

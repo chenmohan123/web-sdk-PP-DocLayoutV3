@@ -82,10 +82,10 @@ test("keeps manual choices strict and uses only validated default pairs", async 
     precisionFallback: false,
     gpuFp16: true,
     gpuFp32: false,
-    wasmFp16: false,
+    wasmFp16: true,
     wasmFp32: true,
     gpuCorrection: "fp16",
-    wasmCorrection: "fp32",
+    wasmCorrection: "fp16",
     runtimeError: "ONNX session-create failed for webgpu: unsupported WebGPU operator",
     fallbackCause: "adapter allocation failed"
   });
@@ -157,7 +157,7 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   );
   await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("target", "_blank");
   await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("rel", "noreferrer");
-  await expect(page.getByText("SDK 1.0.4", { exact: true })).toBeVisible();
+  await expect(page.getByText("SDK 1.0.5", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "English", exact: true })).toBeVisible();
   await expect(page.getByRole("group", { name: "运行后端" })).toBeVisible();
   await expect(page.getByRole("group", { name: "模型精度" })).toBeVisible();
@@ -250,16 +250,12 @@ test("enforces the validated default model matrix in controls", async ({ page })
   await precision.getByRole("button", { name: "FP16" }).click();
   await backend.getByRole("button", { name: "CPU" }).click();
 
-  await expect(precision.getByRole("button", { name: "FP16" })).toBeDisabled();
+  await expect(precision.getByRole("button", { name: "FP16" })).toBeEnabled();
+  await expect(precision.getByRole("button", { name: "FP16" })).not.toHaveAttribute("title");
   await expect(precision.getByRole("button", { name: "FP16" })).toHaveAttribute(
-    "title",
-    "CPU 当前仅支持 FP32，已为你切换模型精度。"
-  );
-  await expect(precision.getByRole("button", { name: "FP32" })).toHaveAttribute(
     "aria-pressed",
     "true"
   );
-  await expect(page.getByTestId("notice")).toContainText("CPU 当前仅支持 FP32，已为你切换模型精度");
   await page.locator('input[type="file"]').setInputFiles({
     name: "cpu-fp16.png",
     mimeType: "image/png",
@@ -269,7 +265,7 @@ test("enforces the validated default model matrix in controls", async ({ page })
   await page.getByRole("button", { name: "开始检测" }).click();
   await expect(page.getByTestId("status")).toContainText("检测完成", { timeout: 15_000 });
   await expect(page.getByText("wasm", { exact: true })).toBeVisible();
-  await expect(page.getByText("fp32", { exact: true })).toBeVisible();
+  await expect(page.getByText("fp16", { exact: true })).toBeVisible();
 });
 
 test("shows local sample documents and only previews a selected sample", async ({ page }) => {

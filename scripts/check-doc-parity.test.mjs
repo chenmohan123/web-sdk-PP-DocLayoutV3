@@ -32,11 +32,14 @@ describe("documentation contract", () => {
     const englishModels = readFileSync(new URL("docs/en/models.md", repositoryRoot), "utf8");
     const chineseModels = readFileSync(new URL("docs/zh-CN/models.md", repositoryRoot), "utf8");
 
-    assert.match(rootReadme, /WebGPU 仅支持 FP16.*CPU\/WASM 仅支持 FP32/s);
-    assert.match(packageReadme, /FP16 模型用于 WebGPU；FP32 模型用于 WASM\/CPU/);
+    assert.match(rootReadme, /WebGPU \+ FP16、CPU\/WASM \+ FP16、CPU\/WASM \+ FP32/s);
     assert.match(
       packageReadme,
-      /The FP16 model targets WebGPU\. The FP32 model targets WASM\/CPU\./
+      /FP16 模型用于 WebGPU，也可用于 WASM\/CPU；FP32 模型用于 WASM\/CPU/
+    );
+    assert.match(
+      packageReadme,
+      /The FP16 model targets WebGPU and WASM\/CPU; the FP32 model targets WASM\/CPU\./
     );
     assert.match(modelReadme, /FP32\s+\| WASM/);
     assert.match(englishModels, /FP32\s+\| 143,216,104 bytes \| WASM/);

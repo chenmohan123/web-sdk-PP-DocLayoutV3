@@ -39,8 +39,19 @@ export const tinyModelManifest: ModelManifest = {
     name: "Generated browser test fixture",
     url: "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3"
   },
-  variantPriority: ["fp32"],
+  variantPriority: ["fp16", "fp32"],
   variants: [
+    {
+      backendCompatibility: ["wasm"],
+      bytes: 503,
+      filename: "tiny-model.onnx",
+      id: "fp16",
+      opset: 18,
+      precision: "fp16",
+      sha256: "6246e122b581090b094a70c3a8237b2fe0029f3aac8ec4dc1271dc5ab1fefa18",
+      url: "https://fixture.invalid/tiny-model.onnx",
+      validation: { included: true, pass: true, report: "generated" }
+    },
     {
       backendCompatibility: ["wasm"],
       bytes: 503,

@@ -19,7 +19,7 @@ Returns a `Promise<DocLayoutDetector>`. Common options:
 
 For `phase: "model"` and `status: "progress"`, `loadedBytes` and the optional `totalBytes` describe model network-transfer bytes only, not overall initialization progress. They exclude integrity verification and ONNX Runtime Session creation. `totalBytes` can be absent when the response has no `Content-Length`, and cache, memory, or custom binary model sources may emit no byte progress.
 
-For the default model, `webgpu` supports `fp16` only, while `wasm` (CPU) supports `fp32` only. Explicit pairs absent from the manifest throw `CAPABILITY_UNSUPPORTED`. `allowFallback` handles runtime failures among valid candidates; it does not rewrite an invalid pair. The Demo enables fallback only for Auto backend + Auto precision, so any manual Demo backend or precision choice remains strict.
+For the default model, `webgpu` supports `fp16`, while `wasm` (CPU) supports both `fp16` and `fp32`. Explicit pairs absent from the manifest throw `CAPABILITY_UNSUPPORTED`. `allowFallback` handles runtime failures among valid candidates; it does not rewrite an invalid pair. Automatic selection prefers WebGPU FP16, then WASM FP16, then WASM FP32 for the bundled manifest. The Demo enables fallback only for Auto backend + Auto precision, so any manual Demo backend or precision choice remains strict.
 
 ```ts
 import { createDocLayout } from "web-sdk-pp-doclayoutv3";

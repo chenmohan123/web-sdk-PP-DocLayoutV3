@@ -12,6 +12,8 @@ Models are large assets. Recommended policy:
 - Allow IndexedDB. The SDK can run when it is unavailable, but may download again.
 - Before mobile-network downloads, disclose 74,279,796 bytes for FP16 and 143,216,104 bytes for FP32.
 
+The bundled SDK uses the versioned `models/v1.0.1/manifest.json`. That manifest reuses model binaries from the immutable `v1.0.0-models` release and adds validated WASM compatibility metadata for FP16; deployments must preserve both the legacy `models/v1.0.0/` path and the current `models/v1.0.1/` path for existing SDK consumers.
+
 Multithreaded WASM requires:
 
 ```text

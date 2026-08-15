@@ -19,7 +19,7 @@ import type { InferenceExecutor } from "../src/worker/worker-bridge";
 const manifest = parseModelManifest(
   JSON.parse(
     readFileSync(
-      new URL("../../../models/pp-doclayoutv3/1.0.0/manifest.json", import.meta.url),
+      new URL("../../../models/pp-doclayoutv3/1.0.1/manifest.json", import.meta.url),
       "utf8"
     )
   )
@@ -102,14 +102,14 @@ describe("createDocLayout", () => {
     const deps = dependencies();
 
     expect(DEFAULT_MANIFEST_URL).toBe(
-      "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.0/manifest.json"
+      "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.1/manifest.json"
     );
 
     const detector = await createDocLayoutWithDependencies({}, deps);
 
     expect(deps.fetchManifest).toHaveBeenCalledWith(DEFAULT_MANIFEST_URL, undefined);
     expect(detector.model.id).toBe("pp-doclayoutv3");
-    expect(detector.runtime).toMatchObject({ backend: "wasm", precision: "fp32" });
+    expect(detector.runtime).toMatchObject({ backend: "wasm", precision: "fp16" });
     expect(vi.mocked(deps.createExecutor).mock.calls[0]?.[0].wasm).toEqual({
       paths: DEFAULT_ORT_WASM_BASE_URL
     });
@@ -146,7 +146,7 @@ describe("createDocLayout", () => {
     const detector = await createDocLayoutWithDependencies({ model: { data, manifest } }, deps);
 
     expect(load).not.toHaveBeenCalled();
-    expect(deps.verifyModel).toHaveBeenCalledWith(data, manifest.variants[1]);
+    expect(deps.verifyModel).toHaveBeenCalledWith(data, manifest.variants[0]);
     expect(deps.createExecutor).toHaveBeenCalledWith(expect.objectContaining({ modelBytes: data }));
     expect(detector.loadTimings).toMatchObject({
       integrityMs: 1,
@@ -180,7 +180,7 @@ describe("createDocLayout", () => {
     });
 
     expect(createExecutor).toHaveBeenCalledTimes(2);
-    expect(result.runtime).toMatchObject({ backend: "wasm", precision: "fp32" });
+    expect(result.runtime).toMatchObject({ backend: "wasm", precision: "fp16" });
     expect(result.runtime.fallbacks).toHaveLength(1);
     expect(result.runtime.fallbacks[0]).toMatchObject({
       code: "SESSION_CREATE_FAILED",
@@ -266,9 +266,9 @@ describe("createDocLayout", () => {
       original: { height: 2, width: 3 }
     });
     expect(result.model).toMatchObject({
-      bytes: manifest.variants[1]!.bytes,
+      bytes: manifest.variants[0]!.bytes,
       parameterCount: 33175165,
-      sha256: manifest.variants[1]!.sha256
+      sha256: manifest.variants[0]!.sha256
     });
   });
 

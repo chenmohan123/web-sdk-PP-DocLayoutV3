@@ -1,6 +1,11 @@
-import * as ort from "/ort/ort.webgpu.min.mjs";
-
 const resultElement = document.querySelector("#result");
+const backend = new URLSearchParams(location.search).get("backend") ?? "webgpu";
+if (!new Set(["wasm", "webgpu"]).has(backend)) {
+  throw new Error(`Unsupported validation backend: ${backend}`);
+}
+const ort = await import(
+  backend === "webgpu" ? "/ort/ort.webgpu.min.mjs" : "/ort/ort.wasm.min.mjs"
+);
 
 function adapterDetails(adapter) {
   const info = adapter.info ?? {};
@@ -49,20 +54,15 @@ async function outputDetails(outputs) {
   return Object.fromEntries(entries);
 }
 
-async function validateFp16WebGpu() {
-  if (!navigator.gpu) {
-    throw new Error("navigator.gpu is unavailable");
-  }
-
-  const adapter = await navigator.gpu.requestAdapter({
-    powerPreference: "high-performance"
-  });
-  if (!adapter) {
-    throw new Error("No WebGPU adapter is available");
-  }
-
+async function validateFp16() {
   ort.env.wasm.wasmPaths = "/ort/";
-  ort.env.webgpu.adapter = adapter;
+  let adapter = null;
+  if (backend === "webgpu") {
+    if (!navigator.gpu) throw new Error("navigator.gpu is unavailable");
+    adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+    if (!adapter) throw new Error("No WebGPU adapter is available");
+    ort.env.webgpu.adapter = adapter;
+  }
 
   const downloadStartedAt = performance.now();
   const response = await fetch("/models/model-fp16.onnx", { cache: "no-store" });
@@ -75,7 +75,7 @@ async function validateFp16WebGpu() {
 
   const sessionStartedAt = performance.now();
   const session = await ort.InferenceSession.create(model, {
-    executionProviders: ["webgpu"]
+    executionProviders: [backend]
   });
   const sessionCreateMs = performance.now() - sessionStartedAt;
 
@@ -91,8 +91,9 @@ async function validateFp16WebGpu() {
 
   const evidence = {
     status: "passed",
-    adapter: adapterDetails(adapter),
-    adapterFeatures: [...adapter.features].sort(),
+    ...(adapter
+      ? { adapter: adapterDetails(adapter), adapterFeatures: [...adapter.features].sort() }
+      : {}),
     browser: {
       userAgent: navigator.userAgent,
       userAgentData: navigator.userAgentData
@@ -103,7 +104,7 @@ async function validateFp16WebGpu() {
           }
         : null
     },
-    executionProvider: "webgpu",
+    executionProvider: backend,
     input: { dimensions: [1, 3, 800, 800], name: "pixel_values", type: "float32" },
     modelBytes: model.byteLength,
     modelSha256,
@@ -122,11 +123,11 @@ async function validateFp16WebGpu() {
 }
 
 window.__validationResult = { status: "running" };
-validateFp16WebGpu()
+validateFp16()
   .then((evidence) => {
     window.__validationResult = evidence;
     resultElement.textContent = JSON.stringify(evidence, null, 2);
-    document.title = "PASSED - PP-DocLayoutV3 WebGPU validation";
+    document.title = `PASSED - PP-DocLayoutV3 ${backend.toUpperCase()} validation`;
   })
   .catch((error) => {
     const evidence = {
@@ -138,5 +139,5 @@ validateFp16WebGpu()
     };
     window.__validationResult = evidence;
     resultElement.textContent = JSON.stringify(evidence, null, 2);
-    document.title = "FAILED - PP-DocLayoutV3 WebGPU validation";
+    document.title = `FAILED - PP-DocLayoutV3 ${backend.toUpperCase()} validation`;
   });

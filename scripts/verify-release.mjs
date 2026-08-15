@@ -130,8 +130,13 @@ function verifyStaticContract() {
   );
   requireMatch(
     read("scripts/stage-pages-models.mjs"),
-    /releases\/download\/v1\.0\.0-models/,
-    "Pages model staging must use the immutable v1.0.0-models release"
+    /releases\/download\/v1\.0\.1-models/,
+    "Pages model staging must use the immutable v1.0.1-models manifest release"
+  );
+  requireMatch(
+    read("scripts/stage-pages-models.mjs"),
+    /LEGACY_MODEL_RELEASE_ROOT[\s\S]*releases\/download\/v1\.0\.0-models/,
+    "Pages model staging must preserve the immutable v1.0.0 model release"
   );
   requireMatch(pages, /pages:\s+write/, "Pages deploy job needs pages: write");
   requireMatch(pages, /pages:\s+read/, "Pages build job needs pages: read");
@@ -148,6 +153,21 @@ function verifyStaticContract() {
     model,
     /upload_assets.*type:\s+boolean/s,
     "model uploads must require an explicit boolean input"
+  );
+  requireMatch(
+    model,
+    /upload-model-assets:\s*\n\s*if:\s*github\.ref == ['"]refs\/heads\/main['"] && inputs\.upload_assets/,
+    "model uploads must run only from main"
+  );
+  requireMatch(
+    model,
+    /gh release create "\$model_tag"[\s\S]*--target "\$GITHUB_SHA"/,
+    "model release tags must target the verified commit"
+  );
+  requireMatch(
+    model,
+    /git fetch --force origin "refs\/tags\/\$model_tag:refs\/tags\/\$model_tag"[\s\S]*git rev-list -n 1 "\$model_tag"[\s\S]*\[\[ "\$tag_sha" != "\$GITHUB_SHA" \]\]/,
+    "existing model release tags must match the verified commit"
   );
   requireMatch(model, /contents:\s+write/, "model upload job needs contents: write");
 
@@ -177,7 +197,7 @@ function verifyStaticContract() {
     fail("npm publishing must never run from develop");
   }
 
-  const manifest = JSON.parse(read("models/pp-doclayoutv3/1.0.0/manifest.json"));
+  const manifest = JSON.parse(read("models/pp-doclayoutv3/1.0.1/manifest.json"));
   if (manifest.variants.length !== 2) fail("manifest must contain exactly FP16 and FP32 variants");
   for (const variant of manifest.variants) {
     if (!/^[a-f0-9]{64}$/.test(variant.sha256)) fail(`${variant.id} has an invalid SHA-256`);
@@ -224,6 +244,7 @@ async function verifyModels(manifest) {
   if (fp32.overallPass !== true) fail("FP32 validation report did not pass");
   if (variants.variants?.fp16?.pass !== true) fail("FP16 validation report did not pass");
   if (browser.fp16Webgpu?.status !== "passed") fail("FP16 hardware WebGPU evidence is missing");
+  if (browser.fp16Wasm?.status !== "passed") fail("FP16 browser WASM evidence is missing");
   if (fp32.sourceHashes?.onnx !== manifestVariants.fp32?.sha256)
     fail("FP32 validation report does not match the manifest SHA-256");
   if (variants.source?.fp32Sha256 !== manifestVariants.fp32?.sha256)
@@ -232,6 +253,10 @@ async function verifyModels(manifest) {
     fail("variant validation report does not match the FP16 manifest SHA-256");
   if (browser.fp16Webgpu?.modelSha256 !== manifestVariants.fp16?.sha256)
     fail("browser evidence does not match the FP16 manifest SHA-256");
+  if (browser.fp16Wasm?.modelSha256 !== manifestVariants.fp16?.sha256)
+    fail("WASM browser evidence does not match the FP16 manifest SHA-256");
+  if (variants.variants?.fp16?.browser?.wasm?.modelSha256 !== manifestVariants.fp16?.sha256)
+    fail("variant validation report does not match the FP16 WASM evidence");
 }
 
 function runPnpm(args) {

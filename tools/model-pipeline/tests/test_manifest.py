@@ -13,8 +13,8 @@ from ppdoclayout.build_manifest import build_manifest, canonical_json
 
 ROOT = Path(__file__).parents[3]
 PIPELINE_DIR = ROOT / "tools" / "model-pipeline"
-MODEL_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.0"
-MANIFEST_PATH = MODEL_DIR / "manifest.json"
+ARTIFACT_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.0"
+MANIFEST_PATH = ROOT / "models" / "pp-doclayoutv3" / "1.0.1" / "manifest.json"
 CONTRACT_PATH = PIPELINE_DIR / "artifacts" / "model-contract.json"
 FP32_REPORT_PATH = PIPELINE_DIR / "reports" / "fp32-validation.json"
 VARIANT_REPORT_PATH = PIPELINE_DIR / "reports" / "variant-validation.json"
@@ -58,7 +58,7 @@ def build_from_paths(
         contract_path=contract_path,
         fp32_report_path=fp32_report_path,
         variant_report_path=variant_report_path,
-        model_dir=MODEL_DIR,
+        model_dir=ARTIFACT_DIR,
     )
 
 
@@ -67,7 +67,7 @@ def test_manifest_has_stable_browser_runtime_contract() -> None:
 
     assert manifest["schemaVersion"] == 1
     assert manifest["model"]["id"] == "pp-doclayoutv3"
-    assert manifest["model"]["version"] == "1.0.0"
+    assert manifest["model"]["version"] == "1.0.1"
     assert manifest["minSdkVersion"] == "1.0.0"
     assert len(manifest["labels"]) == 25
     assert manifest["input"] == {
@@ -91,7 +91,7 @@ def test_manifest_variants_are_sorted_integrity_bound_and_validated() -> None:
     assert [variant["id"] for variant in variants] == ["fp16", "fp32"]
     for variant in variants:
         expected = EXPECTED_VARIANTS[variant["id"]]
-        model_path = MODEL_DIR / variant["filename"]
+        model_path = ARTIFACT_DIR / variant["filename"]
         assert variant["bytes"] == expected["bytes"] == model_path.stat().st_size
         assert variant["sha256"] == expected["sha256"] == sha256_file(model_path)
         assert variant["opset"] == 18
@@ -102,9 +102,9 @@ def test_manifest_variants_are_sorted_integrity_bound_and_validated() -> None:
 
     by_id = {variant["id"]: variant for variant in variants}
     assert by_id["fp16"]["precision"] == "fp16"
-    assert by_id["fp16"]["backendCompatibility"] == ["webgpu"]
+    assert by_id["fp16"]["backendCompatibility"] == ["wasm", "webgpu"]
     assert by_id["fp32"]["precision"] == "fp32"
-    assert by_id["fp32"]["backendCompatibility"] == ["wasm", "webgpu"]
+    assert by_id["fp32"]["backendCompatibility"] == ["wasm"]
 
 
 def test_manifest_records_upstream_source_and_hashes() -> None:
@@ -128,11 +128,22 @@ def test_manifest_matches_generator_and_is_canonical_json() -> None:
     assert b"\r\n" not in generated
 
 
+def test_published_1_0_0_manifest_remains_immutable() -> None:
+    manifest = json.loads(
+        (ARTIFACT_DIR / "manifest.json").read_text(encoding="utf-8")
+    )
+    by_id = {variant["id"]: variant for variant in manifest["variants"]}
+
+    assert manifest["model"]["version"] == "1.0.0"
+    assert by_id["fp16"]["backendCompatibility"] == ["webgpu"]
+    assert by_id["fp32"]["backendCompatibility"] == ["wasm"]
+
+
 def test_generator_inspects_real_onnx_contract() -> None:
     manifest = build_from_paths()
 
     for variant in manifest["variants"]:
-        model = onnx.load(MODEL_DIR / variant["filename"], load_external_data=False)
+        model = onnx.load(ARTIFACT_DIR / variant["filename"], load_external_data=False)
         assert [value.name for value in model.graph.input] == [
             manifest["input"]["name"]
         ]

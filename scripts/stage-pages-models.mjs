@@ -4,8 +4,12 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const MODEL_RELEASE_ROOT =
-  "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models";
+  "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models";
 export const MODEL_PUBLIC_ROOT =
+  "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.1";
+const LEGACY_MODEL_RELEASE_ROOT =
+  "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.0-models";
+const LEGACY_MODEL_PUBLIC_ROOT =
   "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.0";
 
 async function requireOk(response, url) {
@@ -18,6 +22,24 @@ function requireFilename(filename) {
     throw new Error(`Unsafe or unexpected model filename: ${String(filename)}`);
   }
   return filename;
+}
+
+function requireAssetUrl(value, filename) {
+  if (typeof value !== "string") {
+    throw new Error(`Unsafe or unexpected model URL: ${String(value)}`);
+  }
+  const url = new URL(value);
+  const expectedPath = new RegExp(
+    `^/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v\\d+\\.\\d+\\.\\d+-models/${filename}$`
+  );
+  if (
+    url.protocol !== "https:" ||
+    url.hostname !== "github.com" ||
+    !expectedPath.test(url.pathname)
+  ) {
+    throw new Error(`Unsafe or unexpected model URL: ${value}`);
+  }
+  return url.href;
 }
 
 export async function stagePagesModels({
@@ -38,7 +60,7 @@ export async function stagePagesModels({
   const variants = [];
   for (const variant of manifest.variants) {
     const filename = requireFilename(variant.filename);
-    const assetUrl = `${releaseRoot}/${filename}`;
+    const assetUrl = requireAssetUrl(variant.url, filename);
     const response = await requireOk(await fetchImpl(assetUrl), assetUrl);
     const bytes = Buffer.from(await response.arrayBuffer());
     if (bytes.byteLength !== variant.bytes) {
@@ -59,6 +81,11 @@ const modulePath = fileURLToPath(import.meta.url);
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === modulePath) {
   const repositoryRoot = resolve(dirname(modulePath), "..");
   await stagePagesModels({
-    outputRoot: resolve(repositoryRoot, "apps/demo/dist/models/v1.0.0")
+    outputRoot: resolve(repositoryRoot, "apps/demo/dist/models/v1.0.1")
+  });
+  await stagePagesModels({
+    outputRoot: resolve(repositoryRoot, "apps/demo/dist/models/v1.0.0"),
+    publicRoot: LEGACY_MODEL_PUBLIC_ROOT,
+    releaseRoot: LEGACY_MODEL_RELEASE_ROOT
   });
 }

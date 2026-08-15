@@ -237,18 +237,29 @@ def build_variant_report(
             },
         }
     ]
-    fp16["browser"] = {"webgpu": browser_evidence.get("fp16Webgpu", {"status": "pending"})}
+    fp16["browser"] = {
+        "wasm": browser_evidence.get("fp16Wasm", {"status": "pending"}),
+        "webgpu": browser_evidence.get("fp16Webgpu", {"status": "pending"}),
+    }
     int8["browser"] = {"wasm": browser_evidence.get("int8Wasm", {"status": "pending"})}
-    fp16_browser_errors = _browser_evidence_errors(
-        fp16["browser"]["webgpu"], fp16_path, "fp16"
+    fp16_webgpu_errors = _browser_evidence_errors(
+        fp16["browser"]["webgpu"], fp16_path, "fp16", "webgpu"
     )
-    fp16["browser"]["webgpu"]["validationErrors"] = fp16_browser_errors
-    fp16["pass"] = _passes(fp16, "fp16") and not fp16_browser_errors
+    fp16_wasm_errors = _browser_evidence_errors(
+        fp16["browser"]["wasm"], fp16_path, "fp16", "wasm"
+    )
+    fp16["browser"]["webgpu"]["validationErrors"] = fp16_webgpu_errors
+    fp16["browser"]["wasm"]["validationErrors"] = fp16_wasm_errors
+    fp16["pass"] = (
+        _passes(fp16, "fp16")
+        and not fp16_webgpu_errors
+        and not fp16_wasm_errors
+    )
     fp16["included"] = fp16["pass"]
     fp16["cpu"]["acceptanceStatus"] = "passed" if _passes(fp16, "fp16") else "failed"
 
     int8_browser_errors = _browser_evidence_errors(
-        int8["browser"]["wasm"], int8_path, "int8"
+        int8["browser"]["wasm"], int8_path, "int8", "wasm"
     )
     int8["browser"]["wasm"]["validationErrors"] = int8_browser_errors
     int8["pass"] = _passes(int8, "int8") and not int8_browser_errors
@@ -305,9 +316,10 @@ def _passes(report: dict[str, Any], precision: str) -> bool:
 
 
 def _browser_evidence_errors(
-    evidence: dict[str, Any], model_path: Path, precision: str
+    evidence: dict[str, Any], model_path: Path, precision: str, backend: str
 ) -> list[str]:
-    backend = "webgpu" if precision == "fp16" else "wasm"
+    if backend not in {"wasm", "webgpu"}:
+        raise ValueError(f"Unsupported browser validation backend: {backend}")
     if evidence.get("status") != "passed":
         return [f"browser {backend} validation did not pass"]
 
@@ -320,9 +332,10 @@ def _browser_evidence_errors(
         errors.append("browser evidence model SHA-256 does not match artifact")
     if evidence.get("onnxruntimeWebVersion") != EXPECTED_ORT_WEB_VERSION:
         errors.append("browser evidence ONNX Runtime Web version does not match")
-    if precision == "fp16":
+    if precision == "fp16" and backend == "webgpu":
         if "shader-f16" not in evidence.get("adapterFeatures", []):
             errors.append("browser adapter does not report shader-f16")
+    if precision == "fp16":
         outputs = evidence.get("outputs", {})
         if set(outputs) != set(EXPECTED_BROWSER_OUTPUTS):
             errors.append("browser output names do not match model contract")
@@ -365,8 +378,9 @@ def _exclusion_reasons(report: dict[str, Any], precision: str) -> list[str]:
         < thresholds["minMedianWasmSpeedup"]
     ):
         reasons.append("INT8 size and WASM speed acceptance failed")
-    browser_key = "webgpu" if precision == "fp16" else "wasm"
-    reasons.extend(report["browser"][browser_key].get("validationErrors", []))
+    browser_keys = ("webgpu", "wasm") if precision == "fp16" else ("wasm",)
+    for browser_key in browser_keys:
+        reasons.extend(report["browser"][browser_key].get("validationErrors", []))
     return reasons
 
 

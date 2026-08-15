@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       upload_assets:
-        description: Upload verified model assets to v1.0.0-models
+        description: Upload the verified 1.0.1 manifest and reports to v1.0.1-models
         required: true
         type: boolean
         default: false
@@ -34,13 +34,13 @@ jobs:
           name: pp-doclayoutv3-model-validation
           if-no-files-found: error
           path: |
-            models/pp-doclayoutv3/1.0.0/manifest.json
+            models/pp-doclayoutv3/1.0.1/manifest.json
             tools/model-pipeline/reports/browser-evidence.json
             tools/model-pipeline/reports/fp32-validation.json
             tools/model-pipeline/reports/variant-validation.json
 
   upload-model-assets:
-    if: inputs.upload_assets
+    if: github.ref == 'refs/heads/main' && inputs.upload_assets
     needs: validate-models
     runs-on: ubuntu-latest
     permissions:
@@ -58,15 +58,28 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: node scripts/verify-release.mjs --models
-      - name: Upload assets to the existing model release
-        run: >-
-          gh release upload v1.0.0-models
-          models/pp-doclayoutv3/1.0.0/manifest.json
-          models/pp-doclayoutv3/1.0.0/model-fp16.onnx
-          models/pp-doclayoutv3/1.0.0/model-fp32.onnx
-          tools/model-pipeline/reports/browser-evidence.json
-          tools/model-pipeline/reports/fp32-validation.json
-          tools/model-pipeline/reports/variant-validation.json
-          --clobber
+      - name: Publish the new compatibility manifest and evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          model_tag="v1.0.1-models"
+          if gh release view "$model_tag" >/dev/null 2>&1; then
+            git fetch --force origin "refs/tags/$model_tag:refs/tags/$model_tag"
+            tag_sha="$(git rev-list -n 1 "$model_tag")"
+            if [[ "$tag_sha" != "$GITHUB_SHA" ]]; then
+              echo "$model_tag points to $tag_sha, expected verified commit $GITHUB_SHA" >&2
+              exit 1
+            fi
+          else
+            gh release create "$model_tag" \
+              --target "$GITHUB_SHA" \
+              --title "PP-DocLayoutV3 model manifest 1.0.1" \
+              --notes "Adds validated CPU/WASM compatibility for the unchanged FP16 model. Model binaries remain in v1.0.0-models."
+          fi
+          gh release upload "$model_tag" \
+            models/pp-doclayoutv3/1.0.1/manifest.json \
+            tools/model-pipeline/reports/browser-evidence.json \
+            tools/model-pipeline/reports/fp32-validation.json \
+            tools/model-pipeline/reports/variant-validation.json
         env:
           GH_TOKEN: ${{ github.token }}

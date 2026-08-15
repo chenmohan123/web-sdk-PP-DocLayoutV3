@@ -33,9 +33,9 @@ await detector.dispose();
 ## 运行后端与精度
 
 - `backend: "auto"` 优先使用 WebGPU，不可用时回退到 WASM（CPU）。也可手动指定 `"webgpu"` 或 `"wasm"`。
-- `precision: "auto"` 在兼容的 WebGPU 环境优先 FP16，否则使用 WASM/CPU + FP32。也可手动指定 `"fp16"` 或 `"fp32"`。
-- FP16 模型用于 WebGPU；FP32 模型用于 WASM/CPU。
-- 默认模型仅支持 WebGPU + FP16 与 WASM/CPU + FP32。使用默认模型时，显式请求未声明的组合会抛出 `CAPABILITY_UNSUPPORTED`，不会改写无效组合；包含已验证 WebGPU FP32 或 WASM FP16 变体的自定义清单仍受支持。
+- `precision: "auto"` 在兼容的 WebGPU 环境优先 FP16；WebGPU 不可用时优先 WASM/CPU + FP16，再使用 FP32。也可手动指定 `"fp16"` 或 `"fp32"`。
+- FP16 模型用于 WebGPU，也可用于 WASM/CPU；FP32 模型用于 WASM/CPU。FP16 在 CPU 上更小，但不一定更快。
+- 默认模型支持 WebGPU + FP16 与 WASM/CPU + FP16/FP32。使用默认模型时，显式请求未声明的组合会抛出 `CAPABILITY_UNSUPPORTED`，不会改写无效组合；自动候选顺序为 WebGPU FP16、WebGPU FP32（若提供）、WASM FP16、WASM INT8（若通过验收）、WASM FP32。
 
 ## 自定义模型
 
@@ -95,9 +95,9 @@ Detailed initialization timings are available through `detector.loadTimings`. `t
 ### Backend and precision
 
 - `backend: "auto"` prefers WebGPU and falls back to WASM (CPU). Use `"webgpu"` or `"wasm"` for an explicit choice.
-- `precision: "auto"` prefers FP16 on compatible WebGPU devices and otherwise uses FP32 on WASM/CPU. Use `"fp16"` or `"fp32"` for an explicit choice.
-- The FP16 model targets WebGPU. The FP32 model targets WASM/CPU.
-- The default model supports WebGPU + FP16 and WASM/CPU + FP32 only. Explicit pairs absent from the default manifest throw `CAPABILITY_UNSUPPORTED` instead of rewriting an invalid pair; custom manifests with validated WebGPU FP32 or WASM FP16 variants remain supported.
+- `precision: "auto"` prefers FP16 on compatible WebGPU devices, then WASM/CPU FP16, and finally FP32. Use `"fp16"` or `"fp32"` for an explicit choice.
+- The FP16 model targets WebGPU and WASM/CPU; the FP32 model targets WASM/CPU. FP16 is smaller on CPU, but it is not necessarily faster.
+- The default model supports WebGPU + FP16 and WASM/CPU + FP16/FP32. Explicit pairs absent from the default manifest throw `CAPABILITY_UNSUPPORTED` instead of rewriting an invalid pair. Automatic candidates are WebGPU FP16, declared WebGPU FP32, WASM FP16, WASM INT8 when declared and validated, and WASM FP32.
 
 ### Custom models
 

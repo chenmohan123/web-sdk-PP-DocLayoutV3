@@ -10,7 +10,8 @@ import onnx
 
 
 MODEL_ID = "pp-doclayoutv3"
-MODEL_VERSION = "1.0.0"
+MODEL_VERSION = "1.0.1"
+ARTIFACT_VERSION = "1.0.0"
 MIN_SDK_VERSION = "1.0.0"
 RELEASE_BASE_URL = (
     "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
@@ -183,7 +184,7 @@ def build_manifest(
 
     variants = [
         {
-            "backendCompatibility": ["wasm", "webgpu"],
+            "backendCompatibility": ["wasm"],
             "bytes": fp32["bytes"],
             "filename": fp32_path.name,
             "id": "fp32",
@@ -210,16 +211,23 @@ def build_manifest(
             raise ValueError("FP16 report byte size does not match the ONNX artifact")
         if fp16_report.get("sha256") != fp16["sha256"]:
             raise ValueError("FP16 report SHA-256 does not match the ONNX artifact")
-        browser = fp16_report.get("browser", {}).get("webgpu", {})
-        if browser.get("status") != "passed":
-            raise ValueError("FP16 browser validation did not pass")
-        if browser.get("modelBytes") != fp16["bytes"]:
-            raise ValueError("FP16 browser byte size does not match the ONNX artifact")
-        if browser.get("modelSha256") != fp16["sha256"]:
-            raise ValueError("FP16 browser SHA-256 does not match the ONNX artifact")
+        for backend in ("wasm", "webgpu"):
+            browser = fp16_report.get("browser", {}).get(backend, {})
+            if browser.get("status") != "passed":
+                raise ValueError(f"FP16 browser {backend} validation did not pass")
+            if browser.get("executionProvider") != backend:
+                raise ValueError(f"FP16 browser provider does not match {backend}")
+            if browser.get("modelBytes") != fp16["bytes"]:
+                raise ValueError(
+                    f"FP16 browser {backend} byte size does not match the ONNX artifact"
+                )
+            if browser.get("modelSha256") != fp16["sha256"]:
+                raise ValueError(
+                    f"FP16 browser {backend} SHA-256 does not match the ONNX artifact"
+                )
         variants.append(
             {
-                "backendCompatibility": ["webgpu"],
+                "backendCompatibility": ["wasm", "webgpu"],
                 "bytes": fp16["bytes"],
                 "filename": fp16_path.name,
                 "id": "fp16",
@@ -301,7 +309,7 @@ def write_manifest(
 
 def parse_args() -> argparse.Namespace:
     pipeline_dir = ROOT / "tools" / "model-pipeline"
-    model_dir = ROOT / "models" / MODEL_ID / MODEL_VERSION
+    model_dir = ROOT / "models" / MODEL_ID / ARTIFACT_VERSION
     parser = argparse.ArgumentParser(description="Build the versioned model manifest")
     parser.add_argument(
         "--contract",
@@ -319,7 +327,11 @@ def parse_args() -> argparse.Namespace:
         default=pipeline_dir / "reports" / "variant-validation.json",
     )
     parser.add_argument("--model-dir", type=Path, default=model_dir)
-    parser.add_argument("--output", type=Path, default=model_dir / "manifest.json")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=ROOT / "models" / MODEL_ID / MODEL_VERSION / "manifest.json",
+    )
     return parser.parse_args()
 
 
