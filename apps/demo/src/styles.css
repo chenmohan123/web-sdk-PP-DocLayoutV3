@@ -197,6 +197,51 @@ button {
   font-variant-numeric: tabular-nums;
   width: 30px;
 }
+.class-threshold-editor {
+  border-bottom: 1px solid #c9d1ce;
+  padding: 0 0 13px;
+}
+.class-threshold-editor summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 36px;
+  cursor: pointer;
+  color: #183b42;
+  font-weight: 700;
+}
+.class-threshold-editor summary small {
+  color: #688078;
+  font-weight: 400;
+}
+.class-threshold-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.class-threshold-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 9px 12px;
+}
+.class-threshold-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.class-threshold-field span {
+  overflow-wrap: anywhere;
+  color: #48615d;
+  font-size: 12px;
+}
+.class-threshold-field input {
+  width: 100%;
+  min-width: 0;
+}
 .control-actions {
   margin-left: auto;
   flex-wrap: wrap;
@@ -586,6 +631,13 @@ button {
     margin-left: 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+  .class-threshold-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .class-threshold-grid {
+    grid-template-columns: 1fr;
   }
   .file-button {
     grid-column: 1 / -1;

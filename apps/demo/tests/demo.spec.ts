@@ -3,6 +3,49 @@ import { expect, test } from "playwright/test";
 const pixelPng =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
+test("normalizes active class threshold configuration", async ({ page }) => {
+  await page.goto("/?fixture=1");
+  const result = await page.evaluate(async (moduleUrl) => {
+    const module = (await import(moduleUrl)) as typeof import("../src/class-thresholds");
+    return {
+      defaults: module.DEFAULT_CLASS_LABELS,
+      selected: module.selectActiveClassThresholds(["formula", "formula", "text"], {
+        formula: 0.4,
+        stale: 0.2,
+        text: 0.6
+      }),
+      prototypeLabels: module.selectActiveClassThresholds(["constructor", "toString"], {})
+    };
+  }, "/src/class-thresholds.ts");
+
+  expect(result.defaults).toContain("table");
+  expect(result.defaults.filter((label) => label === "formula")).toHaveLength(1);
+  expect(result.selected).toEqual({ formula: 0.4, text: 0.6 });
+  expect(result.prototypeLabels).toEqual({});
+});
+
+test("edits, applies, localizes, and clears class thresholds", async ({ page }) => {
+  await page.goto("/?fixture=1");
+  await page.getByText("类别阈值", { exact: true }).click();
+  const textThreshold = page.getByRole("spinbutton", { name: "类别阈值 text" });
+  await expect(textThreshold).toBeVisible();
+  await textThreshold.fill("0");
+  await page.getByRole("slider", { name: "置信度阈值" }).fill("1");
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "threshold.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(pixelPng, "base64")
+  });
+  await page.getByRole("button", { name: "开始检测" }).click();
+  await expect(page.getByTestId("status")).toContainText("检测完成", { timeout: 15_000 });
+  await expect(page.getByTestId("detection-section")).toContainText("text");
+
+  await page.getByRole("button", { name: "清空类别阈值" }).click();
+  await expect(textThreshold).toHaveValue("");
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await expect(page.getByText("Class thresholds", { exact: true })).toBeVisible();
+});
+
 test("maps SDK progress events to honest model status text states", async ({ page }) => {
   await page.goto("/?fixture=1");
   const states = await page.evaluate(async (moduleUrl) => {
