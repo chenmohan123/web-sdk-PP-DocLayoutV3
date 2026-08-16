@@ -23,7 +23,14 @@ const detector = await createDocLayout({
 
 try {
   const file = document.querySelector<HTMLInputElement>("input[type=file]")!.files![0]!;
-  const result = await detector.detect(file, { threshold: 0.5 });
+  const result = await detector.detect(file, {
+    threshold: 0.5,
+    classThresholds: {
+      formula: 0.4,
+      table: 0.55,
+      text: 0.6
+    }
+  });
   console.log(result.detections, result.runtime, result.timings);
 } catch (error) {
   if (error instanceof DocLayoutError) console.error(error.code, error.details);
@@ -31,6 +38,8 @@ try {
   await detector.dispose();
 }
 ```
+
+`classThresholds` 按 manifest 标签名称覆盖置信度过滤阈值，未配置的类别回退到 `threshold`。全局 `threshold` 仍用于 mask 二值化和多边形提取。未知类别名称或超出 `0` 到 `1` 的值会被拒绝。
 
 初始化完成后可通过 `detector.loadTimings` 查看耗时拆分：`totalMs` 为初始化总耗时，`modelMs` 为模型获取与校验聚合耗时；`modelDownloadMs`、`modelCacheMs`、`integrityMs`、`sessionMs` 分别对应网络下载、缓存读取、SHA-256 完整性校验和 ONNX Runtime Session 创建，`modelSource` 表示 `network`、`cache`、`memory` 或 `custom`。
 

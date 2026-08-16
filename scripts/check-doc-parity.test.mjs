@@ -73,4 +73,22 @@ describe("documentation contract", () => {
       assert.match(document, /FP32.*7 张授权图片|FP32.*seven licensed fixtures/is);
     }
   });
+
+  it("documents per-class confidence thresholds in every public API guide", () => {
+    const documents = [
+      "README.md",
+      "README.en.md",
+      "packages/sdk/README.md",
+      "docs/en/api.md",
+      "docs/zh-CN/api.md",
+      "docs/en/quick-start.md",
+      "docs/zh-CN/quick-start.md"
+    ].map((path) => readFileSync(new URL(path, repositoryRoot), "utf8"));
+
+    for (const document of documents) {
+      assert.match(document, /classThresholds/);
+      assert.match(document, /formula/);
+      assert.match(document, /mask|掩码/i);
+    }
+  });
 });

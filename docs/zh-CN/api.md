@@ -35,10 +35,28 @@ await detector.dispose();
 
 ## `DocLayoutDetector`
 
-- `detect(image, { threshold, signal })`: 接收 Blob、CanvasImageSource 或标准化 raster。
+- `detect(image, { threshold, classThresholds, signal })`: 接收 Blob、CanvasImageSource 或标准化 raster。
 - `dispose()`: 等待已排队操作完成并释放 Worker/session；可重复调用。
 - `listModelCache()` / `clearModelCache()`: 查看或清除该检测器的模型缓存。
 - `model`, `runtime`, `capabilities`, `loadTimings`: 实际加载信息。
+
+```ts
+import type { DocLayoutDetector } from "web-sdk-pp-doclayoutv3";
+
+declare const detector: DocLayoutDetector;
+declare const file: Blob;
+
+const result = await detector.detect(file, {
+  threshold: 0.5,
+  classThresholds: {
+    formula: 0.4,
+    table: 0.55,
+    text: 0.6
+  }
+});
+```
+
+`classThresholds` 按 manifest 标签名称覆盖置信度过滤阈值，未配置的类别回退到 `threshold`。全局 `threshold` 仍用于 mask 二值化和多边形提取。未知类别名称或超出 `0` 到 `1` 的值会被拒绝。
 
 ## 其他导出
 
