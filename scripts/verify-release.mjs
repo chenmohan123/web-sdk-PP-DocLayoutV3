@@ -109,13 +109,13 @@ function verifyStaticContract() {
   const ci = workflows["ci.yml"];
   requireMatch(
     ci,
-    /push:\s*\n\s+branches:\s*\[develop, main\]/,
-    "CI must run on develop and main pushes"
+    /push:\s*\n\s+branches:\s*\[main\]/,
+    "CI must run on main pushes"
   );
   requireMatch(
     ci,
-    /pull_request:\s*\n\s+branches:\s*\[develop, main\]/,
-    "CI must run on develop and main pull requests"
+    /pull_request:\s*\n\s+branches:\s*\[main\]/,
+    "CI must run on pull requests targeting main"
   );
   requireMatch(ci, /pnpm run verify/, "CI must run the workspace verify script");
   requireMatch(

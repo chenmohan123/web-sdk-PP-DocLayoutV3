@@ -17,7 +17,7 @@ describe("1.0.0 benchmark release contract", () => {
   test("provides a manual hardware benchmark workflow", () => {
     const workflow = readFileSync(join(repositoryRoot, ".github/workflows/benchmark.yml"), "utf8");
     assert.match(workflow, /workflow_dispatch:/);
-    assert.match(workflow, /push:\s+branches:\s+\[develop\]\s+paths:/);
+    assert.match(workflow, /push:\s+branches:\s+\[main\]\s+paths:/);
     assert.match(workflow, /tests\/browser\/benchmark\.spec\.ts/);
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?wasm-fp32/);
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?webgpu-fp16/);
