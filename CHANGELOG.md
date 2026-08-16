@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.1.0
+
+- Added per-class confidence thresholds through `classThresholds`, with fallback to the global `threshold` and then `0.5`; the global threshold continues to control mask binarization and polygon extraction.
+- Added a responsive Demo editor for active class thresholds, including blank-value inheritance, clear-all support, and bilingual accessible controls.
+
 ## 1.0.6
 
 - Added validated CPU/WASM support for the bundled FP16 model through immutable model manifest `1.0.2`, reusing the published `1.0.1` model binaries.

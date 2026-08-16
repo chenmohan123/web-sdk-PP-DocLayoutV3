@@ -117,7 +117,7 @@ describe("release workflow contract", () => {
     assert.match(output, /4 workflows, 2 model variants/);
   });
 
-  test("verifies model 1.0.2 as the SDK 1.0.6 default", () => {
+  test("verifies model 1.0.2 as the SDK 1.1.0 default", () => {
     const output = execFileSync(
       process.execPath,
       [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.2"],
@@ -224,7 +224,7 @@ describe("release workflow contract", () => {
     });
   });
 
-  test("keeps the 1.0.6 package, runtime, and changelog versions aligned", () => {
+  test("keeps the 1.1.0 package, runtime, and changelog versions aligned", () => {
     const packageMetadata = JSON.parse(
       readFileSync(resolve(repositoryRoot, "packages/sdk/package.json"), "utf8")
     );
@@ -234,9 +234,9 @@ describe("release workflow contract", () => {
     );
     const changelog = readFileSync(resolve(repositoryRoot, "CHANGELOG.md"), "utf8");
 
-    assert.equal(packageMetadata.version, "1.0.6");
-    assert.match(runtime, /CURRENT_SDK_VERSION = "1\.0\.6"/);
-    assert.match(changelog, /^## 1\.0\.6$/m);
+    assert.equal(packageMetadata.version, "1.1.0");
+    assert.match(runtime, /CURRENT_SDK_VERSION = "1\.1\.0"/);
+    assert.match(changelog, /^## 1\.1\.0$/m);
   });
 
   test("binds the model manifest release to the verified main commit", () => {
