@@ -9,6 +9,7 @@
   "scripts": {
     "build": "pnpm -r --if-present build",
     "benchmark:test": "node --test scripts/benchmark-contract.test.mjs",
+    "benchmark:parity": "playwright test tests/browser/benchmark-parity.spec.ts",
     "docs:test": "node --test scripts/check-doc-parity.test.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -18,7 +19,7 @@
     "test": "pnpm -r --if-present test",
     "test:browser": "playwright test",
     "typecheck": "pnpm -r --if-present typecheck",
-    "verify": "pnpm format:check && pnpm docs:test && pnpm release:test && pnpm benchmark:test && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "verify": "pnpm format:check && pnpm docs:test && pnpm release:test && pnpm benchmark:test && pnpm benchmark:parity && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

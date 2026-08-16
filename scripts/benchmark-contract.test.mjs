@@ -17,7 +17,10 @@ describe("1.0.0 benchmark release contract", () => {
   test("provides a manual hardware benchmark workflow", () => {
     const workflow = readFileSync(join(repositoryRoot, ".github/workflows/benchmark.yml"), "utf8");
     assert.match(workflow, /workflow_dispatch:/);
+    assert.match(workflow, /pnpm run benchmark:parity/);
     assert.match(workflow, /push:\s+branches:\s+\[main\]\s+paths:/);
+    assert.match(workflow, /tests\/browser\/benchmark-parity\.ts/);
+    assert.match(workflow, /tests\/browser\/benchmark-parity\.spec\.ts/);
     assert.match(workflow, /tests\/browser\/benchmark\.spec\.ts/);
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?wasm-fp32/);
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?webgpu-fp16/);
@@ -42,12 +45,30 @@ describe("1.0.0 benchmark release contract", () => {
       );
       assert.doesNotMatch(source, /actions\/upload-artifact@v4/);
     }
+    assert.equal(
+      workflow.match(/- if:\s*always\(\)\s*\r?\n\s*uses: actions\/upload-artifact@v7/g)?.length ??
+        0,
+      3,
+      "every benchmark result must upload after success or failure"
+    );
+    assert.equal(
+      workflow.match(/if-no-files-found:\s*warn/g)?.length ?? 0,
+      3,
+      "missing failure evidence must remain visible"
+    );
     assert.match(workflow, /responsive-screenshots/);
     assert.match(
       workflow,
       /pnpm --filter web-sdk-pp-doclayoutv3 build[\s\S]+pnpm --filter demo test/
     );
     const benchmark = readFileSync(join(repositoryRoot, "tests/browser/benchmark.spec.ts"), "utf8");
+    const parity = readFileSync(join(repositoryRoot, "tests/browser/benchmark-parity.ts"), "utf8");
+    const packageJson = JSON.parse(readFileSync(join(repositoryRoot, "package.json"), "utf8"));
+    assert.equal(
+      packageJson.scripts["benchmark:parity"],
+      "playwright test tests/browser/benchmark-parity.spec.ts"
+    );
+    assert.match(packageJson.scripts.verify, /pnpm benchmark:parity/);
     assert.match(benchmark, /causeMessage/);
     assert.match(benchmark, /capabilities/);
     assert.match(benchmark, /\.mjs["']:\s*["']text\/javascript/);
@@ -60,6 +81,18 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(benchmark, /architecture:\s*adapter\.info\.architecture/);
     assert.match(benchmark, /vendor:\s*adapter\.info\.vendor/);
     assert.match(benchmark, /capabilities:\s*result\.runtime\.capabilities/);
+    assert.match(benchmark, /evaluateBrowserParity/);
+    assert.match(parity, /minMatchedIoU:\s*0\.8/);
+    assert.match(parity, /p05MatchedIoU:\s*0\.85/);
+    assert.match(parity, /meanMatchedIoU:\s*0\.94/);
+    assert.match(parity, /meanPolygonEdgeDistancePixels:\s*2/);
+    assert.match(parity, /maxReadingOrderInversionRate:\s*0\.001/);
+    assert.doesNotMatch(parity, /meanPolygonPointDistancePixels/);
+    assert.ok(
+      benchmark.indexOf("writeFileSync(join(outputRoot") <
+        benchmark.indexOf("expect(fixture.parity)"),
+      "benchmark evidence must be written before parity assertions"
+    );
   });
 
   test("keeps the historical benchmark aligned with its changelog release", () => {

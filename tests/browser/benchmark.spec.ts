@@ -15,6 +15,7 @@ import { basename, extname, join, normalize, resolve } from "node:path";
 import { expect, test } from "playwright/test";
 
 import reference from "../../packages/sdk/tests/fixtures/model-output-reference.json";
+import { evaluateBrowserParity } from "./benchmark-parity";
 
 type BenchmarkMode = "wasm-fp32" | "webgpu-fp16" | "webgpu-fp32";
 
@@ -61,12 +62,6 @@ const referenceThresholds = {
   iou: 0.95,
   maxScoreDelta: 0.02,
   meanPolygonPointDistancePixels: 2
-} as const;
-
-const acceptedParityThresholds = {
-  maxBoxCoordinateDeltaPixels: 1,
-  maxPolygonCoordinateDeltaPixels: 1.5,
-  maxScoreDelta: 0.001
 } as const;
 
 function sha256File(path: string): string {
@@ -228,7 +223,6 @@ test("records strict seven-fixture browser evidence", async ({ browser, page }) 
   const result = await page.evaluate(
     async ({
       acceptedManifest,
-      acceptedParityThresholds: browserParityThresholds,
       backend,
       fixtures,
       origin: browserOrigin,
@@ -240,55 +234,6 @@ test("records strict seven-fixture browser evidence", async ({ browser, page }) 
         return [...new Uint8Array(digest)]
           .map((value) => value.toString(16).padStart(2, "0"))
           .join("");
-      }
-
-      type DetectionForParity = {
-        box: { xMax: number; xMin: number; yMax: number; yMin: number };
-        polygon: Array<{ x: number; y: number }>;
-        score: number;
-      };
-
-      function compareDetections(
-        acceptedDetections: DetectionForParity[],
-        candidateDetections: DetectionForParity[]
-      ) {
-        let maxBoxCoordinateDeltaPixels = 0;
-        let maxPolygonCoordinateDeltaPixels = 0;
-        let maxScoreDelta = 0;
-        if (acceptedDetections.length !== candidateDetections.length) {
-          return {
-            maxBoxCoordinateDeltaPixels: Number.POSITIVE_INFINITY,
-            maxPolygonCoordinateDeltaPixels: Number.POSITIVE_INFINITY,
-            maxScoreDelta: Number.POSITIVE_INFINITY
-          };
-        }
-        for (const [index, candidate] of candidateDetections.entries()) {
-          const accepted = acceptedDetections[index]!;
-          for (const coordinate of ["xMin", "xMax", "yMin", "yMax"] as const) {
-            maxBoxCoordinateDeltaPixels = Math.max(
-              maxBoxCoordinateDeltaPixels,
-              Math.abs(candidate.box[coordinate] - accepted.box[coordinate])
-            );
-          }
-          maxScoreDelta = Math.max(maxScoreDelta, Math.abs(candidate.score - accepted.score));
-          if (candidate.polygon.length !== accepted.polygon.length) {
-            maxPolygonCoordinateDeltaPixels = Number.POSITIVE_INFINITY;
-            continue;
-          }
-          for (const [pointIndex, point] of candidate.polygon.entries()) {
-            const acceptedPoint = accepted.polygon[pointIndex]!;
-            maxPolygonCoordinateDeltaPixels = Math.max(
-              maxPolygonCoordinateDeltaPixels,
-              Math.abs(point.x - acceptedPoint.x),
-              Math.abs(point.y - acceptedPoint.y)
-            );
-          }
-        }
-        return {
-          maxBoxCoordinateDeltaPixels,
-          maxPolygonCoordinateDeltaPixels,
-          maxScoreDelta
-        };
       }
 
       const targetOptions = {
@@ -337,42 +282,19 @@ test("records strict seven-fixture browser evidence", async ({ browser, page }) 
         const image = await (await fetch(`${browserOrigin}/fixtures/${fixture.filename}`)).blob();
         const acceptedDetection = await accepted.detect(image, { threshold: 0.5 });
         const detection = await target.detect(image, { threshold: 0.5 });
-        const acceptedLabels = acceptedDetection.detections.map(({ labelId }) => labelId);
-        const labels = detection.detections.map(({ labelId }) => labelId);
-        const acceptedOrder = acceptedDetection.detections.map(({ readingOrder }) => readingOrder);
-        const readingOrder = detection.detections.map(({ readingOrder }) => readingOrder);
-        const labelSequenceEqual = JSON.stringify(labels) === JSON.stringify(acceptedLabels);
-        const readingOrderEqual = JSON.stringify(readingOrder) === JSON.stringify(acceptedOrder);
-        const parityMetrics = compareDetections(acceptedDetection.detections, detection.detections);
-        const numericParity =
-          parityMetrics.maxBoxCoordinateDeltaPixels <=
-            browserParityThresholds.maxBoxCoordinateDeltaPixels &&
-          parityMetrics.maxPolygonCoordinateDeltaPixels <=
-            browserParityThresholds.maxPolygonCoordinateDeltaPixels &&
-          parityMetrics.maxScoreDelta <= browserParityThresholds.maxScoreDelta;
         const acceptedDetectionJson = JSON.stringify(acceptedDetection.detections);
         const detectionJson = JSON.stringify(detection.detections);
         const acceptedOutputSha256 = await sha256(new TextEncoder().encode(acceptedDetectionJson));
         const outputSha256 = await sha256(new TextEncoder().encode(detectionJson));
         fixtureResults.push({
+          acceptedDetections: acceptedDetection.detections,
           acceptedOutputSha256,
           detectionCount: detection.detections.length,
           detections: detection.detections,
           expectedDetectionCount: acceptedDetection.detections.length,
           filename: fixture.filename,
           fixtureSha256: fixture.sha256,
-          labelSequenceEqual,
           outputSha256,
-          parityMetrics,
-          parityThresholds: browserParityThresholds,
-          parity:
-            detection.detections.length === acceptedDetection.detections.length &&
-            labelSequenceEqual &&
-            readingOrderEqual &&
-            numericParity
-              ? "passed"
-              : "failed",
-          readingOrderEqual,
           timings: detection.timings
         });
       }
@@ -411,7 +333,6 @@ test("records strict seven-fixture browser evidence", async ({ browser, page }) 
     },
     {
       acceptedManifest,
-      acceptedParityThresholds,
       backend,
       fixtures: fixturesLock.fixtures,
       origin,
@@ -423,36 +344,44 @@ test("records strict seven-fixture browser evidence", async ({ browser, page }) 
   expect(result.runtime).toMatchObject({ backend, fallbacks: [], precision });
   expect(result.model.sha256).toBe(manifestVariant!.sha256);
   expect(result.fixtures).toHaveLength(fixturesLock.fixtures.length);
-  const fixtureEvidence = result.fixtures.map(({ detections, ...fixture }) => {
-    expect(fixture.detectionCount).toBe(fixture.expectedDetectionCount);
-    expect(fixture.labelSequenceEqual).toBe(true);
-    expect(fixture.readingOrderEqual).toBe(true);
-    expect(fixture.parity).toBe("passed");
-    expect(fixture.acceptedOutputSha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(fixture.outputSha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(fixture.parityMetrics.maxBoxCoordinateDeltaPixels).toBeLessThanOrEqual(
-      acceptedParityThresholds.maxBoxCoordinateDeltaPixels
-    );
-    expect(fixture.parityMetrics.maxPolygonCoordinateDeltaPixels).toBeLessThanOrEqual(
-      acceptedParityThresholds.maxPolygonCoordinateDeltaPixels
-    );
-    expect(fixture.parityMetrics.maxScoreDelta).toBeLessThanOrEqual(
-      acceptedParityThresholds.maxScoreDelta
-    );
+  const evaluatedFixtures = result.fixtures.map(
+    ({ acceptedDetections, detections, ...fixture }) => ({
+      ...fixture,
+      ...evaluateBrowserParity(precision, acceptedDetections, detections),
+      detections
+    })
+  );
+  const validationErrors = evaluatedFixtures.flatMap((fixture) =>
+    fixture.validationErrors.map((message) => `${fixture.filename}: ${message}`)
+  );
+  const fixtureEvidence = evaluatedFixtures.map(({ detections, ...fixture }) => {
     if (fixture.filename !== "table.png") return fixture;
 
-    const firstDetection = detections[0]!;
-    expect(firstDetection.labelId).toBe(reference.realImage.expected.labels[0]);
+    const firstDetection = detections[0];
+    if (firstDetection === undefined) {
+      validationErrors.push("table.png: expected reference detection is missing");
+      return { ...fixture, referenceMetrics: null, referenceThresholds };
+    }
+    if (firstDetection.labelId !== reference.realImage.expected.labels[0]) {
+      validationErrors.push("table.png: reference label differs");
+    }
     const referenceMetrics = {
       iou: boxIou(firstDetection.box),
       maxScoreDelta: Math.abs(firstDetection.score - reference.realImage.expected.scores[0]!),
       meanPolygonPointDistancePixels: meanPolygonPointDistance(firstDetection.polygon)
     };
-    expect(referenceMetrics.iou).toBeGreaterThanOrEqual(referenceThresholds.iou);
-    expect(referenceMetrics.maxScoreDelta).toBeLessThanOrEqual(referenceThresholds.maxScoreDelta);
-    expect(referenceMetrics.meanPolygonPointDistancePixels).toBeLessThanOrEqual(
+    if (referenceMetrics.iou < referenceThresholds.iou) {
+      validationErrors.push("table.png: reference IoU is below 0.95");
+    }
+    if (referenceMetrics.maxScoreDelta > referenceThresholds.maxScoreDelta) {
+      validationErrors.push("table.png: reference score delta exceeds 0.02");
+    }
+    if (
+      referenceMetrics.meanPolygonPointDistancePixels >
       referenceThresholds.meanPolygonPointDistancePixels
-    );
+    ) {
+      validationErrors.push("table.png: reference polygon distance exceeds 2 px");
+    }
     return { ...fixture, referenceMetrics, referenceThresholds };
   });
 
@@ -462,7 +391,8 @@ test("records strict seven-fixture browser evidence", async ({ browser, page }) 
   }).trim();
   const report = {
     schemaVersion: 1,
-    status: "passed",
+    status: validationErrors.length === 0 ? "passed" : "failed",
+    validationErrors,
     acceptedModelSha256: acceptedManifest.variants.find(({ id }) => id === "fp32")!.sha256,
     executionProvider: backend,
     precision,
@@ -484,6 +414,12 @@ test("records strict seven-fixture browser evidence", async ({ browser, page }) 
   };
   mkdirSync(outputRoot, { recursive: true });
   writeFileSync(join(outputRoot, `${mode}.json`), `${JSON.stringify(report, null, 2)}\n`);
+  expect(validationErrors).toEqual([]);
+  for (const fixture of evaluatedFixtures) {
+    expect(fixture.parity).toBe("passed");
+    expect(fixture.acceptedOutputSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(fixture.outputSha256).toMatch(/^[a-f0-9]{64}$/);
+  }
 });
 
 declare global {
