@@ -30,11 +30,33 @@ export const DEFAULT_CLASS_LABELS = uniqueLabels([
   "vision_footnote"
 ]);
 
+function createThresholdRecord(): Record<string, number> {
+  return Object.create(null) as Record<string, number>;
+}
+
+export function classThresholdValue(
+  thresholds: Readonly<Record<string, number>>,
+  label: string
+): number | "" {
+  return Object.hasOwn(thresholds, label) ? thresholds[label]! : "";
+}
+
+export function setClassThresholdValue(
+  thresholds: Readonly<Record<string, number>>,
+  label: string,
+  value: string
+): Record<string, number> {
+  const next = Object.assign(createThresholdRecord(), thresholds);
+  if (value === "") delete next[label];
+  else next[label] = Number(value);
+  return next;
+}
+
 export function selectActiveClassThresholds(
   labels: readonly string[],
   thresholds: Readonly<Record<string, number>>
 ): Readonly<Record<string, number>> {
-  const selected: Record<string, number> = {};
+  const selected = createThresholdRecord();
   for (const label of uniqueLabels(labels)) {
     if (Object.hasOwn(thresholds, label)) selected[label] = thresholds[label]!;
   }

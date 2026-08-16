@@ -7,21 +7,38 @@ test("normalizes active class threshold configuration", async ({ page }) => {
   await page.goto("/?fixture=1");
   const result = await page.evaluate(async (moduleUrl) => {
     const module = (await import(moduleUrl)) as typeof import("../src/class-thresholds");
+    const updatedPrototype = module.setClassThresholdValue({}, "__proto__", "0.4");
     return {
       defaults: module.DEFAULT_CLASS_LABELS,
+      prototypeValues: ["constructor", "toString", "__proto__"].map((label) =>
+        module.classThresholdValue({}, label)
+      ),
       selected: module.selectActiveClassThresholds(["formula", "formula", "text"], {
         formula: 0.4,
         stale: 0.2,
         text: 0.6
       }),
-      prototypeLabels: module.selectActiveClassThresholds(["constructor", "toString"], {})
+      prototypeLabels: module.selectActiveClassThresholds(
+        ["constructor", "toString", "__proto__"],
+        {}
+      ),
+      updatedPrototype: {
+        own: Object.hasOwn(updatedPrototype, "__proto__"),
+        selected: module.classThresholdValue(
+          module.selectActiveClassThresholds(["__proto__"], updatedPrototype),
+          "__proto__"
+        ),
+        value: module.classThresholdValue(updatedPrototype, "__proto__")
+      }
     };
   }, "/src/class-thresholds.ts");
 
   expect(result.defaults).toContain("table");
   expect(result.defaults.filter((label) => label === "formula")).toHaveLength(1);
+  expect(result.prototypeValues).toEqual(["", "", ""]);
   expect(result.selected).toEqual({ formula: 0.4, text: 0.6 });
   expect(result.prototypeLabels).toEqual({});
+  expect(result.updatedPrototype).toEqual({ own: true, selected: 0.4, value: 0.4 });
 });
 
 test("edits, applies, localizes, and clears class thresholds", async ({ page }) => {
@@ -386,6 +403,8 @@ test("stacks the result workflow on a narrow viewport without horizontal overflo
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?fixture=1");
   await expect(page.getByTestId("demo-shell")).toBeVisible();
+  await page.getByText("类别阈值", { exact: true }).click();
+  await expect(page.getByRole("spinbutton", { name: "类别阈值 text" })).toBeVisible();
   const overflow = await page.evaluate(() => ({
     containers: [...document.querySelectorAll<HTMLElement>("html, body, body *")]
       .filter((element) => element.scrollWidth > element.clientWidth)

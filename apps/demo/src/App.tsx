@@ -29,8 +29,10 @@ import {
   type PrecisionPreference
 } from "./execution-preferences";
 import {
+  classThresholdValue,
   DEFAULT_CLASS_LABELS,
   selectActiveClassThresholds,
+  setClassThresholdValue,
   uniqueLabels
 } from "./class-thresholds";
 import { tinyModelData, tinyModelManifest } from "./fixture";
@@ -193,12 +195,7 @@ export function App(): ReactElement {
   };
 
   const updateClassThreshold = (label: string, value: string): void => {
-    setClassThresholds((current) => {
-      const next = { ...current };
-      if (value === "") delete next[label];
-      else next[label] = Number(value);
-      return next;
-    });
+    setClassThresholds((current) => setClassThresholdValue(current, label, value));
   };
 
   const runDetection = async (): Promise<void> => {
@@ -424,7 +421,7 @@ export function App(): ReactElement {
                 placeholder={threshold.toFixed(2)}
                 step="0.05"
                 type="number"
-                value={classThresholds[label] ?? ""}
+                value={classThresholdValue(classThresholds, label)}
               />
             </label>
           ))}
