@@ -1,17 +1,29 @@
+# Workspace tooling
 .superpowers/
 .worktrees/
+
+# Dependencies and package-manager caches
+node_modules/
+.pnpm-store/
+
+# Build and test outputs
 outputs/
 work/
-node_modules/
 dist/
 coverage/
 packages/sdk/temp/
 playwright-report/
 test-results/
+
+# Environment files
 .env
 .env.*
+
+# Python artifacts
 .venv*/
 **/__pycache__/
 .pytest_cache/
+
+# Logs
 *.log
 
