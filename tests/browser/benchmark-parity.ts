@@ -36,6 +36,47 @@ export interface BrowserParityResult {
   validationErrors: string[];
 }
 
+function validateDetections(detections: DetectionForParity[], role: string): string[] {
+  const errors: string[] = [];
+  for (const [index, detection] of detections.entries()) {
+    if (!Number.isFinite(detection.labelId)) {
+      errors.push(`${role} detection ${index} has a non-finite labelId`);
+    }
+    if (!Number.isFinite(detection.readingOrder)) {
+      errors.push(`${role} detection ${index} has a non-finite readingOrder`);
+    }
+    if (!Number.isFinite(detection.score)) {
+      errors.push(`${role} detection ${index} has a non-finite score`);
+    }
+    for (const coordinate of ["xMin", "xMax", "yMin", "yMax"] as const) {
+      if (!Number.isFinite(detection.box[coordinate])) {
+        errors.push(`${role} detection ${index} has a non-finite box coordinate ${coordinate}`);
+      }
+    }
+    const boxWidth = Math.max(0, detection.box.xMax - detection.box.xMin);
+    const boxHeight = Math.max(0, detection.box.yMax - detection.box.yMin);
+    const boxArea = boxWidth * boxHeight;
+    if (
+      !Number.isFinite(boxWidth) ||
+      !Number.isFinite(boxHeight) ||
+      !Number.isFinite(boxArea) ||
+      boxArea > Number.MAX_VALUE / 2
+    ) {
+      errors.push(`${role} detection ${index} has box geometry outside the safe numeric range`);
+    }
+    if (detection.polygon.length === 0) {
+      errors.push(`${role} detection ${index} has an empty polygon`);
+      continue;
+    }
+    for (const [pointIndex, point] of detection.polygon.entries()) {
+      if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+        errors.push(`${role} detection ${index} polygon point ${pointIndex} is non-finite`);
+      }
+    }
+  }
+  return errors;
+}
+
 function boxIou(left: DetectionForParity["box"], right: DetectionForParity["box"]): number {
   const intersectionWidth = Math.max(
     0,
@@ -49,7 +90,8 @@ function boxIou(left: DetectionForParity["box"], right: DetectionForParity["box"
   const leftArea = Math.max(0, left.xMax - left.xMin) * Math.max(0, left.yMax - left.yMin);
   const rightArea = Math.max(0, right.xMax - right.xMin) * Math.max(0, right.yMax - right.yMin);
   const union = leftArea + rightArea - intersection;
-  return union === 0 ? 0 : intersection / union;
+  const iou = union === 0 ? 0 : intersection / union;
+  return Number.isFinite(iou) ? iou : 0;
 }
 
 function minimumCostAssignment(costs: number[][]): number[] {
@@ -259,6 +301,62 @@ function evaluateFp16(
   accepted: DetectionForParity[],
   candidate: DetectionForParity[]
 ): BrowserParityResult {
+  const validationErrors = [
+    ...validateDetections(accepted, "accepted"),
+    ...validateDetections(candidate, "candidate")
+  ];
+  if (validationErrors.length > 0) {
+    return {
+      parity: "failed",
+      parityMetrics: {
+        acceptedDetections: accepted.length,
+        candidateDetections: candidate.length,
+        matchedDetectionPrecision: null,
+        matchedDetectionRatio: null,
+        matchedDetections: 0,
+        meanMatchedIoU: null,
+        minMatchedIoU: null,
+        p05MatchedIoU: null,
+        maxScoreDelta: null,
+        meanPolygonEdgeDistancePixels: null,
+        maxPolygonOutOfBoxDistancePixels: null,
+        maxReadingOrderDisplacement: null,
+        readingOrderInversions: null,
+        readingOrderInversionRate: null,
+        spatiallyReorderedDetections: 0,
+        unmatchedCandidateDetections: candidate.length,
+        unmatchedAcceptedDetections: accepted.length
+      },
+      parityThresholds: FP16_PARITY_THRESHOLDS,
+      validationErrors
+    };
+  }
+  if (accepted.length === 0 && candidate.length === 0) {
+    return {
+      parity: "passed",
+      parityMetrics: {
+        acceptedDetections: 0,
+        candidateDetections: 0,
+        matchedDetectionPrecision: 1,
+        matchedDetectionRatio: 1,
+        matchedDetections: 0,
+        meanMatchedIoU: null,
+        minMatchedIoU: null,
+        p05MatchedIoU: null,
+        maxScoreDelta: null,
+        meanPolygonEdgeDistancePixels: null,
+        maxPolygonOutOfBoxDistancePixels: 0,
+        maxReadingOrderDisplacement: 0,
+        readingOrderInversions: 0,
+        readingOrderInversionRate: 0,
+        spatiallyReorderedDetections: 0,
+        unmatchedCandidateDetections: 0,
+        unmatchedAcceptedDetections: 0
+      },
+      parityThresholds: FP16_PARITY_THRESHOLDS,
+      validationErrors: []
+    };
+  }
   const matches = spatialMatches(accepted, candidate);
   const ious = matches.map(({ iou }) => iou);
   const scoreDeltas = matches.map(({ acceptedIndex, candidateIndex }) =>
@@ -300,61 +398,61 @@ function evaluateFp16(
     unmatchedCandidateDetections: candidate.length - matches.length,
     unmatchedAcceptedDetections: accepted.length - matches.length
   };
-  const validationErrors: string[] = [];
-  if (accepted.length !== candidate.length) validationErrors.push("detection count differs");
+  const parityValidationErrors: string[] = [];
+  if (accepted.length !== candidate.length) parityValidationErrors.push("detection count differs");
   if (metrics.matchedDetectionRatio < FP16_PARITY_THRESHOLDS.matchedDetectionRatio) {
-    validationErrors.push("matched detection ratio is below 1");
+    parityValidationErrors.push("matched detection ratio is below 1");
   }
   if (metrics.matchedDetectionPrecision < FP16_PARITY_THRESHOLDS.matchedDetectionPrecision) {
-    validationErrors.push("matched detection precision is below 1");
+    parityValidationErrors.push("matched detection precision is below 1");
   }
   if (
     metrics.minMatchedIoU === null ||
     metrics.minMatchedIoU < FP16_PARITY_THRESHOLDS.minMatchedIoU
   ) {
-    validationErrors.push("minimum matched IoU is below 0.8");
+    parityValidationErrors.push("minimum matched IoU is below 0.8");
   }
   if (
     metrics.p05MatchedIoU === null ||
     metrics.p05MatchedIoU < FP16_PARITY_THRESHOLDS.p05MatchedIoU
   ) {
-    validationErrors.push("P05 matched IoU is below 0.85");
+    parityValidationErrors.push("P05 matched IoU is below 0.85");
   }
   if (
     metrics.meanMatchedIoU === null ||
     metrics.meanMatchedIoU < FP16_PARITY_THRESHOLDS.meanMatchedIoU
   ) {
-    validationErrors.push("mean matched IoU is below 0.94");
+    parityValidationErrors.push("mean matched IoU is below 0.94");
   }
   if (
     metrics.maxScoreDelta === null ||
     metrics.maxScoreDelta > FP16_PARITY_THRESHOLDS.maxScoreDelta
   ) {
-    validationErrors.push("score delta exceeds 0.02");
+    parityValidationErrors.push("score delta exceeds 0.02");
   }
   if (
     metrics.meanPolygonEdgeDistancePixels === null ||
     metrics.meanPolygonEdgeDistancePixels > FP16_PARITY_THRESHOLDS.meanPolygonEdgeDistancePixels
   ) {
-    validationErrors.push("mean polygon edge distance exceeds 2 px");
+    parityValidationErrors.push("mean polygon edge distance exceeds 2 px");
   }
   if (
     metrics.maxPolygonOutOfBoxDistancePixels >
     FP16_PARITY_THRESHOLDS.maxPolygonOutOfBoxDistancePixels
   ) {
-    validationErrors.push("polygon point is more than 2 px outside its box");
+    parityValidationErrors.push("polygon point is more than 2 px outside its box");
   }
   if (metrics.maxReadingOrderDisplacement > FP16_PARITY_THRESHOLDS.maxReadingOrderDisplacement) {
-    validationErrors.push("reading order displacement exceeds 1");
+    parityValidationErrors.push("reading order displacement exceeds 1");
   }
   if (metrics.readingOrderInversionRate > FP16_PARITY_THRESHOLDS.maxReadingOrderInversionRate) {
-    validationErrors.push("reading order inversion rate exceeds 0.001");
+    parityValidationErrors.push("reading order inversion rate exceeds 0.001");
   }
   return {
-    parity: validationErrors.length === 0 ? "passed" : "failed",
+    parity: parityValidationErrors.length === 0 ? "passed" : "failed",
     parityMetrics: metrics,
     parityThresholds: FP16_PARITY_THRESHOLDS,
-    validationErrors
+    validationErrors: parityValidationErrors
   };
 }
 
@@ -365,7 +463,22 @@ function evaluateFp32(
   let boxDelta = 0;
   let polygonDelta = 0;
   let scoreDelta = 0;
-  const validationErrors: string[] = [];
+  const validationErrors = [
+    ...validateDetections(accepted, "accepted"),
+    ...validateDetections(candidate, "candidate")
+  ];
+  if (validationErrors.length > 0) {
+    return {
+      parity: "failed",
+      parityMetrics: {
+        maxBoxCoordinateDeltaPixels: null,
+        maxPolygonCoordinateDeltaPixels: null,
+        maxScoreDelta: null
+      },
+      parityThresholds: FP32_PARITY_THRESHOLDS,
+      validationErrors
+    };
+  }
   if (accepted.length !== candidate.length) validationErrors.push("detection count differs");
   if (
     JSON.stringify(accepted.map(({ labelId }) => labelId)) !==
@@ -414,7 +527,7 @@ function evaluateFp32(
     parityMetrics: {
       maxBoxCoordinateDeltaPixels: Number.isFinite(boxDelta) ? boxDelta : null,
       maxPolygonCoordinateDeltaPixels: Number.isFinite(polygonDelta) ? polygonDelta : null,
-      maxScoreDelta: scoreDelta
+      maxScoreDelta: Number.isFinite(scoreDelta) ? scoreDelta : null
     },
     parityThresholds: FP32_PARITY_THRESHOLDS,
     validationErrors

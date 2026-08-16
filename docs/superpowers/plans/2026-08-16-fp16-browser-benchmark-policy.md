@@ -11,6 +11,7 @@
 - [x] Require score delta `0.02`, order displacement `1`, inversion rate `0.001`, and polygon edge distance `2 px`.
 - [x] Add candidate polygon containment validation with a `2 px` tolerance.
 - [x] Add tests for accepted quantization, IoU rejection, score rejection, vertex-count changes, polygon drift, local reorder, and broad reorder.
+- [x] Reject empty polygons and non-finite detection values before numeric matching; define empty-set parity explicitly.
 
 ## Task 2: Benchmark Integration
 
@@ -19,18 +20,19 @@
 - [x] Keep runtime, model hash, adapter, fallback, timing, and table reference evidence.
 - [x] Upload all three benchmark reports with `if: always()` and `if-no-files-found: warn`.
 - [x] Extend `scripts/benchmark-contract.test.mjs` to pin the new FP16 policy names and thresholds.
+- [x] Run the focused parity suite from root `verify` and the benchmark workflow, including policy-file trigger paths.
 
 ## Task 3: Documentation and Verification
 
 - [x] Update this plan and the policy design with the calibrated thresholds and baseline polygon finding.
 - [x] Run focused parity tests and the benchmark contract.
-- [ ] Run formatting, lint, typecheck, SDK/example/demo tests, and build.
-- [ ] Run physical WebGPU FP16 and WebGPU FP32 benchmarks on `windows-nvidia-webgpu`.
-- [ ] Confirm the final working tree and diff are scoped before committing.
+- [x] Run scoped formatting, lint, typecheck, SDK/example/demo tests, and build.
+- [x] Run physical WebGPU FP16 and WebGPU FP32 benchmarks on `windows-nvidia-webgpu`.
+- [x] Confirm the final working tree and diff are scoped before committing.
 
 ## Task 4: Delivery
 
-- [ ] Commit the policy, tests, contract, and documentation changes.
+- [x] Commit the policy, tests, contract, and documentation changes.
 - [ ] Push `codex/fp16-benchmark-policy` and create a PR against `main`.
 - [ ] Require CI and the main-branch hardware benchmark to pass before squash merging.
 

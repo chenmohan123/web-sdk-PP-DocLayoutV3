@@ -17,7 +17,10 @@ describe("1.0.0 benchmark release contract", () => {
   test("provides a manual hardware benchmark workflow", () => {
     const workflow = readFileSync(join(repositoryRoot, ".github/workflows/benchmark.yml"), "utf8");
     assert.match(workflow, /workflow_dispatch:/);
+    assert.match(workflow, /pnpm run benchmark:parity/);
     assert.match(workflow, /push:\s+branches:\s+\[main\]\s+paths:/);
+    assert.match(workflow, /tests\/browser\/benchmark-parity\.ts/);
+    assert.match(workflow, /tests\/browser\/benchmark-parity\.spec\.ts/);
     assert.match(workflow, /tests\/browser\/benchmark\.spec\.ts/);
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?wasm-fp32/);
     assert.match(workflow, /PPDOCLAYOUT_BENCHMARK_MODE:\s*["']?webgpu-fp16/);
@@ -60,6 +63,12 @@ describe("1.0.0 benchmark release contract", () => {
     );
     const benchmark = readFileSync(join(repositoryRoot, "tests/browser/benchmark.spec.ts"), "utf8");
     const parity = readFileSync(join(repositoryRoot, "tests/browser/benchmark-parity.ts"), "utf8");
+    const packageJson = JSON.parse(readFileSync(join(repositoryRoot, "package.json"), "utf8"));
+    assert.equal(
+      packageJson.scripts["benchmark:parity"],
+      "playwright test tests/browser/benchmark-parity.spec.ts"
+    );
+    assert.match(packageJson.scripts.verify, /pnpm benchmark:parity/);
     assert.match(benchmark, /causeMessage/);
     assert.match(benchmark, /capabilities/);
     assert.match(benchmark, /\.mjs["']:\s*["']text\/javascript/);

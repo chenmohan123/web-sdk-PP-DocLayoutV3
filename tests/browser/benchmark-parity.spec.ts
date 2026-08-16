@@ -171,3 +171,78 @@ test("FP16 rejects broad reading-order drift", () => {
   expect(result.parity).toBe("failed");
   expect(result.validationErrors).toContain("reading order inversion rate exceeds 0.001");
 });
+
+test("FP16 rejects a matched detection with an empty polygon", () => {
+  const result = evaluateBrowserParity("fp16", [detection()], [detection({ polygon: [] })]);
+
+  expect(result.parity).toBe("failed");
+  expect(result.validationErrors).toContain("candidate detection 0 has an empty polygon");
+});
+
+test("parity rejects non-finite detection values", () => {
+  const cases: Array<[string, DetectionForParity]> = [
+    ["box", detection({ box: { xMin: Number.NaN, yMin: 0, xMax: 100, yMax: 100 } })],
+    ["label", detection({ labelId: Number.POSITIVE_INFINITY })],
+    ["score", detection({ score: Number.POSITIVE_INFINITY })],
+    ["reading order", detection({ readingOrder: Number.NaN })],
+    [
+      "polygon",
+      detection({
+        polygon: [
+          { x: 0, y: 0 },
+          { x: Number.NEGATIVE_INFINITY, y: 0 },
+          { x: 100, y: 100 }
+        ]
+      })
+    ]
+  ];
+
+  for (const [field, candidate] of cases) {
+    const result = evaluateBrowserParity("fp16", [detection()], [candidate]);
+    expect(result.parity, field).toBe("failed");
+    expect(
+      result.validationErrors.some((error) => error.includes("non-finite")),
+      field
+    ).toBe(true);
+  }
+});
+
+test("FP32 rejects non-finite detection values before strict comparison", () => {
+  const result = evaluateBrowserParity("fp32", [detection()], [detection({ score: Number.NaN })]);
+
+  expect(result.parity).toBe("failed");
+  expect(result.validationErrors).toContain("candidate detection 0 has a non-finite score");
+  expect(result.parityMetrics.maxScoreDelta).toBeNull();
+});
+
+test("FP16 rejects finite coordinates whose derived box area overflows", () => {
+  const result = evaluateBrowserParity(
+    "fp16",
+    [detection()],
+    [
+      detection({
+        box: { xMin: -1e200, yMin: -1e200, xMax: 1e200, yMax: 1e200 }
+      })
+    ]
+  );
+
+  expect(result.parity).toBe("failed");
+  expect(result.validationErrors).toContain(
+    "candidate detection 0 has box geometry outside the safe numeric range"
+  );
+});
+
+test("FP16 accepts two empty detection sets", () => {
+  const result = evaluateBrowserParity("fp16", [], []);
+
+  expect(result.parity).toBe("passed");
+  expect(result.parityMetrics.matchedDetectionRatio).toBe(1);
+  expect(result.parityMetrics.matchedDetectionPrecision).toBe(1);
+});
+
+test("FP16 rejects one empty detection set", () => {
+  const result = evaluateBrowserParity("fp16", [detection()], []);
+
+  expect(result.parity).toBe("failed");
+  expect(result.validationErrors).toContain("detection count differs");
+});

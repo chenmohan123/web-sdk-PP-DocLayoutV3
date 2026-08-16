@@ -30,6 +30,36 @@ function verifyWithJsonMutation(relativePath, mutate) {
   }
 }
 
+function verifyWithCurrentFp32Schema() {
+  const benchmarkPath = resolve(repositoryRoot, "benchmarks/1.0.1/wasm-fp32.json");
+  const evidencePath = resolve(
+    repositoryRoot,
+    "tools/model-pipeline/reports/1.0.1/browser-evidence.json"
+  );
+  const originalBenchmark = readFileSync(benchmarkPath, "utf8");
+  const originalEvidence = readFileSync(evidencePath, "utf8");
+  const benchmark = JSON.parse(originalBenchmark);
+  for (const fixture of benchmark.fixtures) {
+    delete fixture.labelSequenceEqual;
+    delete fixture.readingOrderEqual;
+    fixture.parityThresholds.policy = "fp32-equality";
+  }
+  const evidence = JSON.parse(originalEvidence);
+  evidence.fp32Wasm = structuredClone(benchmark);
+  try {
+    writeFileSync(benchmarkPath, `${JSON.stringify(benchmark, null, 2)}\n`);
+    writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
+    return spawnSync(
+      process.execPath,
+      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.1"],
+      { cwd: repositoryRoot, encoding: "utf8" }
+    );
+  } finally {
+    writeFileSync(benchmarkPath, originalBenchmark);
+    writeFileSync(evidencePath, originalEvidence);
+  }
+}
+
 function modelStagingFixture({ corruptFp32 = false, unsafeFp16Url = false } = {}) {
   const fp16 = Buffer.from("fp16-model");
   const fp32 = Buffer.from("fp32-model");
@@ -175,6 +205,12 @@ describe("release workflow contract", () => {
     });
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /FP32 WASM browser evidence differs from the benchmark artifact/);
+  });
+
+  test("accepts current FP32 parity evidence while preserving historical compatibility", () => {
+    const result = verifyWithCurrentFp32Schema();
+
+    assert.equal(result.status, 0, result.stderr);
   });
 
   test("requires package repository metadata to match GitHub provenance", () => {

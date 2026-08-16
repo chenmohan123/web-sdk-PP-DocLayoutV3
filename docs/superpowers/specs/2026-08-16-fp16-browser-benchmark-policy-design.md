@@ -35,6 +35,8 @@ FP16 uses same-label spatial assignment (Hungarian maximum-IoU matching) and req
 - Maximum reading-order displacement `1` and inversion rate at most `0.001`. This permits one adjacent swap in a 59-detection fixture while rejecting broad reordering.
 - Symmetric mean point-to-edge polygon distance at most `2 px`, independent of vertex count.
 - Candidate polygon points no more than `2 px` outside their candidate box.
+- Reject empty polygons and non-finite label, order, score, box, or polygon values before spatial matching.
+- Treat two empty detection sets as equal, while one empty side still fails count and matching checks.
 
 The policy reports all metrics, unmatched counts, spatial reorder count, and validation errors. It does not filter matches at the IoU threshold before calculating recall; a low-IoU assignment remains visible and fails the minimum/percentile/mean gates.
 
@@ -42,7 +44,7 @@ The policy reports all metrics, unmatched counts, spatial reorder count, and val
 
 `tests/browser/benchmark-parity.ts` is a pure TypeScript module with separate FP32 and FP16 evaluators. The Playwright page returns accepted and candidate detections; Node performs the deterministic policy evaluation after browser inference. Same-label matching is solved per label group so query-array order does not create false unmatched detections.
 
-The benchmark writes `test-results/benchmark/<mode>.json` before parity expectations. Every benchmark result upload in `.github/workflows/benchmark.yml` uses `if: always()` and `if-no-files-found: warn`.
+The benchmark writes `test-results/benchmark/<mode>.json` before parity expectations. The root `verify` command and the benchmark workflow both run the hardware-independent parity suite, and parity-module changes trigger the benchmark workflow. Every benchmark result upload in `.github/workflows/benchmark.yml` uses `if: always()` and `if-no-files-found: warn`.
 
 ## Evidence and Verification
 

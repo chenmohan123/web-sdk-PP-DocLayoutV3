@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/benchmark.yml
       - scripts/benchmark-contract.test.mjs
+      - tests/browser/benchmark-parity.ts
+      - tests/browser/benchmark-parity.spec.ts
       - tests/browser/benchmark.spec.ts
   workflow_dispatch:
 
@@ -28,6 +30,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run benchmark:parity
       - run: pnpm exec playwright test tests/browser/benchmark.spec.ts
         env:
           PPDOCLAYOUT_BENCHMARK_MODE: wasm-fp32
