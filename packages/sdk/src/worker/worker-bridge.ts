@@ -175,6 +175,9 @@ class WorkerBridgeImplementation implements WorkerBridge {
     const rgba = new Uint8ClampedArray(raster.rgba);
     const payload = {
       raster: { height: raster.height, rgba, width: raster.width },
+      ...(options.classThresholds === undefined
+        ? {}
+        : { classThresholds: options.classThresholds }),
       ...(options.threshold === undefined ? {} : { threshold: options.threshold })
     };
     return new Promise<WorkerInferenceResult>((resolve, reject) => {

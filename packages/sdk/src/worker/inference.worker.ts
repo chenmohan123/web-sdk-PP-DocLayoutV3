@@ -95,6 +95,9 @@ async function detect(message: Extract<WorkerMessageToWorker, { type: "detect" }
       inputSize: manifest.preprocessing.size,
       labels: manifest.labels,
       targetSize: input.originalSize,
+      ...(message.payload.classThresholds === undefined
+        ? {}
+        : { classThresholds: message.payload.classThresholds }),
       ...(message.payload.threshold === undefined ? {} : { threshold: message.payload.threshold })
     });
     const postprocessMs = performance.now() - postprocessStartedAt;
