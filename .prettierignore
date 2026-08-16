@@ -2,6 +2,7 @@
 node_modules/
 dist/
 coverage/
+work/
 playwright-report/
 test-results/
 packages/sdk/etc/*.api.md
