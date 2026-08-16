@@ -91,6 +91,31 @@ describe("postprocessDetections", () => {
     expect(second).toMatchObject({ label: "footer", labelId: 1 });
   });
 
+  it("applies shared per-class thresholds after global top-k selection", () => {
+    const detections = postprocessDetections(outputsFor(reference.synthetic), {
+      inputSize: reference.synthetic.inputSize,
+      labels: reference.synthetic.labels,
+      targetSize: reference.synthetic.targetSize,
+      threshold: 0.6,
+      classThresholds: { content: 0.5, footer: 0.85, image: 0.8 }
+    });
+
+    expect(detections.map(({ labelId }) => labelId)).toEqual([0, 2]);
+  });
+
+  it("includes a score equal to its class threshold", () => {
+    const detections = postprocessDetections(outputsFor(reference.synthetic), {
+      inputSize: reference.synthetic.inputSize,
+      labels: reference.synthetic.labels,
+      targetSize: reference.synthetic.targetSize,
+      threshold: 0.95,
+      classThresholds: { content: 0.5 }
+    });
+
+    expect(detections).toHaveLength(1);
+    expect(detections[0]).toMatchObject({ label: "content", labelId: 2, score: 0.5 });
+  });
+
   it("includes a score exactly on the threshold and sorts it before a later query", () => {
     const detections = runFixture(reference.synthetic);
 
@@ -161,6 +186,63 @@ describe("postprocessDetections", () => {
 
     expect(detections.map(({ labelId }) => labelId)).toEqual([0, 1]);
     expect(detections[0]?.box).toEqual(detections[1]?.box);
+  });
+
+  it("does not allow a class override to resurrect a candidate outside global top-k", () => {
+    const outputs: PPDocLayoutRawOutputs = {
+      logits: { data: Float32Array.from([10, 9]), dims: [1, 1, 2] },
+      orderLogits: { data: new Float32Array(1), dims: [1, 1, 1] },
+      outMasks: { data: new Float32Array(4), dims: [1, 1, 2, 2] },
+      predBoxes: { data: Float32Array.from([0.5, 0.5, 0.5, 0.5]), dims: [1, 1, 4] }
+    };
+
+    const detections = postprocessDetections(outputs, {
+      inputSize: { height: 8, width: 8 },
+      labels: ["first", "second"],
+      targetSize: { height: 100, width: 100 },
+      classThresholds: { first: 1, second: 0 }
+    });
+
+    expect(detections).toEqual([]);
+  });
+
+  it("rejects class threshold overrides for unknown labels and invalid values", () => {
+    const options = {
+      inputSize: reference.synthetic.inputSize,
+      labels: reference.synthetic.labels,
+      targetSize: reference.synthetic.targetSize
+    };
+
+    expect(() =>
+      postprocessDetections(outputsFor(reference.synthetic), {
+        ...options,
+        classThresholds: { unknown: 0.5 }
+      })
+    ).toThrow(/unknown/i);
+    expect(() =>
+      postprocessDetections(outputsFor(reference.synthetic), {
+        ...options,
+        classThresholds: { content: Number.NaN }
+      })
+    ).toThrow(/threshold/i);
+  });
+
+  it("keeps mask polygon binarization on the global threshold", () => {
+    const globalOnly = postprocessDetections(outputsFor(reference.synthetic), {
+      inputSize: reference.synthetic.inputSize,
+      labels: reference.synthetic.labels,
+      targetSize: reference.synthetic.targetSize,
+      threshold: 0.5
+    });
+    const classOverride = postprocessDetections(outputsFor(reference.synthetic), {
+      inputSize: reference.synthetic.inputSize,
+      labels: reference.synthetic.labels,
+      targetSize: reference.synthetic.targetSize,
+      threshold: 0.5,
+      classThresholds: { footer: 0.85 }
+    });
+
+    expect(classOverride[0]?.polygon).toEqual(globalOnly[0]?.polygon);
   });
 
   it("uses a strict threshold for masks while detection scores remain inclusive", () => {

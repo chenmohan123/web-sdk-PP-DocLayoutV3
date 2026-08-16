@@ -39,6 +39,7 @@ export interface LayoutDetection {
 }
 
 export interface PostprocessOptions {
+  readonly classThresholds?: Readonly<Record<string, number>>;
   readonly inputSize: ImageSize;
   readonly labels: readonly string[];
   readonly targetSize: ImageSize;
@@ -62,6 +63,11 @@ interface Candidate {
 interface RankedCandidate extends Candidate {
   readonly box: LayoutBox;
   readonly order: number;
+}
+
+interface ValidatedThresholds {
+  readonly classes: Readonly<Record<string, number>>;
+  readonly global: number;
 }
 
 interface IntegerPoint {
@@ -133,10 +139,21 @@ function validateOutputs(outputs: PPDocLayoutRawOutputs, labels: readonly string
   return { classes, maskHeight, maskWidth, queries };
 }
 
-function validateOptions(options: PostprocessOptions): number {
-  const threshold = options.threshold ?? 0.5;
+function validateThreshold(threshold: number, message: string, details: Readonly<Record<string, unknown>>): void {
   if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
-    throw inferenceError("Detection threshold must be between zero and one", { threshold });
+    throw inferenceError(message, details);
+  }
+}
+
+function validateOptions(options: PostprocessOptions): ValidatedThresholds {
+  const global = options.threshold ?? 0.5;
+  validateThreshold(global, "Detection threshold must be between zero and one", { threshold: global });
+  const classes = options.classThresholds ?? {};
+  for (const [label, threshold] of Object.entries(classes)) {
+    if (!options.labels.includes(label)) {
+      throw inferenceError("Class threshold specifies an unknown manifest label", { label });
+    }
+    validateThreshold(threshold, "Class threshold must be between zero and one", { label, threshold });
   }
   for (const [name, size] of [
     ["input", options.inputSize],
@@ -151,7 +168,7 @@ function validateOptions(options: PostprocessOptions): number {
       throw inferenceError(`${name} image dimensions are invalid`, { ...size });
     }
   }
-  return threshold;
+  return { classes, global };
 }
 
 function sigmoid(value: number): number {
@@ -162,12 +179,7 @@ function sigmoid(value: number): number {
   return exponential / (1 + exponential);
 }
 
-function selectCandidates(
-  logits: Float32Array,
-  queries: number,
-  classes: number,
-  threshold: number
-): Candidate[] {
+function selectCandidates(logits: Float32Array, queries: number, classes: number): Candidate[] {
   const candidates = new Array<Candidate>(queries * classes);
   for (let flatIndex = 0; flatIndex < candidates.length; flatIndex += 1) {
     candidates[flatIndex] = {
@@ -179,7 +191,7 @@ function selectCandidates(
   }
 
   candidates.sort((left, right) => right.score - left.score || left.flatIndex - right.flatIndex);
-  return candidates.slice(0, queries).filter(({ score }) => score >= threshold);
+  return candidates.slice(0, queries);
 }
 
 function readingOrderRanks(orderLogits: Float32Array, queries: number): Int32Array {
@@ -595,10 +607,15 @@ export function postprocessDetections(
   outputs: PPDocLayoutRawOutputs,
   options: PostprocessOptions
 ): LayoutDetection[] {
-  const threshold = validateOptions(options);
+  const thresholds = validateOptions(options);
   const shape = validateOutputs(outputs, options.labels);
   const ranks = readingOrderRanks(outputs.orderLogits.data, shape.queries);
-  const candidates = selectCandidates(outputs.logits.data, shape.queries, shape.classes, threshold)
+  const candidates = selectCandidates(outputs.logits.data, shape.queries, shape.classes)
+    .filter((candidate) => {
+      const label = options.labels[candidate.labelId]!;
+      const threshold = thresholds.classes[label] ?? thresholds.global;
+      return candidate.score >= threshold;
+    })
     .map<RankedCandidate>((candidate) => ({
       ...candidate,
       box: boxForQuery(outputs.predBoxes.data, candidate.query, options.targetSize),
@@ -610,7 +627,7 @@ export function postprocessDetections(
     box: candidate.box,
     label: options.labels[candidate.labelId]!,
     labelId: candidate.labelId,
-    polygon: polygonForCandidate(outputs, shape, candidate, options, threshold),
+    polygon: polygonForCandidate(outputs, shape, candidate, options, thresholds.global),
     readingOrder: index + 1,
     score: candidate.score
   }));
