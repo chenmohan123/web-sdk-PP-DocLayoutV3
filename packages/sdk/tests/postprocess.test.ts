@@ -227,14 +227,42 @@ describe("postprocessDetections", () => {
     ).toThrow(/threshold/i);
   });
 
+  it("uses the global threshold for prototype-named labels without own overrides", () => {
+    const outputs: PPDocLayoutRawOutputs = {
+      logits: { data: Float32Array.from([0]), dims: [1, 1, 1] },
+      orderLogits: { data: new Float32Array(1), dims: [1, 1, 1] },
+      outMasks: { data: new Float32Array(4), dims: [1, 1, 2, 2] },
+      predBoxes: { data: Float32Array.from([0.5, 0.5, 0.5, 0.5]), dims: [1, 1, 4] }
+    };
+
+    const detections = postprocessDetections(outputs, {
+      classThresholds: {},
+      inputSize: { height: 8, width: 8 },
+      labels: ["constructor"],
+      targetSize: { height: 100, width: 100 },
+      threshold: 0.5
+    });
+
+    expect(detections).toHaveLength(1);
+  });
+
   it("keeps mask polygon binarization on the global threshold", () => {
-    const globalOnly = postprocessDetections(outputsFor(reference.synthetic), {
+    const original = outputsFor(reference.synthetic);
+    const maskData = new Float32Array(original.outMasks.data);
+    for (let index = 0; index < 8 * 8; index += 1) {
+      if (maskData[index]! > 0) maskData[index] = Math.log(3);
+    }
+    const outputs = {
+      ...original,
+      outMasks: { data: maskData, dims: original.outMasks.dims }
+    };
+    const globalOnly = postprocessDetections(outputs, {
       inputSize: reference.synthetic.inputSize,
       labels: reference.synthetic.labels,
       targetSize: reference.synthetic.targetSize,
       threshold: 0.5
     });
-    const classOverride = postprocessDetections(outputsFor(reference.synthetic), {
+    const classOverride = postprocessDetections(outputs, {
       inputSize: reference.synthetic.inputSize,
       labels: reference.synthetic.labels,
       targetSize: reference.synthetic.targetSize,
@@ -243,6 +271,12 @@ describe("postprocessDetections", () => {
     });
 
     expect(classOverride[0]?.polygon).toEqual(globalOnly[0]?.polygon);
+    expect(globalOnly[0]?.polygon.map(({ x, y }) => [x, y])).not.toEqual([
+      [14, 10],
+      [135, 10],
+      [135, 50],
+      [14, 50]
+    ]);
   });
 
   it("uses a strict threshold for masks while detection scores remain inclusive", () => {

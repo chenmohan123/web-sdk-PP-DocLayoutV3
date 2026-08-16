@@ -139,7 +139,11 @@ function validateOutputs(outputs: PPDocLayoutRawOutputs, labels: readonly string
   return { classes, maskHeight, maskWidth, queries };
 }
 
-function validateThreshold(threshold: number, message: string, details: Readonly<Record<string, unknown>>): void {
+function validateThreshold(
+  threshold: number,
+  message: string,
+  details: Readonly<Record<string, unknown>>
+): void {
   if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
     throw inferenceError(message, details);
   }
@@ -147,13 +151,18 @@ function validateThreshold(threshold: number, message: string, details: Readonly
 
 function validateOptions(options: PostprocessOptions): ValidatedThresholds {
   const global = options.threshold ?? 0.5;
-  validateThreshold(global, "Detection threshold must be between zero and one", { threshold: global });
+  validateThreshold(global, "Detection threshold must be between zero and one", {
+    threshold: global
+  });
   const classes = options.classThresholds ?? {};
   for (const [label, threshold] of Object.entries(classes)) {
     if (!options.labels.includes(label)) {
       throw inferenceError("Class threshold specifies an unknown manifest label", { label });
     }
-    validateThreshold(threshold, "Class threshold must be between zero and one", { label, threshold });
+    validateThreshold(threshold, "Class threshold must be between zero and one", {
+      label,
+      threshold
+    });
   }
   for (const [name, size] of [
     ["input", options.inputSize],
@@ -613,7 +622,9 @@ export function postprocessDetections(
   const candidates = selectCandidates(outputs.logits.data, shape.queries, shape.classes)
     .filter((candidate) => {
       const label = options.labels[candidate.labelId]!;
-      const threshold = thresholds.classes[label] ?? thresholds.global;
+      const threshold = Object.hasOwn(thresholds.classes, label)
+        ? thresholds.classes[label]!
+        : thresholds.global;
       return candidate.score >= threshold;
     })
     .map<RankedCandidate>((candidate) => ({
