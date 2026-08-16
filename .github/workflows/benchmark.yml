@@ -2,7 +2,7 @@ name: Release benchmarks
 
 on:
   push:
-    branches: [develop]
+    branches: [main]
     paths:
       - .github/workflows/benchmark.yml
       - scripts/benchmark-contract.test.mjs
