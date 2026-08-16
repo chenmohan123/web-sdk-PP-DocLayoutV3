@@ -71,6 +71,7 @@ export interface CreateDocLayoutOptions {
 }
 
 export interface DocLayoutDetectOptions {
+  readonly classThresholds?: Readonly<Record<string, number>>;
   readonly signal?: AbortSignal;
   readonly threshold?: number;
 }
@@ -596,6 +597,9 @@ async function createMainExecutor(
         inputSize: options.manifest.preprocessing.size,
         labels: options.manifest.labels,
         targetSize: input.originalSize,
+        ...(detectOptions.classThresholds === undefined
+          ? {}
+          : { classThresholds: detectOptions.classThresholds }),
         ...(detectOptions.threshold === undefined ? {} : { threshold: detectOptions.threshold })
       });
       const postprocessMs = elapsed(nowDefault, postprocessStartedAt);

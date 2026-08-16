@@ -25,6 +25,7 @@ export interface WorkerBridgeEnvironment {
 }
 
 export interface InferenceDetectOptions {
+  readonly classThresholds?: Readonly<Record<string, number>>;
   readonly signal?: AbortSignal;
   readonly threshold?: number;
 }
