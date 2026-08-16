@@ -42,6 +42,17 @@ describe("1.0.0 benchmark release contract", () => {
       );
       assert.doesNotMatch(source, /actions\/upload-artifact@v4/);
     }
+    assert.equal(
+      workflow.match(/- if:\s*always\(\)\s*\r?\n\s*uses: actions\/upload-artifact@v7/g)
+        ?.length ?? 0,
+      3,
+      "every benchmark result must upload after success or failure"
+    );
+    assert.equal(
+      workflow.match(/if-no-files-found:\s*warn/g)?.length ?? 0,
+      3,
+      "missing failure evidence must remain visible"
+    );
     assert.match(workflow, /responsive-screenshots/);
     assert.match(
       workflow,
@@ -60,6 +71,12 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(benchmark, /architecture:\s*adapter\.info\.architecture/);
     assert.match(benchmark, /vendor:\s*adapter\.info\.vendor/);
     assert.match(benchmark, /capabilities:\s*result\.runtime\.capabilities/);
+    assert.match(benchmark, /evaluateBrowserParity/);
+    assert.ok(
+      benchmark.indexOf("writeFileSync(join(outputRoot") <
+        benchmark.indexOf("expect(fixture.parity)"),
+      "benchmark evidence must be written before parity assertions"
+    );
   });
 
   test("keeps the historical benchmark aligned with its changelog release", () => {
