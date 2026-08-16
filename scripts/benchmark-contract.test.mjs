@@ -43,8 +43,8 @@ describe("1.0.0 benchmark release contract", () => {
       assert.doesNotMatch(source, /actions\/upload-artifact@v4/);
     }
     assert.equal(
-      workflow.match(/- if:\s*always\(\)\s*\r?\n\s*uses: actions\/upload-artifact@v7/g)
-        ?.length ?? 0,
+      workflow.match(/- if:\s*always\(\)\s*\r?\n\s*uses: actions\/upload-artifact@v7/g)?.length ??
+        0,
       3,
       "every benchmark result must upload after success or failure"
     );

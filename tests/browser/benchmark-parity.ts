@@ -40,10 +40,8 @@ function boxIou(left: DetectionForParity["box"], right: DetectionForParity["box"
     Math.min(left.yMax, right.yMax) - Math.max(left.yMin, right.yMin)
   );
   const intersection = intersectionWidth * intersectionHeight;
-  const leftArea =
-    Math.max(0, left.xMax - left.xMin) * Math.max(0, left.yMax - left.yMin);
-  const rightArea =
-    Math.max(0, right.xMax - right.xMin) * Math.max(0, right.yMax - right.yMin);
+  const leftArea = Math.max(0, left.xMax - left.xMin) * Math.max(0, left.yMax - left.yMin);
+  const rightArea = Math.max(0, right.xMax - right.xMin) * Math.max(0, right.yMax - right.yMin);
   const union = leftArea + rightArea - intersection;
   return union === 0 ? 0 : intersection / union;
 }
@@ -70,9 +68,7 @@ function evaluateFp16(
       candidate.flatMap((target, candidateIndex) => {
         if (reference.labelId !== target.labelId) return [];
         const iou = boxIou(reference.box, target.box);
-        return iou < FP16_PARITY_THRESHOLDS.iou
-          ? []
-          : [{ acceptedIndex, candidateIndex, iou }];
+        return iou < FP16_PARITY_THRESHOLDS.iou ? [] : [{ acceptedIndex, candidateIndex, iou }];
       })
     )
     .sort((left, right) => right.iou - left.iou);
@@ -89,10 +85,7 @@ function evaluateFp16(
   );
   const polygonDistances = matches
     .map(({ acceptedIndex, candidateIndex }) =>
-      polygonDistance(
-        accepted[acceptedIndex]!.polygon,
-        candidate[candidateIndex]!.polygon
-      )
+      polygonDistance(accepted[acceptedIndex]!.polygon, candidate[candidateIndex]!.polygon)
     )
     .filter(Number.isFinite);
   const metrics = {
@@ -123,8 +116,7 @@ function evaluateFp16(
   }
   if (
     metrics.meanPolygonPointDistancePixels === null ||
-    metrics.meanPolygonPointDistancePixels >
-      FP16_PARITY_THRESHOLDS.meanPolygonPointDistancePixels
+    metrics.meanPolygonPointDistancePixels > FP16_PARITY_THRESHOLDS.meanPolygonPointDistancePixels
   ) {
     validationErrors.push("mean polygon distance exceeds 2 px");
   }
@@ -161,10 +153,7 @@ function evaluateFp32(
     for (const [index, target] of candidate.entries()) {
       const reference = accepted[index]!;
       for (const coordinate of ["xMin", "xMax", "yMin", "yMax"] as const) {
-        boxDelta = Math.max(
-          boxDelta,
-          Math.abs(target.box[coordinate] - reference.box[coordinate])
-        );
+        boxDelta = Math.max(boxDelta, Math.abs(target.box[coordinate] - reference.box[coordinate]));
       }
       scoreDelta = Math.max(scoreDelta, Math.abs(target.score - reference.score));
       if (target.polygon.length !== reference.polygon.length) {
