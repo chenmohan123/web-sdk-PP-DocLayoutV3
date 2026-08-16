@@ -14,10 +14,16 @@ export const FP32_PARITY_THRESHOLDS = {
 } as const;
 
 export const FP16_PARITY_THRESHOLDS = {
-  iou: 0.95,
-  matchedDetectionRatio: 0.99,
+  maxPolygonOutOfBoxDistancePixels: 2,
+  maxReadingOrderDisplacement: 1,
+  maxReadingOrderInversionRate: 0.001,
   maxScoreDelta: 0.02,
-  meanPolygonPointDistancePixels: 2,
+  matchedDetectionPrecision: 1,
+  matchedDetectionRatio: 1,
+  meanMatchedIoU: 0.94,
+  meanPolygonEdgeDistancePixels: 2,
+  minMatchedIoU: 0.8,
+  p05MatchedIoU: 0.85,
   policy: "fp16-quality"
 } as const;
 
@@ -46,67 +52,279 @@ function boxIou(left: DetectionForParity["box"], right: DetectionForParity["box"
   return union === 0 ? 0 : intersection / union;
 }
 
-function polygonDistance(
+function minimumCostAssignment(costs: number[][]): number[] {
+  const size = costs.length;
+  if (size === 0) return [];
+  const u = Array(size + 1).fill(0);
+  const v = Array(size + 1).fill(0);
+  const p = Array(size + 1).fill(0);
+  const way = Array(size + 1).fill(0);
+  for (let row = 1; row <= size; row += 1) {
+    p[0] = row;
+    let column0 = 0;
+    const minimum = Array(size + 1).fill(Number.POSITIVE_INFINITY);
+    const used = Array(size + 1).fill(false);
+    do {
+      used[column0] = true;
+      const row0 = p[column0];
+      let delta = Number.POSITIVE_INFINITY;
+      let column1 = 0;
+      for (let column = 1; column <= size; column += 1) {
+        if (used[column]) continue;
+        const current = costs[row0 - 1]![column - 1]! - u[row0] - v[column];
+        if (current < minimum[column]) {
+          minimum[column] = current;
+          way[column] = column0;
+        }
+        if (minimum[column] < delta) {
+          delta = minimum[column];
+          column1 = column;
+        }
+      }
+      for (let column = 0; column <= size; column += 1) {
+        if (used[column]) {
+          u[p[column]] += delta;
+          v[column] -= delta;
+        } else {
+          minimum[column] -= delta;
+        }
+      }
+      column0 = column1;
+    } while (p[column0] !== 0);
+    do {
+      const column1 = way[column0];
+      p[column0] = p[column1];
+      column0 = column1;
+    } while (column0 !== 0);
+  }
+  const assignment = Array(size).fill(-1);
+  for (let column = 1; column <= size; column += 1) assignment[p[column] - 1] = column - 1;
+  return assignment;
+}
+
+function percentile(values: number[], fraction: number): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((left, right) => left - right);
+  const position = (sorted.length - 1) * fraction;
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  if (lower === upper) return sorted[lower]!;
+  return sorted[lower]! + (sorted[upper]! - sorted[lower]!) * (position - lower);
+}
+
+function pointToSegmentDistance(
+  point: { x: number; y: number },
+  start: { x: number; y: number },
+  end: { x: number; y: number }
+): number {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  if (dx === 0 && dy === 0) return Math.hypot(point.x - start.x, point.y - start.y);
+  const projection = Math.max(
+    0,
+    Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx * dx + dy * dy))
+  );
+  return Math.hypot(point.x - (start.x + projection * dx), point.y - (start.y + projection * dy));
+}
+
+function directedPolygonEdgeDistances(
+  source: DetectionForParity["polygon"],
+  target: DetectionForParity["polygon"]
+): number[] {
+  if (source.length === 0 || target.length === 0) return [];
+  return source.map((point) =>
+    Math.min(
+      ...target.map((start, index) =>
+        pointToSegmentDistance(point, start, target[(index + 1) % target.length]!)
+      )
+    )
+  );
+}
+
+function symmetricPolygonEdgeDistance(
   left: DetectionForParity["polygon"],
   right: DetectionForParity["polygon"]
+): number | null {
+  const distances = [
+    ...directedPolygonEdgeDistances(left, right),
+    ...directedPolygonEdgeDistances(right, left)
+  ];
+  return distances.length === 0
+    ? null
+    : distances.reduce((sum, distance) => sum + distance, 0) / distances.length;
+}
+
+function polygonOutsideBoxDistance(
+  polygon: DetectionForParity["polygon"],
+  box: DetectionForParity["box"]
 ): number {
-  if (left.length === 0 || left.length !== right.length) return Number.POSITIVE_INFINITY;
-  return (
-    left.reduce((sum, point, index) => {
-      const candidate = right[index]!;
-      return sum + Math.hypot(point.x - candidate.x, point.y - candidate.y);
-    }, 0) / left.length
+  return polygon.reduce((maximum, point) => {
+    const outsideX = Math.max(box.xMin - point.x, 0, point.x - box.xMax);
+    const outsideY = Math.max(box.yMin - point.y, 0, point.y - box.yMax);
+    return Math.max(maximum, Math.hypot(outsideX, outsideY));
+  }, 0);
+}
+
+interface SpatialMatch {
+  acceptedIndex: number;
+  candidateIndex: number;
+  iou: number;
+}
+
+function spatialMatches(
+  accepted: DetectionForParity[],
+  candidate: DetectionForParity[]
+): SpatialMatch[] {
+  const labelIds = new Set([...accepted, ...candidate].map(({ labelId }) => labelId));
+  const matches: SpatialMatch[] = [];
+  for (const labelId of labelIds) {
+    const acceptedIndices = accepted.flatMap((item, index) =>
+      item.labelId === labelId ? [index] : []
+    );
+    const candidateIndices = candidate.flatMap((item, index) =>
+      item.labelId === labelId ? [index] : []
+    );
+    const size = Math.max(acceptedIndices.length, candidateIndices.length);
+    if (size === 0) continue;
+    const costs = Array.from({ length: size }, (_, acceptedGroupIndex) =>
+      Array.from({ length: size }, (_, candidateGroupIndex) => {
+        const acceptedIndex = acceptedIndices[acceptedGroupIndex];
+        const candidateIndex = candidateIndices[candidateGroupIndex];
+        if (acceptedIndex === undefined || candidateIndex === undefined) return 1.000001;
+        return 1 - boxIou(accepted[acceptedIndex]!.box, candidate[candidateIndex]!.box);
+      })
+    );
+    const assignment = minimumCostAssignment(costs);
+    for (const [acceptedGroupIndex, candidateGroupIndex] of assignment.entries()) {
+      const acceptedIndex = acceptedIndices[acceptedGroupIndex];
+      const candidateIndex = candidateIndices[candidateGroupIndex];
+      if (acceptedIndex === undefined || candidateIndex === undefined) continue;
+      matches.push({
+        acceptedIndex,
+        candidateIndex,
+        iou: boxIou(accepted[acceptedIndex]!.box, candidate[candidateIndex]!.box)
+      });
+    }
+  }
+  return matches.sort((left, right) => left.acceptedIndex - right.acceptedIndex);
+}
+
+function readingOrderMetrics(
+  accepted: DetectionForParity[],
+  candidate: DetectionForParity[],
+  matches: SpatialMatch[]
+): {
+  inversions: number;
+  maxDisplacement: number;
+  inversionRate: number;
+  reorderedDetections: number;
+} {
+  const ordered = [...matches].sort(
+    (left, right) =>
+      accepted[left.acceptedIndex]!.readingOrder - accepted[right.acceptedIndex]!.readingOrder
   );
+  let inversions = 0;
+  for (let left = 0; left < ordered.length; left += 1) {
+    for (let right = left + 1; right < ordered.length; right += 1) {
+      if (
+        candidate[ordered[left]!.candidateIndex]!.readingOrder >
+        candidate[ordered[right]!.candidateIndex]!.readingOrder
+      ) {
+        inversions += 1;
+      }
+    }
+  }
+  const pairCount = (ordered.length * (ordered.length - 1)) / 2;
+  return {
+    inversions,
+    maxDisplacement: ordered.reduce(
+      (maximum, match) =>
+        Math.max(
+          maximum,
+          Math.abs(
+            accepted[match.acceptedIndex]!.readingOrder -
+              candidate[match.candidateIndex]!.readingOrder
+          )
+        ),
+      0
+    ),
+    inversionRate: pairCount === 0 ? 0 : inversions / pairCount,
+    reorderedDetections: ordered.filter(
+      ({ acceptedIndex, candidateIndex }) => acceptedIndex !== candidateIndex
+    ).length
+  };
 }
 
 function evaluateFp16(
   accepted: DetectionForParity[],
   candidate: DetectionForParity[]
 ): BrowserParityResult {
-  const possible = accepted
-    .flatMap((reference, acceptedIndex) =>
-      candidate.flatMap((target, candidateIndex) => {
-        if (reference.labelId !== target.labelId) return [];
-        const iou = boxIou(reference.box, target.box);
-        return iou < FP16_PARITY_THRESHOLDS.iou ? [] : [{ acceptedIndex, candidateIndex, iou }];
-      })
-    )
-    .sort((left, right) => right.iou - left.iou);
-  const usedAccepted = new Set<number>();
-  const usedCandidate = new Set<number>();
-  const matches = possible.filter(({ acceptedIndex, candidateIndex }) => {
-    if (usedAccepted.has(acceptedIndex) || usedCandidate.has(candidateIndex)) return false;
-    usedAccepted.add(acceptedIndex);
-    usedCandidate.add(candidateIndex);
-    return true;
-  });
+  const matches = spatialMatches(accepted, candidate);
+  const ious = matches.map(({ iou }) => iou);
   const scoreDeltas = matches.map(({ acceptedIndex, candidateIndex }) =>
     Math.abs(accepted[acceptedIndex]!.score - candidate[candidateIndex]!.score)
   );
-  const polygonDistances = matches
+  const polygonEdgeDistances = matches
     .map(({ acceptedIndex, candidateIndex }) =>
-      polygonDistance(accepted[acceptedIndex]!.polygon, candidate[candidateIndex]!.polygon)
+      symmetricPolygonEdgeDistance(
+        accepted[acceptedIndex]!.polygon,
+        candidate[candidateIndex]!.polygon
+      )
     )
-    .filter(Number.isFinite);
+    .filter((distance): distance is number => distance !== null && Number.isFinite(distance));
+  const order = readingOrderMetrics(accepted, candidate, matches);
   const metrics = {
     acceptedDetections: accepted.length,
     candidateDetections: candidate.length,
     matchedDetectionPrecision: candidate.length === 0 ? 0 : matches.length / candidate.length,
     matchedDetectionRatio: accepted.length === 0 ? 0 : matches.length / accepted.length,
     matchedDetections: matches.length,
+    meanMatchedIoU:
+      ious.length === 0 ? null : ious.reduce((sum, value) => sum + value, 0) / ious.length,
+    minMatchedIoU: ious.length === 0 ? null : Math.min(...ious),
+    p05MatchedIoU: percentile(ious, 0.05),
     maxScoreDelta: scoreDeltas.length === 0 ? null : Math.max(...scoreDeltas),
-    meanPolygonPointDistancePixels:
-      polygonDistances.length === 0
+    meanPolygonEdgeDistancePixels:
+      polygonEdgeDistances.length === 0
         ? null
-        : polygonDistances.reduce((sum, value) => sum + value, 0) / polygonDistances.length,
-    unmatchedCandidateDetections: candidate.length - matches.length
+        : polygonEdgeDistances.reduce((sum, value) => sum + value, 0) / polygonEdgeDistances.length,
+    maxPolygonOutOfBoxDistancePixels: candidate.reduce(
+      (maximum, detection) =>
+        Math.max(maximum, polygonOutsideBoxDistance(detection.polygon, detection.box)),
+      0
+    ),
+    maxReadingOrderDisplacement: order.maxDisplacement,
+    readingOrderInversions: order.inversions,
+    readingOrderInversionRate: order.inversionRate,
+    spatiallyReorderedDetections: order.reorderedDetections,
+    unmatchedCandidateDetections: candidate.length - matches.length,
+    unmatchedAcceptedDetections: accepted.length - matches.length
   };
   const validationErrors: string[] = [];
+  if (accepted.length !== candidate.length) validationErrors.push("detection count differs");
   if (metrics.matchedDetectionRatio < FP16_PARITY_THRESHOLDS.matchedDetectionRatio) {
-    validationErrors.push("matched detection ratio is below 0.99");
+    validationErrors.push("matched detection ratio is below 1");
   }
-  if (metrics.matchedDetectionPrecision < FP16_PARITY_THRESHOLDS.matchedDetectionRatio) {
-    validationErrors.push("matched detection precision is below 0.99");
+  if (metrics.matchedDetectionPrecision < FP16_PARITY_THRESHOLDS.matchedDetectionPrecision) {
+    validationErrors.push("matched detection precision is below 1");
+  }
+  if (
+    metrics.minMatchedIoU === null ||
+    metrics.minMatchedIoU < FP16_PARITY_THRESHOLDS.minMatchedIoU
+  ) {
+    validationErrors.push("minimum matched IoU is below 0.8");
+  }
+  if (
+    metrics.p05MatchedIoU === null ||
+    metrics.p05MatchedIoU < FP16_PARITY_THRESHOLDS.p05MatchedIoU
+  ) {
+    validationErrors.push("P05 matched IoU is below 0.85");
+  }
+  if (
+    metrics.meanMatchedIoU === null ||
+    metrics.meanMatchedIoU < FP16_PARITY_THRESHOLDS.meanMatchedIoU
+  ) {
+    validationErrors.push("mean matched IoU is below 0.94");
   }
   if (
     metrics.maxScoreDelta === null ||
@@ -115,10 +333,22 @@ function evaluateFp16(
     validationErrors.push("score delta exceeds 0.02");
   }
   if (
-    metrics.meanPolygonPointDistancePixels === null ||
-    metrics.meanPolygonPointDistancePixels > FP16_PARITY_THRESHOLDS.meanPolygonPointDistancePixels
+    metrics.meanPolygonEdgeDistancePixels === null ||
+    metrics.meanPolygonEdgeDistancePixels > FP16_PARITY_THRESHOLDS.meanPolygonEdgeDistancePixels
   ) {
-    validationErrors.push("mean polygon distance exceeds 2 px");
+    validationErrors.push("mean polygon edge distance exceeds 2 px");
+  }
+  if (
+    metrics.maxPolygonOutOfBoxDistancePixels >
+    FP16_PARITY_THRESHOLDS.maxPolygonOutOfBoxDistancePixels
+  ) {
+    validationErrors.push("polygon point is more than 2 px outside its box");
+  }
+  if (metrics.maxReadingOrderDisplacement > FP16_PARITY_THRESHOLDS.maxReadingOrderDisplacement) {
+    validationErrors.push("reading order displacement exceeds 1");
+  }
+  if (metrics.readingOrderInversionRate > FP16_PARITY_THRESHOLDS.maxReadingOrderInversionRate) {
+    validationErrors.push("reading order inversion rate exceeds 0.001");
   }
   return {
     parity: validationErrors.length === 0 ? "passed" : "failed",

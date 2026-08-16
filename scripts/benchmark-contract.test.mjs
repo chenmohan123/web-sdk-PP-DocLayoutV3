@@ -59,6 +59,7 @@ describe("1.0.0 benchmark release contract", () => {
       /pnpm --filter web-sdk-pp-doclayoutv3 build[\s\S]+pnpm --filter demo test/
     );
     const benchmark = readFileSync(join(repositoryRoot, "tests/browser/benchmark.spec.ts"), "utf8");
+    const parity = readFileSync(join(repositoryRoot, "tests/browser/benchmark-parity.ts"), "utf8");
     assert.match(benchmark, /causeMessage/);
     assert.match(benchmark, /capabilities/);
     assert.match(benchmark, /\.mjs["']:\s*["']text\/javascript/);
@@ -72,6 +73,12 @@ describe("1.0.0 benchmark release contract", () => {
     assert.match(benchmark, /vendor:\s*adapter\.info\.vendor/);
     assert.match(benchmark, /capabilities:\s*result\.runtime\.capabilities/);
     assert.match(benchmark, /evaluateBrowserParity/);
+    assert.match(parity, /minMatchedIoU:\s*0\.8/);
+    assert.match(parity, /p05MatchedIoU:\s*0\.85/);
+    assert.match(parity, /meanMatchedIoU:\s*0\.94/);
+    assert.match(parity, /meanPolygonEdgeDistancePixels:\s*2/);
+    assert.match(parity, /maxReadingOrderInversionRate:\s*0\.001/);
+    assert.doesNotMatch(parity, /meanPolygonPointDistancePixels/);
     assert.ok(
       benchmark.indexOf("writeFileSync(join(outputRoot") <
         benchmark.indexOf("expect(fixture.parity)"),
