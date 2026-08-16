@@ -23,7 +23,14 @@ const detector = await createDocLayout({
 
 try {
   const file = document.querySelector<HTMLInputElement>("input[type=file]")!.files![0]!;
-  const result = await detector.detect(file, { threshold: 0.5 });
+  const result = await detector.detect(file, {
+    threshold: 0.5,
+    classThresholds: {
+      formula: 0.4,
+      table: 0.55,
+      text: 0.6
+    }
+  });
   console.log(result.detections, result.runtime, result.timings);
 } catch (error) {
   if (error instanceof DocLayoutError) console.error(error.code, error.details);
@@ -31,6 +38,8 @@ try {
   await detector.dispose();
 }
 ```
+
+`classThresholds` overrides confidence filtering for matching manifest label names and falls back to `threshold` for unspecified classes. The global `threshold` still controls mask binarization and polygon extraction. Unknown class names and values outside `0` through `1` are rejected.
 
 After initialization, `detector.loadTimings` exposes the timing breakdown. `totalMs` is the full initialization duration and `modelMs` is the aggregate model acquisition and verification duration. `modelDownloadMs`, `modelCacheMs`, `integrityMs`, and `sessionMs` measure network download, cache reads, SHA-256 verification, and ONNX Runtime Session creation. `modelSource` identifies `network`, `cache`, `memory`, or `custom`.
 

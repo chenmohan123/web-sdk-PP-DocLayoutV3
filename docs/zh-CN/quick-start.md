@@ -14,7 +14,14 @@ export async function detectOne(file: File): Promise<void> {
     onProgress: (event) => console.log(event.phase, event.status)
   });
   try {
-    const result = await detector.detect(file, { threshold: 0.5 });
+    const result = await detector.detect(file, {
+      threshold: 0.5,
+      classThresholds: {
+        formula: 0.4,
+        table: 0.55,
+        text: 0.6
+      }
+    });
     console.log(JSON.stringify(result, null, 2));
   } catch (error) {
     if (error instanceof DocLayoutError) console.error(error.code, error.message);
@@ -24,6 +31,8 @@ export async function detectOne(file: File): Promise<void> {
   }
 }
 ```
+
+`classThresholds` 按 manifest 标签名称覆盖置信度过滤阈值，未配置的类别回退到 `threshold`。全局 `threshold` 仍用于 mask 二值化和多边形提取。未知类别名称或超出 `0` 到 `1` 的值会被拒绝。
 
 检测结果包含原图坐标系下的 `box`、`polygon`、类别、置信度与阅读顺序，也包含加载/推理耗时、实际后端、精度和回退记录。生产页面应展示加载状态、允许取消，并在页面卸载时调用 `dispose()`。
 

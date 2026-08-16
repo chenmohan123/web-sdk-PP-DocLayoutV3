@@ -74,6 +74,8 @@ export interface DocLayoutCapabilities {
 // @public (undocumented)
 export interface DocLayoutDetectOptions {
     // (undocumented)
+    readonly classThresholds?: Readonly<Record<string, number>>;
+    // (undocumented)
     readonly signal?: AbortSignal;
     // (undocumented)
     readonly threshold?: number;

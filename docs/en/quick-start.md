@@ -14,7 +14,14 @@ export async function detectOne(file: File): Promise<void> {
     onProgress: (event) => console.log(event.phase, event.status)
   });
   try {
-    const result = await detector.detect(file, { threshold: 0.5 });
+    const result = await detector.detect(file, {
+      threshold: 0.5,
+      classThresholds: {
+        formula: 0.4,
+        table: 0.55,
+        text: 0.6
+      }
+    });
     console.log(JSON.stringify(result, null, 2));
   } catch (error) {
     if (error instanceof DocLayoutError) console.error(error.code, error.message);
@@ -24,6 +31,8 @@ export async function detectOne(file: File): Promise<void> {
   }
 }
 ```
+
+`classThresholds` overrides confidence filtering for matching manifest label names and falls back to `threshold` for unspecified classes. The global `threshold` still controls mask binarization and polygon extraction. Unknown class names and values outside `0` through `1` are rejected.
 
 The result includes original-image coordinates for each box and polygon, category, score, and reading order. It also reports loading/inference timings, the actual backend and precision, and fallback records. Production pages should expose loading state and cancellation and call `dispose()` during page teardown.
 

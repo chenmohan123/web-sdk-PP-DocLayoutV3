@@ -272,6 +272,30 @@ describe("createDocLayout", () => {
     });
   });
 
+  it("forwards class thresholds to the inference executor", async () => {
+    const detect = vi.fn(() =>
+      Promise.resolve({
+        detections: [],
+        timings: { inferenceMs: 1, postprocessMs: 1, preprocessMs: 1 }
+      })
+    );
+    const detector = await createDocLayoutWithDependencies(
+      {},
+      dependencies({ createExecutor: vi.fn(() => Promise.resolve(executor(detect))) })
+    );
+    const classThresholds = { formula: 0.4, table: 0.55 };
+
+    await detector.detect(
+      { height: 1, rgba: new Uint8ClampedArray(4), width: 1 },
+      { classThresholds, threshold: 0.5 }
+    );
+
+    expect(detect).toHaveBeenCalledWith(expect.objectContaining({ height: 2, width: 3 }), {
+      classThresholds,
+      threshold: 0.5
+    });
+  });
+
   it("serializes concurrent detections", async () => {
     let releaseFirst: (() => void) | undefined;
     const detect = vi

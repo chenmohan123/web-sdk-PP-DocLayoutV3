@@ -36,6 +36,7 @@ export interface WorkerInitPayload {
 }
 
 export interface WorkerDetectPayload {
+  readonly classThresholds?: Readonly<Record<string, number>>;
   readonly raster: NormalizedRaster;
   readonly threshold?: number;
 }

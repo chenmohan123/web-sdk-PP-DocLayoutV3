@@ -28,6 +28,13 @@ import {
   type BackendPreference,
   type PrecisionPreference
 } from "./execution-preferences";
+import {
+  classThresholdValue,
+  DEFAULT_CLASS_LABELS,
+  selectActiveClassThresholds,
+  setClassThresholdValue,
+  uniqueLabels
+} from "./class-thresholds";
 import { tinyModelData, tinyModelManifest } from "./fixture";
 import { demoSamples, fetchSampleFile, sampleUrl, type DemoSample } from "./samples";
 import { en } from "./i18n/en";
@@ -125,11 +132,16 @@ export function App(): ReactElement {
   const [customManifest, setCustomManifest] = useState<ModelManifest | undefined>();
   const [notice, setNotice] = useState<string | undefined>();
   const [selectedSample, setSelectedSample] = useState<DemoSample | undefined>();
+  const [classThresholds, setClassThresholds] = useState<Record<string, number>>({});
   const imageRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const detectorRef = useRef<DocLayoutDetector | undefined>(undefined);
   const abortRef = useRef<AbortController | undefined>(undefined);
   const loadTimings = detectorRef.current?.loadTimings as DemoLoadTimings | undefined;
+  const activeLabels = uniqueLabels(
+    customManifest?.labels ?? (demoFixture ? tinyModelManifest.labels : DEFAULT_CLASS_LABELS)
+  );
+  const activeClassThresholds = selectActiveClassThresholds(activeLabels, classThresholds);
 
   const redraw = useCallback(() => {
     drawResult(canvasRef.current!, imageRef.current, result, overlay);
@@ -182,6 +194,10 @@ export function App(): ReactElement {
     setStatus("ready");
   };
 
+  const updateClassThreshold = (label: string, value: string): void => {
+    setClassThresholds((current) => setClassThresholdValue(current, label, value));
+  };
+
   const runDetection = async (): Promise<void> => {
     if (file === undefined) return;
     cancel();
@@ -215,7 +231,13 @@ export function App(): ReactElement {
       });
       detectorRef.current = detector;
       setStatus("running");
-      const nextResult = await detector.detect(file, { signal: controller.signal, threshold });
+      const nextResult = await detector.detect(file, {
+        ...(Object.keys(activeClassThresholds).length === 0
+          ? {}
+          : { classThresholds: activeClassThresholds }),
+        signal: controller.signal,
+        threshold
+      });
       setResult(nextResult);
       setStatus("success");
     } catch (caught) {
@@ -369,6 +391,42 @@ export function App(): ReactElement {
           </button>
         </div>
       </section>
+
+      <details className="class-threshold-editor" data-testid="class-threshold-editor">
+        <summary>
+          <span>{copy.classThresholds}</span>
+          <small>{copy.classThresholdHint}</small>
+        </summary>
+        <div className="class-threshold-toolbar">
+          <span className="muted">{copy.classThresholdHint}</span>
+          <button
+            className="text-button"
+            aria-label={copy.clearClassThresholds}
+            onClick={() => setClassThresholds({})}
+            type="button"
+          >
+            <Trash2 size={15} />
+            {copy.clearClassThresholds}
+          </button>
+        </div>
+        <div className="class-threshold-grid">
+          {activeLabels.map((label) => (
+            <label className="class-threshold-field" key={label}>
+              <span>{label}</span>
+              <input
+                aria-label={`${copy.classThreshold} ${label}`}
+                max="1"
+                min="0"
+                onChange={(event) => updateClassThreshold(label, event.target.value)}
+                placeholder={threshold.toFixed(2)}
+                step="0.05"
+                type="number"
+                value={classThresholdValue(classThresholds, label)}
+              />
+            </label>
+          ))}
+        </div>
+      </details>
 
       <div className="status-line" data-testid="status">
         <span className={`status-dot ${status}`} />

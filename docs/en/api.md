@@ -35,10 +35,28 @@ await detector.dispose();
 
 ## `DocLayoutDetector`
 
-- `detect(image, { threshold, signal })`: accepts a Blob, CanvasImageSource, or normalized raster.
+- `detect(image, { threshold, classThresholds, signal })`: accepts a Blob, CanvasImageSource, or normalized raster.
 - `dispose()`: waits for queued work and releases the Worker/session; it is idempotent.
 - `listModelCache()` / `clearModelCache()`: inspect or clear the detector's model cache.
 - `model`, `runtime`, `capabilities`, `loadTimings`: actual loaded configuration.
+
+```ts
+import type { DocLayoutDetector } from "web-sdk-pp-doclayoutv3";
+
+declare const detector: DocLayoutDetector;
+declare const file: Blob;
+
+const result = await detector.detect(file, {
+  threshold: 0.5,
+  classThresholds: {
+    formula: 0.4,
+    table: 0.55,
+    text: 0.6
+  }
+});
+```
+
+`classThresholds` overrides confidence filtering for matching manifest label names and falls back to `threshold` for unspecified classes. The global `threshold` still controls mask binarization and polygon extraction. Unknown class names and values outside `0` through `1` are rejected.
 
 ## Other exports
 

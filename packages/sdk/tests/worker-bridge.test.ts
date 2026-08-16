@@ -128,9 +128,14 @@ describe("createWorkerBridge", () => {
       (init.message as { payload: { modelBytes: ArrayBuffer } }).payload.modelBytes.byteLength
     ).toBe(3);
 
-    const pending = bridge.detect(raster(), { threshold: 0.5 });
+    const classThresholds = { formula: 0.4, table: 0.55 };
+    const pending = bridge.detect(raster(), { classThresholds, threshold: 0.5 });
     const request = worker.posts[1]!;
-    expect(request.message).toMatchObject({ requestId: 2, type: "detect" });
+    expect(request.message).toMatchObject({
+      payload: { classThresholds, threshold: 0.5 },
+      requestId: 2,
+      type: "detect"
+    });
     expect(request.transfer).toHaveLength(1);
     worker.emit({
       payload: {

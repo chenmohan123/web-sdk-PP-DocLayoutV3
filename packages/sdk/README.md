@@ -21,10 +21,19 @@ const detector = await createDocLayout({
   backend: "auto",
   precision: "auto"
 });
-const result = await detector.detect(file);
+const result = await detector.detect(file, {
+  threshold: 0.5,
+  classThresholds: {
+    formula: 0.4,
+    table: 0.55,
+    text: 0.6
+  }
+});
 console.log(result.detections, result.runtime, result.timings);
 await detector.dispose();
 ```
+
+`classThresholds` 按 manifest 标签名称覆盖置信度过滤阈值，未配置的类别回退到 `threshold`。全局 `threshold` 仍用于 mask 二值化和多边形提取。未知类别名称或超出 `0` 到 `1` 的值会被拒绝。
 
 默认模型由 SDK 自动加载，无需额外配置。
 
@@ -83,10 +92,19 @@ const detector = await createDocLayout({
   backend: "auto",
   precision: "auto"
 });
-const result = await detector.detect(file);
+const result = await detector.detect(file, {
+  threshold: 0.5,
+  classThresholds: {
+    formula: 0.4,
+    table: 0.55,
+    text: 0.6
+  }
+});
 console.log(result.detections, result.runtime, result.timings);
 await detector.dispose();
 ```
+
+`classThresholds` overrides confidence filtering for matching manifest label names and falls back to `threshold` for unspecified classes. The global `threshold` still controls mask binarization and polygon extraction. Unknown class names and values outside `0` through `1` are rejected.
 
 The SDK loads its default model automatically.
 
