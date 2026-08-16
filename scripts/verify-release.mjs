@@ -107,11 +107,7 @@ function verifyStaticContract() {
   if (nodeVersion !== "24") fail(`expected Node 24 in .nvmrc, received ${nodeVersion}`);
 
   const ci = workflows["ci.yml"];
-  requireMatch(
-    ci,
-    /push:\s*\n\s+branches:\s*\[main\]/,
-    "CI must run on main pushes"
-  );
+  requireMatch(ci, /push:\s*\n\s+branches:\s*\[main\]/, "CI must run on main pushes");
   requireMatch(
     ci,
     /pull_request:\s*\n\s+branches:\s*\[main\]/,
