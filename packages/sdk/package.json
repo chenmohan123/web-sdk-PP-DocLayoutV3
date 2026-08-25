@@ -43,10 +43,10 @@
     "provenance": true
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "7.58.12",
-    "eslint": "9.39.5",
+    "@microsoft/api-extractor": "7.59.0",
+    "eslint": "10.9.0",
     "tsup": "8.5.1",
-    "typescript": "5.9.3",
-    "vitest": "3.2.7"
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
   }
 }
