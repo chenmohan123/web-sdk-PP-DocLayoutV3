@@ -1,6 +1,10 @@
 export const zhCN = {
   language: "English",
   backend: "运行后端",
+  modelRepository: "模型来源",
+  unavailable: "暂不可用",
+  manifest: "模型清单",
+  sdkDefaultManifest: "由 SDK 决定",
   precision: "模型精度",
   auto: "自动",
   webgpu: "GPU",

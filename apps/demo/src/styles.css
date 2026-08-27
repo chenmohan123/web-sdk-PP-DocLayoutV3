@@ -19,6 +19,7 @@ body {
 }
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -156,6 +157,26 @@ button {
   display: grid;
   gap: 7px;
   min-width: 0;
+}
+.control-group select {
+  min-height: 36px;
+  min-width: 150px;
+  border: 1px solid #bbc8c3;
+  border-radius: 6px;
+  background: white;
+  color: #183b42;
+  padding: 0 9px;
+}
+.model-source-limitations {
+  max-width: 270px;
+  color: #688078;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.model-source-manifest {
+  overflow-wrap: anywhere;
 }
 .control-label,
 .threshold-control span {

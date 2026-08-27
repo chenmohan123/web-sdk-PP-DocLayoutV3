@@ -3,6 +3,10 @@ import type { Copy } from "./zh-CN";
 export const en: Copy = {
   language: "中文",
   backend: "Execution backend",
+  modelRepository: "Model source",
+  unavailable: "Unavailable",
+  manifest: "Manifest",
+  sdkDefaultManifest: "Managed by the SDK",
   precision: "Model precision",
   auto: "Auto",
   webgpu: "GPU",

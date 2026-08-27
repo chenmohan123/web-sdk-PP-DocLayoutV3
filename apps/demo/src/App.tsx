@@ -40,6 +40,12 @@ import { demoSamples, fetchSampleFile, sampleUrl, type DemoSample } from "./samp
 import { en } from "./i18n/en";
 import { zhCN, type Copy } from "./i18n/zh-CN";
 import { modelProgressState } from "./model-progress";
+import {
+  DEFAULT_MODEL_SOURCE,
+  MODEL_SOURCE_OPTIONS,
+  selectionToModel,
+  type ModelSourceKey
+} from "./model-sources";
 import { formatFallbackCause, formatRuntimeError } from "./runtime-messages";
 
 type Language = "zh" | "en";
@@ -118,6 +124,8 @@ export function App(): ReactElement {
   const copy: Copy = language === "zh" ? zhCN : en;
   const [backend, setBackend] = useState<BackendPreference>("auto");
   const [precision, setPrecision] = useState<PrecisionPreference>("auto");
+  const [modelSource, setModelSource] = useState<ModelSourceKey>(DEFAULT_MODEL_SOURCE);
+  const [modelSourceChanging, setModelSourceChanging] = useState(false);
   const [overlay, setOverlay] = useState<Overlay>("box");
   const [threshold, setThreshold] = useState(0.5);
   const [status, setStatus] = useState<Status>("ready");
@@ -138,6 +146,7 @@ export function App(): ReactElement {
   const detectorRef = useRef<DocLayoutDetector | undefined>(undefined);
   const abortRef = useRef<AbortController | undefined>(undefined);
   const loadTimings = detectorRef.current?.loadTimings as DemoLoadTimings | undefined;
+  const activeModelSource = MODEL_SOURCE_OPTIONS.find((option) => option.key === modelSource)!;
   const activeLabels = uniqueLabels(
     customManifest?.labels ?? (demoFixture ? tinyModelManifest.labels : DEFAULT_CLASS_LABELS)
   );
@@ -188,6 +197,30 @@ export function App(): ReactElement {
     }
   };
 
+  const onModelSource = async (next: ModelSourceKey): Promise<void> => {
+    cancel();
+    setModelSourceChanging(true);
+    const detector = detectorRef.current;
+    detectorRef.current = undefined;
+    try {
+      await detector?.dispose();
+    } catch (caught) {
+      setError(formatRuntimeError(caught));
+      setStatus("error");
+      setModelSourceChanging(false);
+      return;
+    }
+    setModelSource(next);
+    setCustomManifest(undefined);
+    setResult(undefined);
+    setError(undefined);
+    setNotice(undefined);
+    setDownloadPercentage(undefined);
+    setStatus("ready");
+    if (imageRef.current !== null) drawSource(canvasRef.current!, imageRef.current);
+    setModelSourceChanging(false);
+  };
+
   const cancel = (): void => {
     abortRef.current?.abort("cancelled");
     abortRef.current = undefined;
@@ -211,7 +244,7 @@ export function App(): ReactElement {
       detectorRef.current = undefined;
       const model = demoFixture
         ? { data: tinyModelData(), manifest: tinyModelManifest }
-        : customManifest;
+        : (customManifest ?? selectionToModel(modelSource));
       const detector = await createDocLayout({
         allowFallback: allowFallbackForSelection(backend, precision),
         backend,
@@ -305,6 +338,45 @@ export function App(): ReactElement {
       </header>
 
       <section className="control-band" data-testid="controls">
+        <label className="control-group">
+          <span className="control-label">{copy.modelRepository}</span>
+          <select
+            aria-describedby="model-source-limitations"
+            aria-label={copy.modelRepository}
+            disabled={
+              modelSourceChanging ||
+              status === "downloading" ||
+              status === "loading" ||
+              status === "running"
+            }
+            value={modelSource}
+            onChange={(event) => void onModelSource(event.target.value as ModelSourceKey)}
+          >
+            {MODEL_SOURCE_OPTIONS.map((option) => (
+              <option
+                disabled={!option.available}
+                key={option.key}
+                title={option.disabledReason?.[language]}
+                value={option.key}
+              >
+                {option.label[language]}
+                {option.available ? "" : ` (${copy.unavailable})`}
+              </option>
+            ))}
+          </select>
+          <small
+            className="model-source-limitations"
+            data-testid="model-source-limitations"
+            id="model-source-limitations"
+          >
+            {MODEL_SOURCE_OPTIONS.filter((option) => !option.available)
+              .map(
+                (option) =>
+                  `${option.label[language]}: ${option.disabledReason?.[language] ?? copy.unavailable}`
+              )
+              .join(" ")}
+          </small>
+        </label>
         <div className="control-group" role="group" aria-label={copy.backend}>
           <span className="control-label">{copy.backend}</span>
           <div className="segmented">
@@ -376,6 +448,7 @@ export function App(): ReactElement {
             className="primary-button"
             disabled={
               file === undefined ||
+              modelSourceChanging ||
               status === "downloading" ||
               status === "loading" ||
               status === "running"
@@ -617,6 +690,22 @@ export function App(): ReactElement {
               <ChevronDown size={17} />
             </div>
             <dl className="metric-list model-list">
+              <div>
+                <dt>{copy.modelRepository}</dt>
+                <dd data-testid="model-source-value">
+                  {customManifest === undefined
+                    ? activeModelSource.label[language]
+                    : copy.source_custom}
+                </dd>
+              </div>
+              <div>
+                <dt>{copy.manifest}</dt>
+                <dd className="model-source-manifest" data-testid="model-source-manifest">
+                  {customManifest === undefined
+                    ? (activeModelSource.manifestUrl ?? copy.sdkDefaultManifest)
+                    : copy.source_custom}
+                </dd>
+              </div>
               <div>
                 <dt>{copy.modelName}</dt>
                 <dd data-testid="model-name">{result?.model.id ?? "-"}</dd>
