@@ -15,7 +15,12 @@ test("模型来源默认沿用 SDK 并声明远程来源能力", async ({ page }
     const module = (await import(moduleUrl)) as typeof import("../src/model-sources");
     return {
       keys: module.MODEL_SOURCE_OPTIONS.map((option) => option.key),
-      available: module.MODEL_SOURCE_OPTIONS.map((option) => ({ key: option.key, available: option.available, disabledReason: option.disabledReason, manifestUrl: option.manifestUrl })),
+      available: module.MODEL_SOURCE_OPTIONS.map((option) => ({
+        key: option.key,
+        available: option.available,
+        disabledReason: option.disabledReason,
+        manifestUrl: option.manifestUrl
+      })),
       defaultModel: module.selectionToModel("default"),
       huggingFaceModel: module.selectionToModel("huggingface"),
       modelScopeModel: module.selectionToModel("modelscope")
@@ -26,12 +31,26 @@ test("模型来源默认沿用 SDK 并声明远程来源能力", async ({ page }
     keys: ["default", "huggingface", "modelscope"],
     available: [
       { key: "default", available: true, manifestUrl: undefined },
-      { key: "huggingface", available: true, disabledReason: undefined, manifestUrl: "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/13bbf4e3e91172c0407cf14742ac8291dc69353b/1.0.2/manifest.json" },
-      { key: "modelscope", available: true, disabledReason: undefined, manifestUrl: "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/v1.0.3/1.0.2/manifest.json" }
+      {
+        key: "huggingface",
+        available: true,
+        disabledReason: undefined,
+        manifestUrl:
+          "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/13bbf4e3e91172c0407cf14742ac8291dc69353b/1.0.2/manifest.json"
+      },
+      {
+        key: "modelscope",
+        available: true,
+        disabledReason: undefined,
+        manifestUrl:
+          "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/v1.0.3/1.0.2/manifest.json"
+      }
     ],
     defaultModel: undefined,
-    huggingFaceModel: "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/13bbf4e3e91172c0407cf14742ac8291dc69353b/1.0.2/manifest.json",
-    modelScopeModel: "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/v1.0.3/1.0.2/manifest.json"
+    huggingFaceModel:
+      "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/13bbf4e3e91172c0407cf14742ac8291dc69353b/1.0.2/manifest.json",
+    modelScopeModel:
+      "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/v1.0.3/1.0.2/manifest.json"
   });
 });
 
