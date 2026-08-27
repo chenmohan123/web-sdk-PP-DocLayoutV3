@@ -3,6 +3,38 @@ import { expect, test } from "playwright/test";
 const pixelPng =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
+test("模型来源默认沿用 SDK 并声明远程来源能力", async ({ page }) => {
+  await page.goto("/?fixture=1");
+
+  await expect(page.getByLabel("模型来源", { exact: true })).toHaveValue("default");
+  await expect(page.getByLabel("模型来源").locator("option")).toHaveCount(3);
+  await expect(page.getByRole("option", { name: /Hugging Face/ })).toBeEnabled();
+  await expect(page.getByRole("option", { name: /ModelScope/ })).toBeEnabled();
+
+  const contract = await page.evaluate(async (moduleUrl) => {
+    const module = (await import(moduleUrl)) as typeof import("../src/model-sources");
+    return {
+      keys: module.MODEL_SOURCE_OPTIONS.map((option) => option.key),
+      available: module.MODEL_SOURCE_OPTIONS.map((option) => ({ key: option.key, available: option.available, disabledReason: option.disabledReason, manifestUrl: option.manifestUrl })),
+      defaultModel: module.selectionToModel("default"),
+      huggingFaceModel: module.selectionToModel("huggingface"),
+      modelScopeModel: module.selectionToModel("modelscope")
+    };
+  }, "/src/model-sources.ts");
+
+  expect(contract).toEqual({
+    keys: ["default", "huggingface", "modelscope"],
+    available: [
+      { key: "default", available: true, manifestUrl: undefined },
+      { key: "huggingface", available: true, disabledReason: undefined, manifestUrl: "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/13bbf4e3e91172c0407cf14742ac8291dc69353b/1.0.2/manifest.json" },
+      { key: "modelscope", available: true, disabledReason: undefined, manifestUrl: "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/v1.0.3/1.0.2/manifest.json" }
+    ],
+    defaultModel: undefined,
+    huggingFaceModel: "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/13bbf4e3e91172c0407cf14742ac8291dc69353b/1.0.2/manifest.json",
+    modelScopeModel: "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/v1.0.3/1.0.2/manifest.json"
+  });
+});
+
 test("normalizes active class threshold configuration", async ({ page }) => {
   await page.goto("/?fixture=1");
   const result = await page.evaluate(async (moduleUrl) => {
@@ -185,8 +217,10 @@ test("reports loading before detecting for an in-memory model", async ({ page })
   );
   await page.getByRole("button", { name: "开始检测" }).click();
   await wasmRequest;
+  await expect(page.getByLabel("模型来源")).toBeDisabled();
   await expect(page.getByTestId("status")).toContainText("模型加载中");
   await expect(page.getByTestId("status")).toContainText("检测完成", { timeout: 15_000 });
+  await expect(page.getByLabel("模型来源")).toBeEnabled();
 
   const history = await page.evaluate(
     () =>
