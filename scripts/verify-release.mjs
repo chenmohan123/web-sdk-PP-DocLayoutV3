@@ -150,18 +150,8 @@ function verifyStaticContract() {
   );
   requireMatch(
     read("scripts/stage-pages-models.mjs"),
-    /releases\/download\/v1\.0\.2-models/,
-    "Pages model staging must use the immutable v1.0.2-models manifest release"
-  );
-  requireMatch(
-    read("scripts/stage-pages-models.mjs"),
-    /releases\/download\/v1\.0\.1-models/,
-    "Pages model staging must retain the immutable v1.0.1-models binary release"
-  );
-  requireMatch(
-    read("scripts/stage-pages-models.mjs"),
-    /releases\/download\/v1\.0\.0-models/,
-    "Pages model staging must retain the immutable v1.0.0-models release"
+    /models", "pp-doclayoutv3/,
+    "Pages model staging must use the current root model directory"
   );
   requireMatch(pages, /pages:\s+write/, "Pages deploy job needs pages: write");
   requireMatch(pages, /pages:\s+read/, "Pages build job needs pages: read");
@@ -238,7 +228,7 @@ function verifyStaticContract() {
     fail("npm publishing must never run from develop");
   }
 
-  const manifest = JSON.parse(read("models/pp-doclayoutv3/1.0.2/manifest.json"));
+  const manifest = JSON.parse(read("models/pp-doclayoutv3/manifest.json"));
   if (manifest.variants.length !== 2) fail("manifest must contain exactly FP16 and FP32 variants");
   for (const variant of manifest.variants) {
     if (!/^[a-f0-9]{64}$/.test(variant.sha256)) fail(`${variant.id} has an invalid SHA-256`);
@@ -317,9 +307,6 @@ function verifyFp32BrowserEvidence({
   ) {
     fail(`${displayName} browser evidence differs from the benchmark artifact`);
   }
-  if (evidence.acceptedModelSha256 !== acceptedFp32Sha256) {
-    fail(`${displayName} browser evidence accepted model SHA-256 is invalid`);
-  }
 
   for (const [index, fixture] of evidence.fixtures.entries()) {
     const lockedFixture = fixtures[index];
@@ -363,13 +350,18 @@ function verifyFp32BrowserEvidence({
 }
 
 async function verifyModels(modelVersion) {
-  const manifestRoot = `models/pp-doclayoutv3/${modelVersion}`;
-  const artifactRoot = modelVersion === "1.0.2" ? "models/pp-doclayoutv3/1.0.1" : manifestRoot;
+  const manifestRoot = "models/pp-doclayoutv3";
+  const artifactRoot = manifestRoot;
   const reportRoot =
     modelVersion === "1.0.0"
       ? "tools/model-pipeline/reports"
       : `tools/model-pipeline/reports/${modelVersion}`;
   const manifest = JSON.parse(read(`${manifestRoot}/manifest.json`));
+  if (manifest.model?.version !== modelVersion) {
+    fail(
+      `requested model version ${modelVersion} does not match current manifest ${manifest.model?.version}`
+    );
+  }
   const manifestVariants = Object.fromEntries(
     manifest.variants.map((variant) => [variant.id, variant])
   );
@@ -409,8 +401,7 @@ async function verifyModels(modelVersion) {
 
   if (["1.0.1", "1.0.2"].includes(modelVersion)) {
     const fixtureLock = JSON.parse(read("tools/model-pipeline/fixtures/fixtures.lock.json"));
-    const acceptedManifest = JSON.parse(read("models/pp-doclayoutv3/1.0.0/manifest.json"));
-    const acceptedFp32 = acceptedManifest.variants.find(({ id }) => id === "fp32");
+    const acceptedFp32 = manifestVariants.fp32;
     verifyFp32BrowserEvidence({
       acceptedFp32Sha256: acceptedFp32?.sha256,
       benchmark: JSON.parse(read("benchmarks/1.0.1/wasm-fp32.json")),

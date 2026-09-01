@@ -18,10 +18,7 @@ import type { InferenceExecutor } from "../src/worker/worker-bridge";
 
 const manifest = parseModelManifest(
   JSON.parse(
-    readFileSync(
-      new URL("../../../models/pp-doclayoutv3/1.0.2/manifest.json", import.meta.url),
-      "utf8"
-    )
+    readFileSync(new URL("../../../models/pp-doclayoutv3/manifest.json", import.meta.url), "utf8")
   )
 );
 
@@ -102,7 +99,7 @@ describe("createDocLayout", () => {
     const deps = dependencies();
 
     expect(DEFAULT_MANIFEST_URL).toBe(
-      "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/v1.0.2/manifest.json"
+      "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/manifest.json"
     );
 
     const detector = await createDocLayoutWithDependencies({}, deps);

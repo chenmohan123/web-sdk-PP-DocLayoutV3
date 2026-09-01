@@ -6,13 +6,13 @@ SDK 和 Demo 必须部署在 HTTPS（localhost 除外）。模型清单、ONNX�
 
 模型是大文件，建议：
 
-- 使用固定版本 URL，不使用 `latest`。
-- 为带 hash 的 ONNX 设置长期不可变缓存；清单使用可控的短缓存或版本化 URL。
+- 将清单与两个 ONNX 发布到同一当前模型根目录，并在更新时一起替换。
+- 为根目录清单和 ONNX 使用可控缓存或明确的查询 revision，避免更新时混用新旧文件。
 - 保留 `Content-Length`，使加载进度准确。
 - 允许 IndexedDB；禁用或受限时 SDK 仍可运行，但会重复下载。
 - 在移动网络下载前告知用户 FP16 74,279,796 字节、FP32 142,574,928 字节。
 
-内置 SDK 使用版本化的 `models/v1.0.2/manifest.json`。该清单复用不可变 `v1.0.1-models` Release 中的模型二进制，只为 FP16 增加经过验证的 WASM 兼容元数据；部署时必须同时保留历史 `models/v1.0.0/`、`models/v1.0.1/` 与当前 `models/v1.0.2/` 路径，避免破坏已有 SDK 使用者。
+内置 SDK 使用当前的 `models/manifest.json`。模型文件与清单位于同一根目录，更新模型时一起替换；清单仍保留 `model.version`、文件大小、SHA-256 和来源 revision 作为完整性证据。
 
 多线程 WASM 需要：
 

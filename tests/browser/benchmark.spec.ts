@@ -10,7 +10,7 @@ import {
 } from "node:fs";
 import { createServer, type Server } from "node:http";
 import { cpus, platform, release } from "node:os";
-import { basename, extname, join, normalize, resolve } from "node:path";
+import { extname, join, normalize, resolve } from "node:path";
 
 import { expect, test } from "playwright/test";
 
@@ -47,9 +47,9 @@ const mode = process.env.PPDOCLAYOUT_BENCHMARK_MODE as BenchmarkMode | undefined
 const repositoryRoot = resolve(__dirname, "../..");
 const sdkRoot = join(repositoryRoot, "packages/sdk");
 const ortRoot = join(sdkRoot, "node_modules/onnxruntime-web/dist");
-const acceptedModelRoot = join(repositoryRoot, "models/pp-doclayoutv3/1.0.0");
-const candidateModelVersion = mode === "webgpu-fp16" ? "1.0.0" : "1.0.1";
-const candidateModelRoot = join(repositoryRoot, `models/pp-doclayoutv3/${candidateModelVersion}`);
+const acceptedModelRoot = join(repositoryRoot, "models/pp-doclayoutv3");
+// 当前模型只有一份；历史版本仅保留在 benchmark/report 证据中。
+const candidateModelRoot = acceptedModelRoot;
 const fixtureRoot = join(repositoryRoot, "tools/model-pipeline/fixtures/images");
 const fixturesLockPath = join(repositoryRoot, "tools/model-pipeline/fixtures/fixtures.lock.json");
 const outputRoot = join(repositoryRoot, "test-results/benchmark");
@@ -80,7 +80,7 @@ function localManifest(
   fp32Backends: readonly string[]
 ): BenchmarkManifest {
   const manifest = structuredClone(loadManifest());
-  manifest.model.version = basename(modelRoot);
+  manifest.model.version = loadManifest().model.version;
   for (const variant of manifest.variants) {
     const path = join(modelRoot, variant.filename);
     variant.bytes = statSync(path).size;

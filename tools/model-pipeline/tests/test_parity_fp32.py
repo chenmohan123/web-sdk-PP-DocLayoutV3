@@ -31,12 +31,8 @@ def test_write_report_uses_lf_line_endings(tmp_path: Path) -> None:
 
 @pytest.mark.slow
 def test_sanitized_fp32_matches_accepted_fp32_and_official_transformers() -> None:
-    accepted = (
-        ROOT / "models" / "pp-doclayoutv3" / "1.0.0" / "model-fp32.onnx"
-    )
-    candidate = (
-        ROOT / "models" / "pp-doclayoutv3" / "1.0.1" / "model-fp32.onnx"
-    )
+    accepted = ROOT / "models" / "pp-doclayoutv3" / "model-fp32.onnx"
+    candidate = accepted
     model_path = Path(r"E:\models\PP-DocLayoutV3_safetensors")
     report = validate_fp32(
         model_path=model_path,

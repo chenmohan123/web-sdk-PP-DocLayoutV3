@@ -13,7 +13,7 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function verifyWithJsonMutation(relativePath, mutate) {
+function verifyWithJsonMutation(relativePath, mutate, modelVersion = "1.0.2") {
   const path = resolve(repositoryRoot, relativePath);
   const original = readFileSync(path, "utf8");
   const value = JSON.parse(original);
@@ -22,7 +22,7 @@ function verifyWithJsonMutation(relativePath, mutate) {
     writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
     return spawnSync(
       process.execPath,
-      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.1"],
+      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", modelVersion],
       { cwd: repositoryRoot, encoding: "utf8" }
     );
   } finally {
@@ -34,7 +34,7 @@ function verifyWithCurrentFp32Schema() {
   const benchmarkPath = resolve(repositoryRoot, "benchmarks/1.0.1/wasm-fp32.json");
   const evidencePath = resolve(
     repositoryRoot,
-    "tools/model-pipeline/reports/1.0.1/browser-evidence.json"
+    "tools/model-pipeline/reports/1.0.2/browser-evidence.json"
   );
   const originalBenchmark = readFileSync(benchmarkPath, "utf8");
   const originalEvidence = readFileSync(evidencePath, "utf8");
@@ -51,7 +51,7 @@ function verifyWithCurrentFp32Schema() {
     writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
     return spawnSync(
       process.execPath,
-      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.1"],
+      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.2"],
       { cwd: repositoryRoot, encoding: "utf8" }
     );
   } finally {
@@ -127,6 +127,17 @@ describe("release workflow contract", () => {
     assert.match(output, /model 1\.0\.2/);
   });
 
+  test("拒绝与当前根目录清单版本不一致的报告", () => {
+    const result = spawnSync(
+      process.execPath,
+      [resolve(repositoryRoot, "scripts/verify-release.mjs"), "--models", "1.0.1"],
+      { cwd: repositoryRoot, encoding: "utf8" }
+    );
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /does not match current manifest 1\.0\.2/);
+  });
+
   test("creates the immutable model release without clobber", () => {
     const workflow = readFileSync(
       resolve(repositoryRoot, ".github/workflows/model-validation.yml"),
@@ -148,7 +159,7 @@ describe("release workflow contract", () => {
 
   test("rejects FP32 browser evidence for a different model", () => {
     const result = verifyWithJsonMutation(
-      "tools/model-pipeline/reports/1.0.1/browser-evidence.json",
+      "tools/model-pipeline/reports/1.0.2/browser-evidence.json",
       (evidence) => {
         evidence.fp32Wasm.modelSha256 = "0".repeat(64);
       }
@@ -158,7 +169,7 @@ describe("release workflow contract", () => {
   });
 
   test("rejects incomplete or inconsistent FP32 browser evidence", () => {
-    const evidencePath = "tools/model-pipeline/reports/1.0.1/browser-evidence.json";
+    const evidencePath = "tools/model-pipeline/reports/1.0.2/browser-evidence.json";
     const cases = [
       [
         (evidence) => {
@@ -406,12 +417,12 @@ describe("release workflow contract", () => {
       const staged = await stagePagesModels({
         fetchImpl: fixture.fetchImpl,
         outputRoot,
-        publicRoot: "https://pages.test/models/v1.0.2",
+        publicRoot: "https://pages.test/models",
         releaseRoot: "https://release.test"
       });
 
-      assert.equal(staged.variants[0].url, "https://pages.test/models/v1.0.2/model-fp16.onnx");
-      assert.equal(staged.variants[1].url, "https://pages.test/models/v1.0.2/model-fp32.onnx");
+      assert.equal(staged.variants[0].url, "https://pages.test/models/model-fp16.onnx");
+      assert.equal(staged.variants[1].url, "https://pages.test/models/model-fp32.onnx");
       assert.deepEqual(readFileSync(resolve(outputRoot, "model-fp16.onnx")), fixture.fp16);
       assert.deepEqual(readFileSync(resolve(outputRoot, "model-fp32.onnx")), fixture.fp32);
       assert.deepEqual(
@@ -423,45 +434,24 @@ describe("release workflow contract", () => {
     }
   });
 
-  test("keeps historical and current models in the Pages artifact", async () => {
-    const stagingSource = readFileSync(
-      resolve(repositoryRoot, "scripts/stage-pages-models.mjs"),
-      "utf8"
-    );
+  test("只在 Pages artifact 中暂存当前模型根目录", async () => {
     const { stageAllPagesModels } = await import("./stage-pages-models.mjs");
-    const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-model-versions-"));
+    const outputRoot = mkdtempSync(resolve(tmpdir(), "ppdoclayout-model-root-"));
     const fixture = modelStagingFixture();
-    const fetchImpl = (url) =>
-      fixture.fetchImpl(
-        String(url).endsWith("/manifest.json") ? "https://release.test/manifest.json" : String(url)
-      );
 
     try {
-      assert.match(stagingSource, /await stageAllPagesModels\(/);
-      const staged = await stageAllPagesModels({ fetchImpl, outputRoot });
-
+      const staged = await stageAllPagesModels({ outputRoot: resolve(outputRoot, "models") });
       assert.deepEqual(
         staged.map(({ model }) => model.version),
-        ["1.0.0", "1.0.1", "1.0.2"]
+        ["1.0.2"]
       );
-      for (const version of ["1.0.0", "1.0.1", "1.0.2"]) {
-        const publicVersion = `v${version}`;
-        const manifest = JSON.parse(
-          readFileSync(resolve(outputRoot, publicVersion, "manifest.json"), "utf8")
-        );
-        assert.equal(
-          manifest.variants[0].url,
-          `https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/${publicVersion}/model-fp16.onnx`
-        );
-        assert.deepEqual(
-          readFileSync(resolve(outputRoot, publicVersion, "model-fp16.onnx")),
-          fixture.fp16
-        );
-        assert.deepEqual(
-          readFileSync(resolve(outputRoot, publicVersion, "model-fp32.onnx")),
-          fixture.fp32
-        );
-      }
+      const manifest = JSON.parse(
+        readFileSync(resolve(outputRoot, "models", "manifest.json"), "utf8")
+      );
+      assert.equal(
+        manifest.variants[0].url,
+        "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp16.onnx"
+      );
     } finally {
       rmSync(outputRoot, { force: true, recursive: true });
     }
@@ -476,7 +466,7 @@ describe("release workflow contract", () => {
         stagePagesModels({
           fetchImpl: fixture.fetchImpl,
           outputRoot,
-          publicRoot: "https://pages.test/models/v1.0.2",
+          publicRoot: "https://pages.test/models",
           releaseRoot: "https://release.test"
         }),
         /model-fp32\.onnx SHA-256 mismatch/
@@ -495,7 +485,7 @@ describe("release workflow contract", () => {
         stagePagesModels({
           fetchImpl: fixture.fetchImpl,
           outputRoot,
-          publicRoot: "https://pages.test/models/v1.0.2",
+          publicRoot: "https://pages.test/models",
           releaseRoot: "https://release.test"
         }),
         /Unsafe or unexpected model URL/

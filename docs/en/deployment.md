@@ -6,13 +6,13 @@ Deploy the SDK and Demo over HTTPS (localhost is exempt). The manifest, ONNX fil
 
 Models are large assets. Recommended policy:
 
-- Use immutable version URLs, never `latest`.
-- Give hash-addressed ONNX files long immutable caching; use controlled short caching or a versioned URL for manifests.
+- Publish the manifest and both ONNX files to the same current-model root, and replace them together.
+- Use controlled caching or an explicit query revision for the root manifest and ONNX files so an update cannot mix old and new assets.
 - Preserve `Content-Length` so download progress is accurate.
 - Allow IndexedDB. The SDK can run when it is unavailable, but may download again.
 - Before mobile-network downloads, disclose 74,279,796 bytes for FP16 and 142,574,928 bytes for FP32.
 
-The bundled SDK uses the versioned `models/v1.0.2/manifest.json`. That manifest reuses model binaries from the immutable `v1.0.1-models` release and adds validated WASM compatibility metadata for FP16; deployments must preserve the historical `models/v1.0.0/` and `models/v1.0.1/` paths alongside the current `models/v1.0.2/` path for existing SDK consumers.
+The bundled SDK uses the current `models/manifest.json`. Model files are served from the same root directory and replaced together with the manifest when the current model is updated; `model.version`, byte sizes, SHA-256 values, and source revisions remain in the manifest for integrity evidence.
 
 Multithreaded WASM requires:
 

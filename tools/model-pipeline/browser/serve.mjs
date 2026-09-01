@@ -9,7 +9,7 @@ import { parsePort } from "./port.mjs";
 const browserDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(browserDirectory, "../../..");
 const ortDirectory = join(repositoryRoot, "packages/sdk/node_modules/onnxruntime-web/dist");
-const modelDirectory = join(repositoryRoot, "models/pp-doclayoutv3/1.0.0");
+const modelDirectory = join(repositoryRoot, "models/pp-doclayoutv3");
 const requestedPort = parsePort(process.argv);
 
 const contentTypes = {

@@ -20,6 +20,9 @@ EXPECTED_INPUT_SHAPE = [1, 3, 800, 800]
 EXPECTED_OUTPUT_NAMES = ["logits", "pred_boxes", "order_logits", "out_masks"]
 EXPECTED_OPSET = 18
 SOURCE_URL = "https://huggingface.co/PaddlePaddle/PP-DocLayoutV3_safetensors"
+MODEL_PUBLIC_ROOT = (
+    "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/"
+)
 ROOT = Path(__file__).parents[3]
 
 
@@ -28,10 +31,8 @@ def release_base_url(model_version: str, release_tag: str) -> str:
         raise ValueError(f"Invalid model version: {model_version}")
     if not RELEASE_TAG.fullmatch(release_tag):
         raise ValueError(f"Invalid model release tag: {release_tag}")
-    return (
-        "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
-        f"releases/download/{release_tag}/"
-    )
+    # release_tag 保留为归档/验证参数；当前 Demo 永远从模型根目录读取。
+    return MODEL_PUBLIC_ROOT
 
 
 def sha256_file(path: Path) -> str:
@@ -387,9 +388,8 @@ def write_manifest(
 
 def parse_args() -> argparse.Namespace:
     pipeline_dir = ROOT / "tools" / "model-pipeline"
-    parser = argparse.ArgumentParser(description="Build the versioned model manifest")
+    parser = argparse.ArgumentParser(description="Build the current model manifest")
     parser.add_argument("--model-version", default="1.0.2")
-    parser.add_argument("--artifact-version", default="1.0.1")
     parser.add_argument("--release-tag", default="v1.0.1-models")
     parser.add_argument(
         "--contract",
@@ -410,10 +410,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-dir", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
-    if not SEMVER.fullmatch(args.artifact_version):
-        parser.error("--artifact-version must be semantic version X.Y.Z")
-    model_dir = ROOT / "models" / MODEL_ID / args.artifact_version
-    manifest_dir = ROOT / "models" / MODEL_ID / args.model_version
+    model_dir = ROOT / "models" / MODEL_ID
+    manifest_dir = model_dir
     report_dir = pipeline_dir / "reports" / args.model_version
     args.model_dir = args.model_dir or model_dir
     args.fp32_report = args.fp32_report or report_dir / "fp32-validation.json"
