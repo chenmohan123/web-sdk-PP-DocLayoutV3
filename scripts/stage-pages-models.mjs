@@ -6,8 +6,7 @@ import { fileURLToPath } from "node:url";
 const modulePath = fileURLToPath(import.meta.url);
 const repositoryRoot = resolve(dirname(modulePath), "..");
 export const MODEL_ROOT = resolve(repositoryRoot, "models", "pp-doclayoutv3");
-export const MODEL_PUBLIC_ROOT =
-  "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models";
+export const MODEL_PUBLIC_ROOT = "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models";
 
 function requireFilename(filename) {
   if (typeof filename !== "string" || !/^model-fp(?:16|32)\.onnx$/.test(filename)) {
@@ -53,10 +52,12 @@ export async function stagePagesModels({
   const variants = [];
   for (const variant of manifest.variants) {
     const filename = requireFilename(variant.filename);
-    const sourceUrl = releaseRoot === undefined ? undefined : requireAssetUrl(variant.url, filename);
-    const bytes = sourceUrl === undefined
-      ? await readFile(resolve(modelRoot, filename))
-      : Buffer.from(await (await fetchImpl(sourceUrl)).arrayBuffer());
+    const sourceUrl =
+      releaseRoot === undefined ? undefined : requireAssetUrl(variant.url, filename);
+    const bytes =
+      sourceUrl === undefined
+        ? await readFile(resolve(modelRoot, filename))
+        : Buffer.from(await (await fetchImpl(sourceUrl)).arrayBuffer());
     if (bytes.byteLength !== variant.bytes) throw new Error(`${filename} byte length mismatch`);
     const digest = createHash("sha256").update(bytes).digest("hex");
     if (digest !== variant.sha256) throw new Error(`${filename} SHA-256 mismatch`);

@@ -14,10 +14,7 @@ import type { DocLayoutCapabilities } from "../src/types";
 
 const manifest = parseModelManifest(
   JSON.parse(
-    readFileSync(
-new URL("../../../models/pp-doclayoutv3/manifest.json", import.meta.url),
-      "utf8"
-    )
+    readFileSync(new URL("../../../models/pp-doclayoutv3/manifest.json", import.meta.url), "utf8")
   )
 );
 

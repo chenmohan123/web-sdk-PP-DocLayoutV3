@@ -441,9 +441,17 @@ describe("release workflow contract", () => {
 
     try {
       const staged = await stageAllPagesModels({ outputRoot: resolve(outputRoot, "models") });
-      assert.deepEqual(staged.map(({ model }) => model.version), ["1.0.2"]);
-      const manifest = JSON.parse(readFileSync(resolve(outputRoot, "models", "manifest.json"), "utf8"));
-      assert.equal(manifest.variants[0].url, "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp16.onnx");
+      assert.deepEqual(
+        staged.map(({ model }) => model.version),
+        ["1.0.2"]
+      );
+      const manifest = JSON.parse(
+        readFileSync(resolve(outputRoot, "models", "manifest.json"), "utf8")
+      );
+      assert.equal(
+        manifest.variants[0].url,
+        "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp16.onnx"
+      );
     } finally {
       rmSync(outputRoot, { force: true, recursive: true });
     }

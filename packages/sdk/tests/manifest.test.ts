@@ -6,10 +6,7 @@ import { DocLayoutError } from "../src/errors";
 import { CURRENT_SDK_VERSION, parseModelManifest } from "../src/model/manifest";
 
 const defaultManifest = JSON.parse(
-  readFileSync(
-    new URL("../../../models/pp-doclayoutv3/manifest.json", import.meta.url),
-    "utf8"
-  )
+  readFileSync(new URL("../../../models/pp-doclayoutv3/manifest.json", import.meta.url), "utf8")
 ) as unknown;
 
 function copyManifest(): Record<string, unknown> {
