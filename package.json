@@ -22,14 +22,14 @@
     "verify": "pnpm format:check && pnpm docs:test && pnpm release:test && pnpm benchmark:test && pnpm benchmark:parity && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
-    "@eslint/js": "^9.0.0",
-    "@types/node": "^24.0.0",
-    "eslint": "^9.0.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.4.0",
+    "eslint": "^10.9.1",
     "playwright": "^1.55.0",
     "prettier": "^3.6.0",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.0",
-    "typescript-eslint": "^8.0.0",
-    "vitest": "^3.2.0"
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.68.0",
+    "vitest": "^4.1.11"
   }
 }

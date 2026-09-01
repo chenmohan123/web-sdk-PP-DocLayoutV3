@@ -11,17 +11,17 @@
     "lint": "eslint src tests"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "5.0.4",
-    "lucide-react": "0.468.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "lucide-react": "1.37.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "web-sdk-pp-doclayoutv3": "workspace:*"
   },
   "devDependencies": {
-    "@types/react": "19.1.10",
-    "@types/react-dom": "19.1.7",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
     "playwright": "1.62.1",
-    "typescript": "5.9.3",
-    "vite": "7.3.6"
+    "typescript": "7.0.2",
+    "vite": "8.2.2"
   }
 }
