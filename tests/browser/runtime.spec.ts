@@ -11,7 +11,7 @@ import { TINY_MODEL_BASE64, tinyModelManifest } from "./tiny-model";
 const repositoryRoot = resolve(__dirname, "../..");
 const sdkRoot = join(repositoryRoot, "packages/sdk");
 const ortRoot = join(sdkRoot, "node_modules/onnxruntime-web/dist");
-const modelRoot = join(repositoryRoot, "models/pp-doclayoutv3/1.0.0");
+const modelRoot = join(repositoryRoot, "models/pp-doclayoutv3");
 const fixtureRoot = join(repositoryRoot, "tools/model-pipeline/fixtures/images");
 let origin = "";
 let server: Server;

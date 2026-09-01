@@ -15,13 +15,15 @@ describe("documentation contract", () => {
     });
   });
 
-  it("describes bundled defaults without coupling the model label to an SDK version", () => {
+  it("describes the current root model without coupling the download path to a version", () => {
     const chineseReadme = readFileSync(new URL("README.md", repositoryRoot), "utf8");
     const englishReadme = readFileSync(new URL("README.en.md", repositoryRoot), "utf8");
 
-    assert.match(chineseReadme, /默认模型 `1\.0\.2`：FP16/);
+    assert.match(chineseReadme, /models\/pp-doclayoutv3\/manifest\.json/);
+    assert.match(chineseReadme, /Git LFS/);
     assert.doesNotMatch(chineseReadme, /默认 1\.0\.0 模型/);
-    assert.match(englishReadme, /The default `1\.0\.2` model/);
+    assert.match(englishReadme, /models\/pp-doclayoutv3\/manifest\.json/);
+    assert.match(englishReadme, /Git LFS/);
     assert.doesNotMatch(englishReadme, /The default 1\.0\.0 FP16 model/);
   });
 
@@ -40,7 +42,7 @@ describe("documentation contract", () => {
     assert.match(chineseModels, /FP32 \| 142,574,928 字节 \| WASM、WebGPU/);
   });
 
-  it("records model 1.0.1 sanitation provenance in both languages", () => {
+  it("records sanitation provenance and keeps version labels out of model paths", () => {
     const modelReadme = readFileSync(new URL("models/README.md", repositoryRoot), "utf8");
     const englishConversion = readFileSync(
       new URL("docs/en/conversion.md", repositoryRoot),
@@ -53,7 +55,7 @@ describe("documentation contract", () => {
 
     for (const document of [modelReadme, englishConversion, chineseConversion]) {
       assert.match(document, /1\.0\.1/);
-      assert.match(document, /v1\.0\.1-models/);
+      assert.doesNotMatch(document, /models\/(?:pp-doclayoutv3\/)?1\.0\.1/);
       assert.match(document, /sin.*cos.*sin_1.*cos_1/s);
       assert.match(document, /625.*64/s);
       assert.match(document, /FP64.*不支持|FP64.*not supported/is);

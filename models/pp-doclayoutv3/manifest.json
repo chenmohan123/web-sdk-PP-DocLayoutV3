@@ -42,7 +42,7 @@
     "id": "pp-doclayoutv3",
     "modelType": "pp_doclayout_v3",
     "parameterCount": 33175165,
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "outputs": [
     {
@@ -123,6 +123,7 @@
   "variants": [
     {
       "backendCompatibility": [
+        "wasm",
         "webgpu"
       ],
       "bytes": 74279796,
@@ -131,11 +132,11 @@
       "opset": 18,
       "precision": "fp16",
       "sha256": "463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2",
-      "url": "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models/model-fp16.onnx",
+      "url": "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp16.onnx",
       "validation": {
         "included": true,
         "pass": true,
-        "report": "tools/model-pipeline/reports/1.0.1/variant-validation.json"
+        "report": "tools/model-pipeline/reports/1.0.2/variant-validation.json"
       }
     },
     {
@@ -149,11 +150,11 @@
       "opset": 18,
       "precision": "fp32",
       "sha256": "476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269",
-      "url": "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models/model-fp32.onnx",
+      "url": "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp32.onnx",
       "validation": {
         "included": true,
         "pass": true,
-        "report": "tools/model-pipeline/reports/1.0.1/fp32-validation.json"
+        "report": "tools/model-pipeline/reports/1.0.2/fp32-validation.json"
       }
     }
   ]

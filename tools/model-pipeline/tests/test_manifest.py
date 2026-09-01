@@ -14,11 +14,9 @@ from ppdoclayout.build_manifest import build_manifest, canonical_json
 ROOT = Path(__file__).parents[3]
 PIPELINE_DIR = ROOT / "tools" / "model-pipeline"
 MODEL_VERSION = "1.0.2"
-ARTIFACT_VERSION = "1.0.1"
 RELEASE_TAG = "v1.0.1-models"
-ARTIFACT_DIR = ROOT / "models" / "pp-doclayoutv3" / ARTIFACT_VERSION
-HISTORICAL_DIR = ROOT / "models" / "pp-doclayoutv3" / "1.0.0"
-MANIFEST_PATH = ROOT / "models" / "pp-doclayoutv3" / MODEL_VERSION / "manifest.json"
+ARTIFACT_DIR = ROOT / "models" / "pp-doclayoutv3"
+MANIFEST_PATH = ARTIFACT_DIR / "manifest.json"
 CONTRACT_PATH = PIPELINE_DIR / "artifacts" / "model-contract.json"
 FP32_REPORT_PATH = PIPELINE_DIR / "reports" / MODEL_VERSION / "fp32-validation.json"
 VARIANT_REPORT_PATH = PIPELINE_DIR / "reports" / MODEL_VERSION / "variant-validation.json"
@@ -38,13 +36,8 @@ SOURCE_SHA256 = "5ea422c6cc5fe759a47e1357c35639b58173508e025a3131cbe4b6ac59e2b85
 HISTORICAL_FP32_SHA256 = (
     "fc2eebdc2153ad4e6993766f914f78f47a737fed123a78731bc9c57f7a6c806b"
 )
-RELEASE_BASE = (
-    "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
-    f"releases/download/{RELEASE_TAG}/"
-)
-HISTORICAL_RELEASE_BASE = (
-    "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/"
-    "releases/download/v1.0.0-models/"
+MODEL_PUBLIC_ROOT = (
+    "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/"
 )
 
 
@@ -111,7 +104,7 @@ def test_manifest_variants_are_sorted_integrity_bound_and_validated() -> None:
         assert variant["bytes"] == expected["bytes"] == model_path.stat().st_size
         assert variant["sha256"] == expected["sha256"] == sha256_file(model_path)
         assert variant["opset"] == 18
-        assert variant["url"] == RELEASE_BASE + variant["filename"]
+        assert variant["url"] == MODEL_PUBLIC_ROOT + variant["filename"]
         assert "latest" not in variant["url"]
         assert variant["validation"]["pass"] is True
         assert variant["validation"]["included"] is True
@@ -142,30 +135,6 @@ def test_manifest_matches_generator_and_is_canonical_json() -> None:
     assert MANIFEST_PATH.read_bytes() == generated
     assert generated.endswith(b"\n")
     assert b"\r\n" not in generated
-
-
-def test_published_1_0_0_manifest_remains_immutable() -> None:
-    manifest = json.loads(
-        (HISTORICAL_DIR / "manifest.json").read_text(encoding="utf-8")
-    )
-    by_id = {variant["id"]: variant for variant in manifest["variants"]}
-
-    assert manifest["model"]["version"] == "1.0.0"
-    assert by_id["fp16"]["backendCompatibility"] == ["webgpu"]
-    assert by_id["fp32"]["backendCompatibility"] == ["wasm"]
-
-
-def test_published_1_0_1_manifest_remains_immutable() -> None:
-    manifest = json.loads(
-        (ARTIFACT_DIR / "manifest.json").read_text(encoding="utf-8")
-    )
-    by_id = {variant["id"]: variant for variant in manifest["variants"]}
-
-    assert manifest["model"]["version"] == "1.0.1"
-    assert by_id["fp16"]["backendCompatibility"] == ["webgpu"]
-    assert by_id["fp32"]["backendCompatibility"] == ["wasm", "webgpu"]
-    assert by_id["fp16"]["sha256"] == EXPECTED_VARIANTS["fp16"]["sha256"]
-    assert by_id["fp32"]["sha256"] == EXPECTED_VARIANTS["fp32"]["sha256"]
 
 
 def test_generator_inspects_real_onnx_contract() -> None:
@@ -214,7 +183,7 @@ def test_manifest_advertises_validated_fp32_for_both_backends() -> None:
     assert manifest["model"]["version"] == MODEL_VERSION
     assert manifest["variantPriority"] == ["fp16", "fp32"]
     assert fp32["backendCompatibility"] == ["wasm", "webgpu"]
-    assert fp32["url"].endswith(f"/{RELEASE_TAG}/model-fp32.onnx")
+    assert fp32["url"] == MODEL_PUBLIC_ROOT + "model-fp32.onnx"
 
 
 def test_model_readme_documents_distribution_and_reproducibility() -> None:
@@ -228,8 +197,7 @@ def test_model_readme_documents_distribution_and_reproducibility() -> None:
     assert EXPECTED_VARIANTS["fp16"]["sha256"] in readme
     assert "INT8" in readme and "不发布" in readme
     assert "python.exe -m ppdoclayout.build_manifest" in readme
-    assert HISTORICAL_RELEASE_BASE in readme
-    assert "latest" in readme
+    assert MODEL_PUBLIC_ROOT in readme
     assert "自定义微调模型" in readme
     assert "Apache-2.0" in readme
     assert "https://modelscope.cn/models/PaddlePaddle/PP-DocLayoutV3" in readme

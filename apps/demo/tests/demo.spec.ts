@@ -36,21 +36,21 @@ test("模型来源默认沿用 SDK 并声明远程来源能力", async ({ page }
         available: true,
         disabledReason: undefined,
         manifestUrl:
-          "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/13bbf4e3e91172c0407cf14742ac8291dc69353b/1.0.2/manifest.json"
+          "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/main/manifest.json?v=1.0.2"
       },
       {
         key: "modelscope",
         available: true,
         disabledReason: undefined,
         manifestUrl:
-          "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/v1.0.3/1.0.2/manifest.json"
+          "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/master/manifest.json?v=1.0.2"
       }
     ],
     defaultModel: undefined,
     huggingFaceModel:
-      "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/13bbf4e3e91172c0407cf14742ac8291dc69353b/1.0.2/manifest.json",
+      "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/main/manifest.json?v=1.0.2",
     modelScopeModel:
-      "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/v1.0.3/1.0.2/manifest.json"
+      "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/master/manifest.json?v=1.0.2"
   });
 });
 

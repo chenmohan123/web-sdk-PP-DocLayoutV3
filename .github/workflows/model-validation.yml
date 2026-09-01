@@ -65,7 +65,7 @@ jobs:
           name: pp-doclayoutv3-${{ inputs.model_version }}-validation
           if-no-files-found: error
           path: |
-            models/pp-doclayoutv3/${{ inputs.model_version }}/manifest.json
+            models/pp-doclayoutv3/manifest.json
             tools/model-pipeline/reports/${{ inputs.model_version }}/browser-evidence.json
             tools/model-pipeline/reports/${{ inputs.model_version }}/fp32-validation.json
             tools/model-pipeline/reports/${{ inputs.model_version }}/variant-validation.json
@@ -128,13 +128,13 @@ jobs:
             exit 1
           fi
           gh release create "${RELEASE_TAG}" \
-            "models/pp-doclayoutv3/${MODEL_VERSION}/manifest.json" \
+            "models/pp-doclayoutv3/manifest.json" \
             "tools/model-pipeline/reports/${MODEL_VERSION}/browser-evidence.json" \
             "tools/model-pipeline/reports/${MODEL_VERSION}/fp32-validation.json" \
             "tools/model-pipeline/reports/${MODEL_VERSION}/variant-validation.json" \
             --target "${GITHUB_SHA}" \
             --title "PP-DocLayoutV3 model manifest ${MODEL_VERSION}" \
-            --notes "Adds validated CPU/WASM compatibility for unchanged model binaries in v1.0.1-models."
+            --notes "记录当前根目录模型的 CPU/WASM 兼容性验证；模型文件由 Git LFS 管理并整体更新。"
         env:
           GH_TOKEN: ${{ github.token }}
           MODEL_VERSION: ${{ inputs.model_version }}

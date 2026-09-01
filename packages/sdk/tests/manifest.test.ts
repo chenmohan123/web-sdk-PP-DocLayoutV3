@@ -7,7 +7,7 @@ import { CURRENT_SDK_VERSION, parseModelManifest } from "../src/model/manifest";
 
 const defaultManifest = JSON.parse(
   readFileSync(
-    new URL("../../../models/pp-doclayoutv3/1.0.2/manifest.json", import.meta.url),
+    new URL("../../../models/pp-doclayoutv3/manifest.json", import.meta.url),
     "utf8"
   )
 ) as unknown;
@@ -70,13 +70,13 @@ describe("parseModelManifest", () => {
         backendCompatibility: ["wasm", "webgpu"],
         id: "fp16",
         precision: "fp16",
-        url: "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models/model-fp16.onnx"
+        url: "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp16.onnx"
       },
       {
         backendCompatibility: ["wasm", "webgpu"],
         id: "fp32",
         precision: "fp32",
-        url: "https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3/releases/download/v1.0.1-models/model-fp32.onnx"
+        url: "https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp32.onnx"
       }
     ]);
   });
