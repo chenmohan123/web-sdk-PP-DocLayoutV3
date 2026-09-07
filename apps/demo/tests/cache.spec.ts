@@ -1,6 +1,38 @@
 import { expect, test } from "playwright/test";
 import { TINY_MODEL_BASE64, tinyModelManifest } from "../src/fixture";
 
+for (const scope of ["current", "all"] as const) {
+  test(`清理 ${scope} 缓存后画布恢复原图`, async ({ page }) => {
+    await page.goto("/?fixture=1");
+    await page.locator(".sample-card").first().click();
+    const canvas = page.getByTestId("result-canvas");
+    await expect(canvas).toBeVisible();
+    await expect
+      .poll(() => canvas.evaluate((element) => (element as HTMLCanvasElement).width))
+      .toBeGreaterThan(300);
+    const original = await canvas.evaluate((element) => (element as HTMLCanvasElement).toDataURL());
+    await page.getByRole("button", { name: "CPU", exact: true }).click();
+    await page.getByRole("button", { name: "开始检测", exact: true }).click();
+    await expect(page.getByTestId("status")).toContainText("检测完成");
+    await expect
+      .poll(
+        async () =>
+          (await canvas.evaluate((element) => (element as HTMLCanvasElement).toDataURL())) ===
+          original
+      )
+      .toBe(false);
+    await page.locator(`[data-sdk-cache-clear="${scope}"]`).click();
+    await expect(page.getByTestId("notice")).toContainText("缓存已清理");
+    await expect
+      .poll(
+        async () =>
+          (await canvas.evaluate((element) => (element as HTMLCanvasElement).toDataURL())) ===
+          original
+      )
+      .toBe(true);
+  });
+}
+
 test("同来源的迟到缓存清单不能覆盖实际加载的新模型版本", async ({ page }) => {
   const current = { ...tinyModelManifest, model: { ...tinyModelManifest.model, version: "2.0.0" } };
   let running = false;

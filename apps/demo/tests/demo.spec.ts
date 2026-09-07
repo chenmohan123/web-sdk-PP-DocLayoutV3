@@ -331,8 +331,6 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "导出 JSON" }).click();
   expect((await downloadPromise).suggestedFilename()).toBe("pp-doclayoutv3-result.json");
-  await page.getByRole("button", { name: "清理 SDK 全部缓存" }).click();
-  await expect(page.getByTestId("notice")).toContainText("缓存已清理");
   const canvasPixels = await page
     .getByTestId("result-canvas")
     .evaluate((canvas: HTMLCanvasElement) => {
@@ -345,6 +343,8 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
       return sum;
     });
   expect(canvasPixels).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "清理 SDK 全部缓存" }).click();
+  await expect(page.getByTestId("notice")).toContainText("缓存已清理");
   await page.screenshot({ path: testInfo.outputPath("desktop.png"), fullPage: true });
 });
 
