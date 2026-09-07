@@ -1,4 +1,4 @@
-import type { ModelCache, ModelCacheEntry } from "./model-cache";
+import type { ModelCache, ModelCacheEntry, ModelCacheMetadata } from "./model-cache";
 
 const CACHE_ORIGIN = "https://cache.ppdoclayout.invalid/";
 
@@ -50,6 +50,24 @@ export class CacheStorageModelCache implements ModelCache {
         }
       })
     );
+  }
+
+  async listMetadata(): Promise<readonly ModelCacheMetadata[]> {
+    const cache = await this.storage.open(this.cacheName);
+    const entries: ModelCacheMetadata[] = [];
+    for (const request of await cache.keys()) {
+      const response = await cache.match(request);
+      if (response === undefined) continue;
+      const bytes = Number(response.headers.get("content-length"));
+      const sha256 = response.headers.get("x-ppdoclayout-sha256");
+      const key = decodeURIComponent(new URL(request.url).pathname.slice(1));
+      entries.push({
+        bytes: Number.isSafeInteger(bytes) && bytes > 0 ? bytes : 0,
+        key,
+        sha256: sha256 ?? ""
+      });
+    }
+    return entries;
   }
 }
 

@@ -37,7 +37,9 @@ await detector.dispose();
 
 - `detect(image, { threshold, classThresholds, signal })`: 接收 Blob、CanvasImageSource 或标准化 raster。
 - `dispose()`: 等待已排队操作完成并释放 Worker/session；可重复调用。
-- `listModelCache()` / `clearModelCache()`: 查看或清除该检测器的模型缓存。
+- `listModelCache()` / `clearModelCache()`: 查看或清除该检测器缓存管理器内的全部 SDK 模型缓存，保持原全清语义。
+- `clearCurrentModelCache()` / `estimateModelCache()`: 按实际加载模型的 ID 和版本清理或统计全部精度缓存。
+- `clearAllModelCache()`: 与旧 `clearModelCache()` 等价。
 - `model`, `runtime`, `capabilities`, `loadTimings`: 实际加载信息。
 
 ```ts
@@ -59,5 +61,26 @@ const result = await detector.detect(file, {
 `classThresholds` 按 manifest 标签名称覆盖置信度过滤阈值，未配置的类别回退到 `threshold`。全局 `threshold` 仍用于 mask 二值化和多边形提取。未知类别名称或超出 `0` 到 `1` 的值会被拒绝。
 
 ## 其他导出
+
+顶层 `clearCurrentModelCache({ modelId, version })` 精确匹配一个模型及版本，`clearAllModelCache()` 删除本 SDK 的全部模型缓存，`clearModelCache()` 保留同样的全清语义。普通模型缓存键保持兼容；身份含 `:` 或 `%` 时逐段编码，无法无歧义识别的历史键只会由 SDK 全清移除。默认检测器和顶层 API 共享当前 JavaScript 环境的缓存管理器，覆盖持久缓存失败后的内存回退；`cache: false` 的独立管理器需要通过检测器实例清理。
+
+`estimateModelCache(identity?)` 返回 `bytes`（内存与持久副本字节数之和）、`memoryBytes`、`persistentBytes`、`entryCount`（按键去重）。省略身份时统计本 SDK 全部模型；容量来自模型字节元数据，不含 ONNX 会话、图片、浏览器存储开销。可选 `originUsageBytes` 和 `originQuotaBytes` 来自 `navigator.storage.estimate()`，表示整个源站，不能当作 SDK 缓存容量。
+
+```ts
+import {
+  clearCurrentModelCache,
+  clearAllModelCache,
+  estimateModelCache
+} from "web-sdk-pp-doclayoutv3";
+
+const identity = { modelId: "pp-doclayoutv3", version: "1.0.2" };
+const usage = await estimateModelCache(identity);
+await clearCurrentModelCache(identity);
+await clearAllModelCache();
+```
+
+清理会阻止同一管理器中先前启动的下载回填缓存，但不会自动销毁正在运行的检测器会话。Demo 会先取消并等待当前任务，再 `dispose()` 释放 Worker/session，最后清理缓存。其他标签页或独立 JavaScript 环境的活跃任务需要由调用方协调；SDK 全清不会删除其他 SDK 的 Cache Storage。
+
+`loadTimings.modelCacheReadMs` 是标准缓存读取耗时，`modelCacheMs` 保留为同值兼容字段。两者均不包含 SHA-256 校验耗时。
 
 `probeDocLayoutCapabilities()`、`listModelCache()`、`clearModelCache()`、`parseModelManifest()`、`DocLayoutError`、默认清单/WASM URL，以及所有公开 TypeScript 类型。错误消息保持英文稳定，界面可按 `error.code` 本地化。

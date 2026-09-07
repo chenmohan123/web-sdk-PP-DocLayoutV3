@@ -1,4 +1,4 @@
-import type { ModelCacheEntry } from "./cache/model-cache";
+import type { ModelCacheEntry, ModelCacheIdentity, ModelCacheEstimate } from "./cache/model-cache";
 import { MemoryModelCache } from "./cache/memory-cache";
 import { DocLayoutError, type DocLayoutErrorCode } from "./errors";
 import { decodeImage, type DecodableImage } from "./image/decode";
@@ -114,6 +114,7 @@ export interface DocLayoutLoadTimings {
   readonly integrityMs: number;
   readonly manifestMs: number;
   readonly modelCacheMs: number;
+  readonly modelCacheReadMs: number;
   readonly modelDownloadMs: number;
   readonly modelMs: number;
   readonly modelSource: "cache" | "custom" | "memory" | "network";
@@ -144,6 +145,9 @@ export interface DocLayoutDetector {
   readonly model: DocLayoutModelInfo;
   readonly runtime: DocLayoutRuntimeInfo;
   clearModelCache(): Promise<void>;
+  clearCurrentModelCache(): Promise<void>;
+  clearAllModelCache(): Promise<void>;
+  estimateModelCache(): Promise<ModelCacheEstimate>;
   detect(image: DecodableImage, options?: DocLayoutDetectOptions): Promise<DocLayoutResult>;
   dispose(): Promise<void>;
   listModelCache(): Promise<readonly ModelCacheEntry[]>;
@@ -151,6 +155,8 @@ export interface DocLayoutDetector {
 
 export interface DetectorModelManager {
   clearCache(): Promise<void>;
+  clearCurrentCache(identity: ModelCacheIdentity): Promise<void>;
+  estimateCache(identity?: ModelCacheIdentity): Promise<ModelCacheEstimate>;
   listCache(): Promise<readonly ModelCacheEntry[]>;
   load(
     manifest: ModelManifest,
@@ -319,6 +325,7 @@ async function attemptExecutor(
             downloadedBytes: 0,
             integrityMs: elapsed(dependencies.now, integrityStartedAt),
             modelCacheMs: 0,
+            modelCacheReadMs: 0,
             modelDownloadMs: 0,
             modelSource: "custom",
             source: "cache"
@@ -394,6 +401,21 @@ class DocLayoutDetectorImplementation implements DocLayoutDetector {
 
   clearModelCache(): Promise<void> {
     return this.modelManager.clearCache();
+  }
+
+  clearCurrentModelCache(): Promise<void> {
+    return this.modelManager.clearCurrentCache({
+      modelId: this.model.id,
+      version: this.model.version
+    });
+  }
+
+  clearAllModelCache(): Promise<void> {
+    return this.clearModelCache();
+  }
+
+  estimateModelCache(): Promise<ModelCacheEstimate> {
+    return this.modelManager.estimateCache({ modelId: this.model.id, version: this.model.version });
   }
 
   listModelCache(): Promise<readonly ModelCacheEntry[]> {
@@ -498,6 +520,7 @@ export async function createDocLayoutWithDependencies(
     integrityMs: selected.integrityMs,
     manifestMs,
     modelCacheMs: selected.modelCacheMs,
+    modelCacheReadMs: selected.modelCacheMs,
     modelDownloadMs: selected.modelDownloadMs,
     modelMs: selected.modelMs,
     modelSource: selected.modelSource,
@@ -520,7 +543,7 @@ export async function createDocLayoutWithDependencies(
 
 function defaultDependencies(cache = true): DetectorDependencies {
   const modelManager = cache
-    ? new ModelManager()
+    ? sharedModelManager()
     : new ModelManager({ memoryCache: new MemoryModelCache(), persistentCache: null });
   return {
     createExecutor: createProductionExecutor,
@@ -639,9 +662,27 @@ export function probeDocLayoutCapabilities(
 }
 
 export function clearModelCache(): Promise<void> {
-  return new ModelManager().clearCache();
+  return clearAllModelCache();
+}
+
+export function clearCurrentModelCache(identity: ModelCacheIdentity): Promise<void> {
+  return sharedModelManager().clearCurrentCache(identity);
+}
+
+export function clearAllModelCache(): Promise<void> {
+  return sharedModelManager().clearCache();
+}
+
+export function estimateModelCache(identity?: ModelCacheIdentity): Promise<ModelCacheEstimate> {
+  return sharedModelManager().estimateCache(identity);
+}
+
+let defaultModelManager: ModelManager | undefined;
+
+function sharedModelManager(): ModelManager {
+  return (defaultModelManager ??= new ModelManager());
 }
 
 export function listModelCache(): Promise<readonly ModelCacheEntry[]> {
-  return new ModelManager().listCache();
+  return sharedModelManager().listCache();
 }

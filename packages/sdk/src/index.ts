@@ -1,9 +1,12 @@
 export { DocLayoutError } from "./errors";
 export type { DocLayoutErrorCode } from "./errors";
 export type { DecodableImage } from "./image/decode";
-export type { ModelCacheEntry } from "./cache/model-cache";
+export type { ModelCacheEntry, ModelCacheIdentity, ModelCacheEstimate } from "./cache/model-cache";
 export {
   clearModelCache,
+  clearCurrentModelCache,
+  clearAllModelCache,
+  estimateModelCache,
   createDocLayout,
   DEFAULT_MANIFEST_URL,
   DEFAULT_ORT_WASM_BASE_URL,

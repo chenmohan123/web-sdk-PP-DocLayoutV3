@@ -275,7 +275,7 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   );
   await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("target", "_blank");
   await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute("rel", "noreferrer");
-  await expect(page.getByText("SDK 1.1.0", { exact: true })).toBeVisible();
+  await expect(page.getByText("SDK 1.2.0", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "English", exact: true })).toBeVisible();
   await expect(page.getByRole("group", { name: "运行后端" })).toBeVisible();
   await expect(page.getByRole("group", { name: "模型精度" })).toBeVisible();
@@ -327,11 +327,11 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
   await expect(page.getByTestId("timing-total")).toContainText("ms");
   await expect(page.getByTestId("model-name")).not.toHaveText("-");
   await expect(page.getByRole("button", { name: "导出 JSON" })).toBeEnabled();
-  await expect(page.getByRole("button", { name: "清理缓存" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "清理 SDK 全部缓存" })).toBeEnabled();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "导出 JSON" }).click();
   expect((await downloadPromise).suggestedFilename()).toBe("pp-doclayoutv3-result.json");
-  await page.getByRole("button", { name: "清理缓存" }).click();
+  await page.getByRole("button", { name: "清理 SDK 全部缓存" }).click();
   await expect(page.getByTestId("notice")).toContainText("缓存已清理");
   const canvasPixels = await page
     .getByTestId("result-canvas")

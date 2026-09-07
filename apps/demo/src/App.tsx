@@ -14,7 +14,9 @@ import {
 import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import {
   CURRENT_SDK_VERSION,
-  clearModelCache,
+  clearCurrentModelCache,
+  clearAllModelCache,
+  estimateModelCache,
   createDocLayout,
   parseModelManifest,
   type DocLayoutDetector,
@@ -141,6 +143,14 @@ export function App(): ReactElement {
   const [customError, setCustomError] = useState<string | undefined>();
   const [customManifest, setCustomManifest] = useState<ModelManifest | undefined>();
   const [notice, setNotice] = useState<string | undefined>();
+  const [cacheIdentity, setCacheIdentity] = useState<{ modelId: string; version: string }>();
+  const [cacheBytes, setCacheBytes] = useState<number>();
+  const [cacheError, setCacheError] = useState<string>();
+  const [cacheBusy, setCacheBusy] = useState(false);
+  const [cacheRevision, setCacheRevision] = useState(0);
+  const cacheBusyRef = useRef(false);
+  const cacheIdentityControllerRef = useRef<AbortController | undefined>(undefined);
+  const runRef = useRef<Promise<void> | undefined>(undefined);
   const [selectedSample, setSelectedSample] = useState<DemoSample | undefined>();
   const [classThresholds, setClassThresholds] = useState<Record<string, number>>({});
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -168,6 +178,45 @@ export function App(): ReactElement {
   }, [overlay, result]);
 
   useEffect(() => redraw(), [redraw]);
+  useEffect(() => {
+    const controller = new AbortController();
+    cacheIdentityControllerRef.current = controller;
+    setCacheIdentity(undefined);
+    setCacheBytes(undefined);
+    setCacheError(undefined);
+    void (async () => {
+      const manifest =
+        customManifest ??
+        (demoFixture ? tinyModelManifest : await loadSelectedModel(modelSource, controller.signal));
+      if (!controller.signal.aborted && cacheIdentityControllerRef.current === controller)
+        setCacheIdentity({ modelId: manifest.model.id, version: manifest.model.version });
+    })().catch((caught: unknown) => {
+      if (!controller.signal.aborted) setCacheError(formatRuntimeError(caught));
+    });
+    return () => {
+      controller.abort();
+      if (cacheIdentityControllerRef.current === controller)
+        cacheIdentityControllerRef.current = undefined;
+    };
+  }, [customManifest, modelSource]);
+  useEffect(() => {
+    let current = true;
+    if (cacheIdentity !== undefined) {
+      void estimateModelCache(cacheIdentity)
+        .then((estimate) => {
+          if (current) setCacheBytes(estimate.bytes);
+        })
+        .catch((caught: unknown) => {
+          if (current) {
+            setCacheBytes(undefined);
+            setCacheError(formatRuntimeError(caught));
+          }
+        });
+    }
+    return () => {
+      current = false;
+    };
+  }, [cacheIdentity, cacheRevision, result]);
   useEffect(
     () => () => {
       if (imageUrl !== undefined) URL.revokeObjectURL(imageUrl);
@@ -222,6 +271,7 @@ export function App(): ReactElement {
   };
 
   const onModelSource = async (next: ModelSourceKey): Promise<void> => {
+    if (cacheBusyRef.current) return;
     cancel();
     setModelSourceChanging(true);
     const detector = detectorRef.current;
@@ -255,8 +305,10 @@ export function App(): ReactElement {
     setClassThresholds((current) => setClassThresholdValue(current, label, value));
   };
 
-  const runDetection = async (): Promise<void> => {
+  const performDetection = async (): Promise<void> => {
     if (file === undefined) return;
+    cacheIdentityControllerRef.current?.abort();
+    cacheIdentityControllerRef.current = undefined;
     cancel();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -269,9 +321,11 @@ export function App(): ReactElement {
       await previousDetector?.dispose();
       if (controller.signal.aborted || abortRef.current !== controller) return;
       const manifestStartedAt = performance.now();
-      const model = demoFixture
-        ? { data: tinyModelData(), manifest: tinyModelManifest }
-        : (customManifest ?? (await loadSelectedModel(modelSource, controller.signal)));
+      const model =
+        customManifest ??
+        (demoFixture
+          ? { data: tinyModelData(), manifest: tinyModelManifest }
+          : await loadSelectedModel(modelSource, controller.signal));
       const manifestLoadMs = performance.now() - manifestStartedAt;
       if (controller.signal.aborted || abortRef.current !== controller) return;
       const detector = await createDocLayout({
@@ -297,6 +351,7 @@ export function App(): ReactElement {
         return;
       }
       detectorRef.current = detector;
+      setCacheIdentity({ modelId: detector.model.id, version: detector.model.version });
       manifestLoadMsRef.current = manifestLoadMs;
       setStatus("running");
       const nextResult = await detector.detect(file, {
@@ -316,6 +371,15 @@ export function App(): ReactElement {
     }
   };
 
+  const runDetection = (): void => {
+    if (cacheBusyRef.current || runRef.current !== undefined) return;
+    const pending = performDetection();
+    runRef.current = pending;
+    void pending.finally(() => {
+      if (runRef.current === pending) runRef.current = undefined;
+    });
+  };
+
   const exportJson = (): void => {
     if (result === undefined) return;
     const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
@@ -327,6 +391,7 @@ export function App(): ReactElement {
   };
 
   const validateCustom = (): void => {
+    if (cacheBusyRef.current || runRef.current !== undefined || modelSourceChanging) return;
     try {
       const parsed = parseModelManifest(JSON.parse(customText) as unknown);
       setCustomManifest(parsed);
@@ -337,9 +402,30 @@ export function App(): ReactElement {
     }
   };
 
-  const clearCache = async (): Promise<void> => {
-    await clearModelCache();
-    setNotice(copy.cacheCleared);
+  const clearCache = async (scope: "current" | "all"): Promise<void> => {
+    if (cacheBusyRef.current || (scope === "current" && cacheIdentity === undefined)) return;
+    cacheBusyRef.current = true;
+    setCacheBusy(true);
+    setCacheError(undefined);
+    setNotice(undefined);
+    cancel();
+    try {
+      // 先结束下载/推理，再释放含 Worker 的会话，最后清理共享内存与持久缓存。
+      await runRef.current;
+      const detector = detectorRef.current;
+      detectorRef.current = undefined;
+      await detector?.dispose();
+      if (scope === "current") await clearCurrentModelCache(cacheIdentity!);
+      else await clearAllModelCache();
+      setResult(undefined);
+      setNotice(copy.cacheCleared);
+    } catch (caught) {
+      setCacheError(formatRuntimeError(caught));
+    } finally {
+      setCacheRevision((value) => value + 1);
+      cacheBusyRef.current = false;
+      setCacheBusy(false);
+    }
   };
 
   return (
@@ -390,6 +476,7 @@ export function App(): ReactElement {
                 aria-describedby="model-source-limitations"
                 aria-label={copy.modelRepository}
                 disabled={
+                  cacheBusy ||
                   modelSourceChanging ||
                   status === "downloading" ||
                   status === "loading" ||
@@ -494,6 +581,7 @@ export function App(): ReactElement {
                 className="primary-button"
                 disabled={
                   file === undefined ||
+                  cacheBusy ||
                   modelSourceChanging ||
                   status === "downloading" ||
                   status === "loading" ||
@@ -688,7 +776,7 @@ export function App(): ReactElement {
                   </div>
                   <div>
                     <dt>{copy.modelCache}</dt>
-                    <dd>{formatMs(loadTimings?.modelCacheMs)}</dd>
+                    <dd>{formatMs(loadTimings?.modelCacheReadMs)}</dd>
                   </div>
                   <div>
                     <dt>{copy.integrity}</dt>
@@ -833,10 +921,36 @@ export function App(): ReactElement {
                 <Download size={16} />
                 {copy.exportJson}
               </button>
-              <button className="text-button" onClick={() => void clearCache()}>
+            </div>
+            <div className="detail-section" aria-busy={cacheBusy}>
+              <p data-sdk-cache-usage="current">
+                {copy.currentCacheUsage}: {cacheBytes === undefined ? "-" : formatBytes(cacheBytes)}
+              </p>
+              <p className="muted">{copy.cacheScope}</p>
+              <button
+                className="text-button"
+                data-sdk-cache-clear="current"
+                disabled={cacheBusy || modelSourceChanging || cacheIdentity === undefined}
+                onClick={() => void clearCache("current")}
+              >
                 <Trash2 size={16} />
-                {copy.clearCache}
+                {copy.clearCurrentCache}
               </button>
+              <button
+                className="text-button"
+                data-sdk-cache-clear="all"
+                disabled={cacheBusy || modelSourceChanging}
+                onClick={() => void clearCache("all")}
+              >
+                <Trash2 size={16} />
+                {copy.clearAllCache}
+              </button>
+              {cacheBusy && <p role="status">{copy.clearingCache}</p>}
+              {cacheError !== undefined && (
+                <p className="error-banner" role="alert">
+                  {cacheError}
+                </p>
+              )}
             </div>
           </aside>
         </section>
@@ -870,7 +984,17 @@ export function App(): ReactElement {
               <button className="secondary-button" onClick={() => setCustomOpen(false)}>
                 {copy.close}
               </button>
-              <button className="primary-button" onClick={validateCustom}>
+              <button
+                className="primary-button"
+                disabled={
+                  cacheBusy ||
+                  modelSourceChanging ||
+                  status === "loading" ||
+                  status === "downloading" ||
+                  status === "running"
+                }
+                onClick={validateCustom}
+              >
                 {copy.validate}
               </button>
             </div>

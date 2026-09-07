@@ -14,6 +14,12 @@ export interface CapabilityProbeOptions {
 }
 
 // @public (undocumented)
+export function clearAllModelCache(): Promise<void>;
+
+// @public (undocumented)
+export function clearCurrentModelCache(identity: ModelCacheIdentity): Promise<void>;
+
+// @public (undocumented)
 export function clearModelCache(): Promise<void>;
 
 // @public (undocumented)
@@ -40,7 +46,7 @@ export interface CreateDocLayoutOptions {
 }
 
 // @public (undocumented)
-export const CURRENT_SDK_VERSION = "1.1.0";
+export const CURRENT_SDK_VERSION = "1.2.0";
 
 // @public (undocumented)
 export type DecodableImage = Blob | CanvasImageSource | NormalizedRaster;
@@ -86,11 +92,17 @@ export interface DocLayoutDetector {
     // (undocumented)
     readonly capabilities: DocLayoutCapabilities;
     // (undocumented)
+    clearAllModelCache(): Promise<void>;
+    // (undocumented)
+    clearCurrentModelCache(): Promise<void>;
+    // (undocumented)
     clearModelCache(): Promise<void>;
     // (undocumented)
     detect(image: DecodableImage, options?: DocLayoutDetectOptions): Promise<DocLayoutResult>;
     // (undocumented)
     dispose(): Promise<void>;
+    // (undocumented)
+    estimateModelCache(): Promise<ModelCacheEstimate>;
     // (undocumented)
     listModelCache(): Promise<readonly ModelCacheEntry[]>;
     // (undocumented)
@@ -141,6 +153,8 @@ export interface DocLayoutLoadTimings {
     readonly manifestMs: number;
     // (undocumented)
     readonly modelCacheMs: number;
+    // (undocumented)
+    readonly modelCacheReadMs: number;
     // (undocumented)
     readonly modelDownloadMs: number;
     // (undocumented)
@@ -256,6 +270,9 @@ export interface DocLayoutRuntimeInfo {
 }
 
 // @public (undocumented)
+export function estimateModelCache(identity?: ModelCacheIdentity): Promise<ModelCacheEstimate>;
+
+// @public (undocumented)
 export interface LayoutBox {
     // (undocumented)
     readonly xMax: number;
@@ -307,6 +324,30 @@ export interface ModelCacheEntry {
     readonly key: string;
     // (undocumented)
     readonly sha256: string;
+}
+
+// @public (undocumented)
+export interface ModelCacheEstimate {
+    // (undocumented)
+    readonly bytes: number;
+    // (undocumented)
+    readonly entryCount: number;
+    // (undocumented)
+    readonly memoryBytes: number;
+    // (undocumented)
+    readonly originQuotaBytes?: number;
+    // (undocumented)
+    readonly originUsageBytes?: number;
+    // (undocumented)
+    readonly persistentBytes: number;
+}
+
+// @public (undocumented)
+export interface ModelCacheIdentity {
+    // (undocumented)
+    readonly modelId: string;
+    // (undocumented)
+    readonly version: string;
 }
 
 // @public (undocumented)

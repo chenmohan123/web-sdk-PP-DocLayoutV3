@@ -87,6 +87,60 @@ function streamingResponse(
 }
 
 describe("ModelManager", () => {
+  it.each(["memory-current", "persistent-current", "memory-all", "persistent-all"])(
+    "旧损坏校验不能删除清理后新建的缓存：%s",
+    async (mode) => {
+      const { data, manifest, variant } = await modelFixture();
+      const cache = new RecordingCache();
+      const key = modelCacheKey(manifest, variant);
+      await cache.set({
+        key,
+        bytes: data.byteLength,
+        data: new ArrayBuffer(data.byteLength),
+        sha256: variant.sha256
+      });
+      let release!: () => void;
+      let entered!: () => void;
+      const started = new Promise<void>((resolve) => {
+        entered = resolve;
+      });
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let first = true;
+      const subtle = {
+        digest: async (algorithm: AlgorithmIdentifier, buffer: BufferSource) => {
+          if (first) {
+            first = false;
+            entered();
+            await gate;
+          }
+          return crypto.subtle.digest(algorithm, buffer);
+        }
+      } as SubtleCrypto;
+      const manager = new ModelManager({
+        ...(mode.startsWith("memory")
+          ? { memoryCache: cache, persistentCache: null }
+          : { persistentCache: cache }),
+        subtle,
+        fetch: () => Promise.resolve(streamingResponse([data]))
+      });
+      const oldLoad = manager.load(manifest, variant);
+      await started;
+      if (mode.endsWith("current"))
+        await manager.clearCurrentCache({
+          modelId: manifest.model.id,
+          version: manifest.model.version
+        });
+      else await manager.clearCache();
+      await manager.load(manifest, variant);
+      expect(await manager.estimateCache()).toMatchObject({ entryCount: 1 });
+      release();
+      await oldLoad;
+      expect(await manager.estimateCache()).toMatchObject({ entryCount: 1 });
+    }
+  );
+
   it("streams a cold download with monotonically increasing progress", async () => {
     const { data, manifest, variant } = await modelFixture();
     const progress: Array<{ loadedBytes: number; totalBytes?: number }> = [];
@@ -109,6 +163,7 @@ describe("ModelManager", () => {
     expect(result.source).toBe("network");
     expect(result.modelDownloadMs).toBeGreaterThanOrEqual(0);
     expect(result.modelCacheMs).toBeGreaterThanOrEqual(0);
+    expect(result.modelCacheReadMs).toBe(result.modelCacheMs);
     expect(result.integrityMs).toBeGreaterThanOrEqual(0);
     expect(result.downloadedBytes).toBe(data.byteLength);
     expect(new Uint8Array(result.data)).toEqual(data);
@@ -141,6 +196,7 @@ describe("ModelManager", () => {
     expect(result).toMatchObject({ source: "cache", downloadedBytes: 0 });
     expect(result.modelDownloadMs).toBe(0);
     expect(result.modelCacheMs).toBeGreaterThanOrEqual(0);
+    expect(result.modelCacheReadMs).toBe(result.modelCacheMs);
     expect(result.integrityMs).toBeGreaterThanOrEqual(0);
     expect(new Uint8Array(result.data)).toEqual(data);
   });
@@ -253,6 +309,98 @@ describe("ModelManager", () => {
 
     expect(await manager.listCache()).toHaveLength(1);
     await manager.clearCache();
+    expect(await manager.listCache()).toEqual([]);
+  });
+
+  it("按模型身份与版本清理所有精度，保留其他模型、版本和 SDK", async () => {
+    const persistent = new RecordingCache();
+    const memory = new MemoryModelCache();
+    const manager = new ModelManager({ memoryCache: memory, persistentCache: persistent });
+    const keys = [
+      "ppdoclayout:current:1:fp16:hash",
+      "ppdoclayout:current:1:fp32:hash",
+      "ppdoclayout:current:10:fp16:hash",
+      "ppdoclayout:current-other:1:fp16:hash",
+      "other-sdk:current:1:fp16:hash"
+    ];
+    for (const key of keys) {
+      await persistent.set({ key, bytes: 4, data: new ArrayBuffer(4), sha256: "hash" });
+      await memory.set({ key, bytes: 4, data: new ArrayBuffer(4), sha256: "hash" });
+    }
+    await manager.clearCurrentCache({ modelId: "current", version: "1" });
+    expect((await manager.listCache()).map((entry) => entry.key)).toEqual(keys.slice(2));
+    await manager.clearCache();
+    expect((await memory.list()).map((entry) => entry.key)).toEqual([keys[4]]);
+    expect((await persistent.list()).map((entry) => entry.key)).toEqual([keys[4]]);
+  });
+
+  it("容量区分内存和持久缓存，模型身份包含分隔符时不会误匹配", async () => {
+    const persistent = new RecordingCache();
+    const memory = new MemoryModelCache();
+    const manager = new ModelManager({ memoryCache: memory, persistentCache: persistent });
+    const { manifest, variant } = await modelFixture();
+    const first = { ...manifest, model: { ...manifest.model, id: "a:b", version: "c" } };
+    const second = { ...manifest, model: { ...manifest.model, id: "a", version: "b:c" } };
+    const firstKey = modelCacheKey(first, variant);
+    const secondKey = modelCacheKey(second, variant);
+    expect(firstKey).not.toBe(secondKey);
+    await persistent.set({ key: firstKey, bytes: 8, data: new ArrayBuffer(8), sha256: "hash" });
+    await memory.set({ key: secondKey, bytes: 4, data: new ArrayBuffer(4), sha256: "hash" });
+    expect(await manager.estimateCache({ modelId: "a:b", version: "c" })).toMatchObject({
+      bytes: 8,
+      memoryBytes: 0,
+      persistentBytes: 8,
+      entryCount: 1
+    });
+    expect(await manager.estimateCache()).toMatchObject({
+      bytes: 12,
+      memoryBytes: 4,
+      persistentBytes: 8,
+      entryCount: 2
+    });
+    await manager.clearCurrentCache({ modelId: "a:b", version: "c" });
+    expect((await manager.listCache()).map((entry) => entry.key)).toEqual([secondKey]);
+  });
+
+  it("历史百分号模型身份不会被新编码身份误删", async () => {
+    const memory = new MemoryModelCache();
+    const manager = new ModelManager({ memoryCache: memory, persistentCache: null });
+    const legacyKey = "ppdoclayout:a%3Ab:c:fp32:hash";
+    await memory.set({ key: legacyKey, bytes: 4, data: new ArrayBuffer(4), sha256: "hash" });
+    await manager.clearCurrentCache({ modelId: "a:b", version: "c" });
+    expect((await manager.listCache()).map((entry) => entry.key)).toEqual([legacyKey]);
+    const legacyColonKey = "ppdoclayout:v2:a:b:fp32:hash";
+    await memory.set({ key: legacyColonKey, bytes: 4, data: new ArrayBuffer(4), sha256: "hash" });
+    await manager.clearCurrentCache({ modelId: "a", version: "b" });
+    expect((await manager.listCache()).map((entry) => entry.key)).toEqual([
+      legacyKey,
+      legacyColonKey
+    ]);
+  });
+
+  it("清理完成后，先前启动的下载不能重新写入缓存", async () => {
+    const { data, manifest, variant } = await modelFixture();
+    let finish!: (response: Response) => void;
+    let started!: () => void;
+    const downloading = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const manager = new ModelManager({
+      fetch: () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+          started();
+        }),
+      persistentCache: new RecordingCache()
+    });
+    const pending = manager.load(manifest, variant);
+    await downloading;
+    await manager.clearCurrentCache({
+      modelId: manifest.model.id,
+      version: manifest.model.version
+    });
+    finish(streamingResponse([data]));
+    await pending;
     expect(await manager.listCache()).toEqual([]);
   });
 });
