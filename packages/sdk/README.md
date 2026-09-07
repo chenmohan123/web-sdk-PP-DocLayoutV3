@@ -7,10 +7,10 @@
 ## 安装
 
 ```bash
-pnpm add web-sdk-pp-doclayoutv3
+pnpm add web-sdk-pp-doclayoutv3@1.2.0
 ```
 
-也可以使用 `npm install web-sdk-pp-doclayoutv3`。
+也可以使用 `npm install web-sdk-pp-doclayoutv3@1.2.0`。
 
 ## 快速开始
 
@@ -37,9 +37,11 @@ await detector.dispose();
 
 默认模型由 SDK 自动加载，无需额外配置。
 
-模型初始化耗时可以通过 `detector.loadTimings` 查看。`totalMs` 是初始化总耗时，`modelMs` 是模型获取与校验的聚合耗时；同时提供 `modelDownloadMs`（网络下载）、`modelCacheMs`（缓存读取）、`integrityMs`（SHA-256 完整性校验）、`sessionMs`（ONNX Runtime Session 创建）和 `modelSource`（`network`、`cache`、`memory` 或 `custom`）。
+模型初始化耗时可以通过 `detector.loadTimings` 查看。`totalMs` 是初始化总耗时，`modelMs` 是模型获取与校验的聚合耗时；同时提供 `modelDownloadMs`（网络下载）、`modelCacheReadMs`（缓存读取）、`integrityMs`（SHA-256 完整性校验）、`sessionMs`（ONNX Runtime Session 创建）和 `modelSource`（`network`、`cache`、`memory` 或 `custom`）。
 
 ## 运行后端与精度
+
+标准缓存读取字段为 `loadTimings.modelCacheReadMs`，旧 `modelCacheMs` 保留且值相同。`clearCurrentModelCache({ modelId, version })` 清理指定模型版本的全部精度，`clearAllModelCache()` 和旧 `clearModelCache()` 清理 SDK 全部缓存。`estimateModelCache(identity?)` 返回内存、持久缓存字节和可选的源站容量；源站容量不等于 SDK 模型缓存。
 
 - `backend: "auto"` 优先使用 WebGPU，不可用时回退到 WASM（CPU）。也可手动指定 `"webgpu"` 或 `"wasm"`。
 - `precision: "auto"` 在有 `shader-f16` 的 WebGPU 环境优先 FP16，没有该能力时可使用 WebGPU FP32，必要时回退到 WASM/CPU + FP16 或 FP32。也可手动指定 `"fp16"` 或 `"fp32"`。
@@ -78,10 +80,10 @@ A browser-first PP-DocLayoutV3 document layout analysis SDK powered by ONNX Runt
 ### Installation
 
 ```bash
-pnpm add web-sdk-pp-doclayoutv3
+pnpm add web-sdk-pp-doclayoutv3@1.2.0
 ```
 
-`npm install web-sdk-pp-doclayoutv3` is also supported.
+`npm install web-sdk-pp-doclayoutv3@1.2.0` is also supported.
 
 ### Quick start
 
@@ -108,7 +110,9 @@ await detector.dispose();
 
 The SDK loads its default model automatically.
 
-Detailed initialization timings are available through `detector.loadTimings`. `totalMs` is the full initialization duration and `modelMs` is the aggregate model acquisition and verification duration. The additive fields `modelDownloadMs`, `modelCacheMs`, `integrityMs`, `sessionMs`, and `modelSource` (`network`, `cache`, `memory`, or `custom`) separate network download, cache reads, SHA-256 verification, Session creation, and the selected model source.
+Detailed initialization timings are available through `detector.loadTimings`. `totalMs` is the full initialization duration and `modelMs` is the aggregate model acquisition and verification duration. The additive fields `modelDownloadMs`, `modelCacheReadMs`, `integrityMs`, `sessionMs`, and `modelSource` (`network`, `cache`, `memory`, or `custom`) separate network download, cache reads, SHA-256 verification, Session creation, and the selected model source. The existing `modelCacheMs` remains equal-valued.
+
+`clearCurrentModelCache({ modelId, version })` clears all precisions of one model version; `clearAllModelCache()` and the existing `clearModelCache()` clear all SDK model caches. `estimateModelCache(identity?)` returns memory and persistent bytes plus optional origin storage estimates. Origin storage is not the SDK model cache size.
 
 ### Backend and precision
 

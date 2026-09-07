@@ -122,8 +122,10 @@ test("packed ESM and declarations install in a standalone Vite project", () => {
   writeFileSync(
     join(fixtureRoot, "main.ts"),
     [
-      'import { createDocLayout, type DocLayoutResult } from "web-sdk-pp-doclayoutv3";',
+      'import { createDocLayout, clearCurrentModelCache, clearAllModelCache, estimateModelCache, type DocLayoutResult, type ModelCacheEstimate } from "web-sdk-pp-doclayoutv3";',
       "const result: DocLayoutResult | undefined = undefined;",
+      "const estimate: Promise<ModelCacheEstimate> = estimateModelCache();",
+      "void [clearCurrentModelCache, clearAllModelCache, estimate];",
       'document.querySelector("#app")!.textContent = `${typeof createDocLayout}:${String(result)}`;'
     ].join("\n")
   );
@@ -173,6 +175,19 @@ test("publishes a browser global and a resolvable worker asset", async ({ page }
   await expect
     .poll(() => page.evaluate(() => typeof window.PPDocLayout?.createDocLayout))
     .toBe("function");
+  expect(
+    await page.evaluate(() => ({
+      version: window.PPDocLayout?.CURRENT_SDK_VERSION,
+      clearCurrent: typeof window.PPDocLayout?.clearCurrentModelCache,
+      clearAll: typeof window.PPDocLayout?.clearAllModelCache,
+      estimate: typeof window.PPDocLayout?.estimateModelCache
+    }))
+  ).toEqual({
+    version: "1.2.0",
+    clearCurrent: "function",
+    clearAll: "function",
+    estimate: "function"
+  });
   const result = await page.evaluate(
     async ({ base64, manifest, wasmBaseUrl }) => {
       const data = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0)).buffer;

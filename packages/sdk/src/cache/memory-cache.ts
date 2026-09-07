@@ -1,4 +1,9 @@
-import { cloneCacheEntry, type ModelCache, type ModelCacheEntry } from "./model-cache";
+import {
+  cloneCacheEntry,
+  type ModelCache,
+  type ModelCacheEntry,
+  type ModelCacheMetadata
+} from "./model-cache";
 
 export class MemoryModelCache implements ModelCache {
   readonly #entries = new Map<string, ModelCacheEntry>();
@@ -20,6 +25,12 @@ export class MemoryModelCache implements ModelCache {
 
   list(): Promise<readonly ModelCacheEntry[]> {
     return Promise.resolve([...this.#entries.values()].map(cloneCacheEntry));
+  }
+
+  listMetadata(): Promise<readonly ModelCacheMetadata[]> {
+    return Promise.resolve(
+      [...this.#entries.values()].map(({ bytes, key, sha256 }) => ({ bytes, key, sha256 }))
+    );
   }
 
   set(entry: ModelCacheEntry): Promise<void> {

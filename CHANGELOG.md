@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.2.0
+
+发布说明：[1.2.0](docs/releases/1.2.0.md)。
+
+- 加载、推理及切换来源期间禁用自定义清单应用，并取消迟到的初始化清单请求，避免旧会话覆盖当前模型的缓存身份。
+- 损坏缓存的异步校验按清理代次保护删除，避免旧校验移除清理后写入的新缓存。
+- 新增标准耗时字段 `modelCacheReadMs`，保留同值的 `modelCacheMs` 兼容字段。
+- 新增 `clearCurrentModelCache(identity)`、`clearAllModelCache()` 和 `estimateModelCache(identity?)`；原 `clearModelCache()` 保持 SDK 全清语义。当前模型清理按模型 ID 和版本匹配全部精度，容量区分 SDK 内存、持久缓存与源站配额。
+- Demo 展示当前模型缓存容量、当前模型清理和 SDK 全清控件；清理会取消并等待当前任务、释放 Worker 会话，显示忙碌和失败状态，避免旧下载回填。
 
 ## 1.1.0
 

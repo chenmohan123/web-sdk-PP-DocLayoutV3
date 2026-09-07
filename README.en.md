@@ -2,6 +2,8 @@
 
 [中文](README.md)
 
+[npm 1.2.0](https://www.npmjs.com/package/web-sdk-pp-doclayoutv3/v/1.2.0) · [Live Demo](https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/) · [Release notes (Chinese)](docs/releases/1.2.0.md)
+
 A TypeScript SDK that runs PP-DocLayoutV3 in the browser with ONNX Runtime Web. The default path loads `models/pp-doclayoutv3/manifest.json`, prefers WebGPU with FP16, and can fall back to WASM/CPU with FP16 and then FP32 in fully automatic mode when capabilities or session creation require it.
 
 > Supported surfaces include desktop and mobile browsers, WeChat Official Account H5 pages, and mini-program `web-view` pages. It does not support native mini-program inference.
@@ -9,7 +11,7 @@ A TypeScript SDK that runs PP-DocLayoutV3 in the browser with ONNX Runtime Web. 
 ## Install and use with zero configuration
 
 ```bash
-pnpm add web-sdk-pp-doclayoutv3
+pnpm add web-sdk-pp-doclayoutv3@1.2.0
 ```
 
 ```ts
@@ -41,7 +43,9 @@ try {
 
 `classThresholds` overrides confidence filtering for matching manifest label names and falls back to `threshold` for unspecified classes. The global `threshold` still controls mask binarization and polygon extraction. Unknown class names and values outside `0` through `1` are rejected.
 
-After initialization, `detector.loadTimings` exposes the timing breakdown. `totalMs` is the full initialization duration and `modelMs` is the aggregate model acquisition and verification duration. `modelDownloadMs`, `modelCacheMs`, `integrityMs`, and `sessionMs` measure network download, cache reads, SHA-256 verification, and ONNX Runtime Session creation. `modelSource` identifies `network`, `cache`, `memory`, or `custom`.
+After initialization, `detector.loadTimings` exposes the timing breakdown. `totalMs` is the full initialization duration and `modelMs` is the aggregate model acquisition and verification duration. `modelDownloadMs`, `modelCacheReadMs`, `integrityMs`, and `sessionMs` measure network download, cache reads, SHA-256 verification, and ONNX Runtime Session creation. `modelSource` identifies `network`, `cache`, `memory`, or `custom`. The existing `modelCacheMs` remains equal-valued.
+
+Use `clearCurrentModelCache({ modelId, version })` to clear all precisions of the current model and version, or `clearAllModelCache()` for all SDK caches. The existing `clearModelCache()` retains clear-all semantics. `estimateModelCache(identity?)` distinguishes SDK bytes from origin storage estimates; see the [cache API](docs/en/api.md).
 
 ## Manual selection and custom models
 
@@ -53,7 +57,7 @@ The current root model is 74,279,796 bytes for FP16 and 142,574,928 bytes for FP
 
 ## Deployment and privacy
 
-Inference stays in the user's browser; the SDK does not upload document images to this project's servers. Default model downloads require HTTPS and correct CORS headers, and model caching uses IndexedDB. Configure COOP/COEP to obtain `crossOriginIsolated` and multithreaded WASM. The first load downloads roughly 71 MiB or 136 MiB, so mobile-network products should ask for user consent.
+Inference stays in the user's browser; the SDK does not upload document images to this project's servers. Default model downloads require HTTPS and correct CORS headers. Model caching uses Cache Storage with an in-memory fallback, not IndexedDB. Configure COOP/COEP to obtain `crossOriginIsolated` and multithreaded WASM. The first load downloads roughly 71 MiB or 136 MiB, so mobile-network products should ask for user consent.
 
 Recorded real WebGPU evidence used Windows, Chrome 151, an NVIDIA Blackwell adapter, and ONNX Runtime Web 1.27.0. FP16 passed physical WebGPU validation on a single sample; FP32 passed on seven licensed fixtures. This is not a cross-device benchmark, and timings vary with hardware, browser, cache, and network.
 

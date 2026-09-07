@@ -2,7 +2,7 @@
 
 [中文](../zh-CN/quick-start.md)
 
-After installing `web-sdk-pp-doclayoutv3`, the first detector creation probes browser capabilities, downloads the manifest and model, checks SHA-256, and creates an ONNX Runtime session. The defaults `backend: "auto"`, `precision: "auto"`, and `allowFallback: true` prefer GPU execution.
+After installing with `pnpm add web-sdk-pp-doclayoutv3@1.2.0`, the first detector creation probes browser capabilities, downloads the manifest and model, checks SHA-256, and creates an ONNX Runtime session. The defaults `backend: "auto"`, `precision: "auto"`, and `allowFallback: true` prefer GPU execution.
 
 Start with a single-image file input:
 

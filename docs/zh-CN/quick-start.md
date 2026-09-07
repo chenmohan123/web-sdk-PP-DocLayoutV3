@@ -2,7 +2,7 @@
 
 [English](../en/quick-start.md)
 
-安装 `web-sdk-pp-doclayoutv3` 后，浏览器会在第一次创建检测器时探测能力、下载清单与模型、校验 SHA-256，并创建 ONNX Runtime 会话。默认 `backend: "auto"`、`precision: "auto"` 和 `allowFallback: true` 优先使用 GPU。
+使用 `pnpm add web-sdk-pp-doclayoutv3@1.2.0` 安装后，浏览器会在第一次创建检测器时探测能力、下载清单与模型、校验 SHA-256，并创建 ONNX Runtime 会话。默认 `backend: "auto"`、`precision: "auto"` 和 `allowFallback: true` 优先使用 GPU。
 
 页面至少需要一个单图文件输入：
 

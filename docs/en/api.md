@@ -37,7 +37,9 @@ await detector.dispose();
 
 - `detect(image, { threshold, classThresholds, signal })`: accepts a Blob, CanvasImageSource, or normalized raster.
 - `dispose()`: waits for queued work and releases the Worker/session; it is idempotent.
-- `listModelCache()` / `clearModelCache()`: inspect or clear the detector's model cache.
+- `listModelCache()` / `clearModelCache()`: inspect or clear every SDK model in the detector's cache manager, preserving the existing clear-all semantics.
+- `clearCurrentModelCache()` / `estimateModelCache()`: clear or measure all precisions of the loaded model ID and version.
+- `clearAllModelCache()`: equivalent to the existing `clearModelCache()`.
 - `model`, `runtime`, `capabilities`, `loadTimings`: actual loaded configuration.
 
 ```ts
@@ -59,5 +61,26 @@ const result = await detector.detect(file, {
 `classThresholds` overrides confidence filtering for matching manifest label names and falls back to `threshold` for unspecified classes. The global `threshold` still controls mask binarization and polygon extraction. Unknown class names and values outside `0` through `1` are rejected.
 
 ## Other exports
+
+The top-level `clearCurrentModelCache({ modelId, version })` matches one model and version exactly. `clearAllModelCache()` clears all models belonging to this SDK; `clearModelCache()` keeps the same clear-all semantics. Ordinary cache keys remain compatible. Identity segments containing `:` or `%` are encoded separately; ambiguous legacy keys can only be removed by the SDK clear-all action. Default detectors and top-level APIs share a cache manager in the current JavaScript context, including memory fallback after persistence failure. A detector created with `cache: false` has an isolated manager and must be cleared through its instance.
+
+`estimateModelCache(identity?)` returns `bytes` (memory plus persistent copies), `memoryBytes`, `persistentBytes`, and `entryCount` (unique keys). Omitting the identity measures all SDK models. Measurements use model byte metadata and exclude ONNX sessions, images, and browser storage overhead. Optional `originUsageBytes` and `originQuotaBytes` come from `navigator.storage.estimate()` and describe the entire origin, not the SDK cache.
+
+```ts
+import {
+  clearCurrentModelCache,
+  clearAllModelCache,
+  estimateModelCache
+} from "web-sdk-pp-doclayoutv3";
+
+const identity = { modelId: "pp-doclayoutv3", version: "1.0.2" };
+const usage = await estimateModelCache(identity);
+await clearCurrentModelCache(identity);
+await clearAllModelCache();
+```
+
+Clearing prevents previously started downloads in the same manager from repopulating the cache, but does not dispose active detector sessions. The Demo first cancels and awaits the task, calls `dispose()` to release its Worker/session, then clears the cache. Callers must coordinate active tasks in other tabs or JavaScript contexts. SDK clear-all leaves other SDKs' Cache Storage untouched.
+
+`loadTimings.modelCacheReadMs` is the standard cache-read timing. `modelCacheMs` remains an equal-valued compatibility field. Both exclude SHA-256 verification.
 
 `probeDocLayoutCapabilities()`, `listModelCache()`, `clearModelCache()`, `parseModelManifest()`, `DocLayoutError`, default manifest/WASM URLs, and all public TypeScript contracts. Runtime messages remain stable English strings; localize UI using `error.code`.

@@ -2,6 +2,8 @@
 
 [English](README.en.md)
 
+[npm 1.2.0](https://www.npmjs.com/package/web-sdk-pp-doclayoutv3/v/1.2.0) · [在线 Demo](https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/) · [发布说明](docs/releases/1.2.0.md)
+
 在浏览器中运行 PP-DocLayoutV3 的 TypeScript SDK，基于 ONNX Runtime Web。SDK 默认加载 `models/pp-doclayoutv3/manifest.json`，优先选择 WebGPU 和 FP16；能力不足或会话创建失败时，全自动模式可回退到 WASM/CPU 和 FP16，再回退到 FP32。
 
 > 当前支持 PC、移动端浏览器、微信公众号 H5 和微信小程序 `web-view` 页面。不支持微信小程序原生推理。
@@ -9,7 +11,7 @@
 ## 安装与零配置使用
 
 ```bash
-pnpm add web-sdk-pp-doclayoutv3
+pnpm add web-sdk-pp-doclayoutv3@1.2.0
 ```
 
 ```ts
@@ -41,7 +43,9 @@ try {
 
 `classThresholds` 按 manifest 标签名称覆盖置信度过滤阈值，未配置的类别回退到 `threshold`。全局 `threshold` 仍用于 mask 二值化和多边形提取。未知类别名称或超出 `0` 到 `1` 的值会被拒绝。
 
-初始化完成后可通过 `detector.loadTimings` 查看耗时拆分：`totalMs` 为初始化总耗时，`modelMs` 为模型获取与校验聚合耗时；`modelDownloadMs`、`modelCacheMs`、`integrityMs`、`sessionMs` 分别对应网络下载、缓存读取、SHA-256 完整性校验和 ONNX Runtime Session 创建，`modelSource` 表示 `network`、`cache`、`memory` 或 `custom`。
+初始化完成后可通过 `detector.loadTimings` 查看耗时拆分：`totalMs` 为初始化总耗时，`modelMs` 为模型获取与校验聚合耗时；`modelDownloadMs`、`modelCacheReadMs`、`integrityMs`、`sessionMs` 分别对应网络下载、缓存读取、SHA-256 完整性校验和 ONNX Runtime Session 创建，`modelSource` 表示 `network`、`cache`、`memory` 或 `custom`。原 `modelCacheMs` 保留且数值相同。
+
+使用 `clearCurrentModelCache({ modelId, version })` 清理当前模型及版本的全部精度，`clearAllModelCache()` 清理 SDK 全部缓存，旧 `clearModelCache()` 保持全清语义。`estimateModelCache(identity?)` 区分 SDK 缓存字节和源站容量；完整语义见 [缓存 API](docs/zh-CN/api.md)。
 
 ## 手动选择与自定义模型
 
@@ -53,7 +57,7 @@ try {
 
 ## 部署与隐私
 
-推理在用户浏览器本地完成，SDK 不会把文档图片上传到项目服务器。默认模型需要 HTTPS 下载和正确的 CORS 响应；模型缓存使用 IndexedDB。若要启用多线程 WASM，请配置 COOP/COEP 形成 `crossOriginIsolated` 环境。首次加载会下载约 71 MiB 或 136 MiB 模型，请在移动网络场景明确提示用户。
+推理在用户浏览器本地完成，SDK 不会把文档图片上传到项目服务器。默认模型需要 HTTPS 下载和正确的 CORS 响应；模型缓存使用 Cache Storage，不可用时回退到内存，不使用 IndexedDB。若要启用多线程 WASM，请配置 COOP/COEP 形成 `crossOriginIsolated` 环境。首次加载会下载约 71 MiB 或 136 MiB 模型，请在移动网络场景明确提示用户。
 
 已记录的真实 WebGPU 验证环境为 Windows、Chrome 151、NVIDIA Blackwell、ONNX Runtime Web 1.27.0；FP16 已通过单次样本的物理 WebGPU 验证，FP32 已通过 7 张授权图片的物理 WebGPU 验证。这不是跨设备基准，具体耗时仍会受硬件、浏览器、缓存和网络影响。
 

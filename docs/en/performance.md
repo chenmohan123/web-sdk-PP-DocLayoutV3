@@ -2,6 +2,8 @@
 
 [中文](../zh-CN/performance.md)
 
+The standard cache timing is `modelCacheReadMs`; the existing `modelCacheMs` remains equal-valued. A cold start includes network or cache acquisition, verification, and session creation. A warm inference reuses a loaded detector session. A newly created detector with a cache hit still verifies bytes and creates a session, so it is not a warm inference.
+
 Performance metrics have two independent scopes. `detector.loadTimings` records one-time initialization: capability probing, manifest retrieval, model download or cache access, integrity verification, and Session creation; its `totalMs` is the wall-clock duration of the full initialization. `result.timings` records the current image detection: image decode, preprocessing, model inference, and postprocessing; its `totalMs` is the end-to-end wall-clock duration from starting image processing until the result is returned. It also includes small amounts of Worker communication, scheduling, and result-transfer overhead, so the phase timings do not necessarily sum exactly to `totalMs`.
 
 Existing real-runtime evidence used Windows, Chrome 151, an NVIDIA Blackwell adapter, and ONNX Runtime Web 1.27.0. FP16 passed physical WebGPU validation on a single sample; FP32 passed on seven licensed fixtures. FP32 is about twice the file size of FP16 and can increase download, initialization, and GPU-memory costs; timings vary with hardware, browser, cache, and network.

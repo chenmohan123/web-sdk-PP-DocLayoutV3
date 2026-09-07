@@ -4,7 +4,7 @@ name: PP-DocLayoutV3
 summary: 在浏览器本地识别文档版面区域、类别与阅读顺序的独立模型 SDK。
 package:
   name: web-sdk-pp-doclayoutv3
-  version: 1.1.0
+  version: 1.2.0
 repository: https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3
 demo:
   url: https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/
@@ -39,10 +39,10 @@ model:
       url: https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp32.onnx
       sha256: 476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269
 performance:
-  # 缓存读取沿用现有 modelCacheMs；不声明尚未提供的 modelCacheReadMs。
   timings:
     [
       modelDownloadMs,
+      modelCacheReadMs,
       integrityMs,
       sessionMs,
       decodeMs,
@@ -56,10 +56,9 @@ performance:
 cache:
   storage: [cache-storage, memory]
   versionedKeys: true
-  # 现有公开清理接口删除 SDK 的全部模型缓存，尚不能仅清理当前模型。
-  clearCurrent: false
+  clearCurrent: true
   clearAll: true
-  estimate: false
+  estimate: true
 examples:
   vanilla: { status: available, path: examples/vanilla-vite }
   react: { status: available, path: examples/react }

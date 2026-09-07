@@ -54,6 +54,12 @@ export const en: Copy = {
     "End-to-end time also includes small Worker communication and result-transfer overhead.",
   exportJson: "Export JSON",
   clearCache: "Clear cache",
+  clearCurrentCache: "Clear current model cache",
+  clearAllCache: "Clear all SDK cache",
+  currentCacheUsage: "Current model cache",
+  cacheScope:
+    "Counts all precisions for the current model and version in memory and persistent storage; excludes sessions, images and other origin data. Clearing ends the current task and releases its Worker.",
+  clearingCache: "Ending task and clearing cache…",
   cacheCleared: "Cache cleared",
   cpuFp16Unsupported:
     "The current model does not validate FP16 on CPU. Model precision was switched for you.",

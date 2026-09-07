@@ -55,6 +55,10 @@ function executor(
 function dependencies(overrides: Partial<DetectorDependencies> = {}): DetectorDependencies {
   const modelManager = {
     clearCache: vi.fn(() => Promise.resolve()),
+    clearCurrentCache: vi.fn(() => Promise.resolve()),
+    estimateCache: vi.fn(() =>
+      Promise.resolve({ bytes: 0, memoryBytes: 0, persistentBytes: 0, entryCount: 0 })
+    ),
     listCache: vi.fn(() => Promise.resolve([] as readonly ModelCacheEntry[])),
     load: vi.fn(
       (
@@ -69,6 +73,7 @@ function dependencies(overrides: Partial<DetectorDependencies> = {}): DetectorDe
           source: "network",
           modelDownloadMs: 2,
           modelCacheMs: 0,
+          modelCacheReadMs: 0,
           integrityMs: 1,
           modelSource: "network"
         });
@@ -106,6 +111,7 @@ describe("createDocLayout", () => {
 
     expect(deps.fetchManifest).toHaveBeenCalledWith(DEFAULT_MANIFEST_URL, undefined);
     expect(detector.model.id).toBe("pp-doclayoutv3");
+    expect(detector.loadTimings.modelCacheReadMs).toBe(detector.loadTimings.modelCacheMs);
     expect(detector.runtime).toMatchObject({ backend: "wasm", precision: "fp16" });
     expect(vi.mocked(deps.createExecutor).mock.calls[0]?.[0].wasm).toEqual({
       paths: DEFAULT_ORT_WASM_BASE_URL
@@ -253,6 +259,7 @@ describe("createDocLayout", () => {
       modelMs: 1,
       modelDownloadMs: 2,
       modelCacheMs: 0,
+      modelCacheReadMs: 0,
       integrityMs: 1,
       modelSource: "network",
       sessionMs: 1,

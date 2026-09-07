@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const examplesRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -38,24 +39,28 @@ function allSource(name: (typeof exampleNames)[number]): string {
 }
 
 const packageManagerPath = process.env.npm_execpath;
+const execFileAsync = promisify(execFile);
 
-function runPackageManager(args: readonly string[], cwd: string): string {
+async function runPackageManager(args: readonly string[], cwd: string): Promise<string> {
   if (packageManagerPath === undefined)
     throw new Error("npm_execpath is required to run consumer builds");
-  return execFileSync(process.execPath, [packageManagerPath, ...args], {
+  // 安装和构建期间保持事件循环可用，避免阻塞 Vitest 的任务进度 RPC。
+  const { stdout } = await execFileAsync(process.execPath, [packageManagerPath, ...args], {
     cwd,
     encoding: "utf8",
-    stdio: "pipe",
     env: { ...process.env, CI: "true" }
   });
+  return stdout;
 }
 
-beforeAll(() => {
+beforeAll(async () => {
   sandbox = mkdtempSync(join(tmpdir(), "ppdoclayout-examples-"));
-  runPackageManager(["--filter", packageName, "build"], repositoryRoot);
-  const packOutput = runPackageManager(
-    ["--filter", packageName, "pack", "--pack-destination", sandbox],
-    repositoryRoot
+  await runPackageManager(["--filter", packageName, "build"], repositoryRoot);
+  const packOutput = (
+    await runPackageManager(
+      ["--filter", packageName, "pack", "--pack-destination", sandbox],
+      repositoryRoot
+    )
   ).trim();
   sdkTarball = join(sandbox, basename(packOutput.split(/\r?\n/u).at(-1)!));
 }, 120_000);
@@ -77,13 +82,13 @@ describe("consumer example content", () => {
     expect(source).not.toMatch(/packages\/sdk|src\/detector|src\/runtime|workspace:/u);
   });
 
-  it("loads the CDN build through window.PPDocLayout", () => {
+  it("loads the CDN build through window.PPDocLayout", async () => {
     const html = readExample("cdn", "index.html");
     expect(html).toMatch(/browser-global\.js/u);
     expect(html).toMatch(/window\.PPDocLayout/u);
     const unpacked = join(sandbox, "cdn-package");
     mkdirSync(unpacked);
-    runPackageManager(["exec", "tar", "-xzf", sdkTarball, "-C", unpacked], repositoryRoot);
+    await runPackageManager(["exec", "tar", "-xzf", sdkTarball, "-C", unpacked], repositoryRoot);
     expect(existsSync(join(unpacked, "package", "dist", "browser-global.js"))).toBe(true);
   });
 
@@ -103,7 +108,7 @@ describe("consumer example content", () => {
 describe("packed SDK consumer builds", () => {
   it.each(buildableExamples)(
     "builds %s outside the workspace",
-    (name) => {
+    async (name) => {
       const target = join(sandbox, `${name}-consumer`);
       cpSync(join(examplesRoot, name), target, { recursive: true });
       const packagePath = join(target, "package.json");
@@ -113,8 +118,8 @@ describe("packed SDK consumer builds", () => {
       packageJson.dependencies ??= {};
       packageJson.dependencies[packageName] = `file:${sdkTarball.replaceAll("\\", "/")}`;
       writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
-      runPackageManager(["install", "--ignore-scripts", "--no-frozen-lockfile"], target);
-      runPackageManager(["run", "build"], target);
+      await runPackageManager(["install", "--ignore-scripts", "--no-frozen-lockfile"], target);
+      await runPackageManager(["run", "build"], target);
     },
     120_000
   );

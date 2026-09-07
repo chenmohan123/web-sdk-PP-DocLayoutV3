@@ -51,6 +51,12 @@ export const zhCN = {
   timingOverhead: "端到端耗时还包含 Worker 通信与结果传输等少量开销。",
   exportJson: "导出 JSON",
   clearCache: "清理缓存",
+  clearCurrentCache: "清理当前模型缓存",
+  clearAllCache: "清理 SDK 全部缓存",
+  currentCacheUsage: "当前模型缓存",
+  cacheScope:
+    "统计当前模型及版本的全部精度缓存（内存与持久存储），不包含会话、图片或源站其他数据。清理会结束当前任务并释放 Worker。",
+  clearingCache: "正在结束任务并清理缓存…",
   cacheCleared: "缓存已清理",
   cpuFp16Unsupported: "当前模型未验证 CPU + FP16，已为你切换模型精度。",
   gpuFp32Unsupported: "当前模型未验证 GPU + FP32，已为你切换模型精度。",
