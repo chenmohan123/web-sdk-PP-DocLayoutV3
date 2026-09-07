@@ -3,11 +3,14 @@ import { expect, test } from "playwright/test";
 const pixelPng =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
-test("模型来源默认沿用 SDK 并声明远程来源能力", async ({ page }) => {
-  await page.goto("/?fixture=1");
+test("默认使用 ModelScope 且仅提供两个远程模型来源", async ({ page }) => {
+  await page.goto("/");
 
-  await expect(page.getByLabel("模型来源", { exact: true })).toHaveValue("default");
-  await expect(page.getByLabel("模型来源").locator("option")).toHaveCount(3);
+  await expect(page.getByLabel("模型来源", { exact: true })).toHaveValue("modelscope");
+  await expect(page.getByLabel("模型来源").locator("option")).toHaveText([
+    "ModelScope",
+    "Hugging Face"
+  ]);
   await expect(page.getByRole("option", { name: /Hugging Face/ })).toBeEnabled();
   await expect(page.getByRole("option", { name: /ModelScope/ })).toBeEnabled();
 
@@ -21,37 +24,39 @@ test("模型来源默认沿用 SDK 并声明远程来源能力", async ({ page }
         disabledReason: option.disabledReason,
         manifestUrl: option.manifestUrl
       })),
-      defaultModel: module.selectionToModel("default"),
+      defaultModel: module.selectionToModel(module.DEFAULT_MODEL_SOURCE),
       huggingFaceModel: module.selectionToModel("huggingface"),
       modelScopeModel: module.selectionToModel("modelscope")
     };
   }, "/src/model-sources.ts");
 
   expect(contract).toEqual({
-    keys: ["default", "huggingface", "modelscope"],
+    keys: ["modelscope", "huggingface"],
     available: [
-      { key: "default", available: true, manifestUrl: undefined },
-      {
-        key: "huggingface",
-        available: true,
-        disabledReason: undefined,
-        manifestUrl:
-          "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/main/manifest.json?v=1.0.2"
-      },
       {
         key: "modelscope",
         available: true,
         disabledReason: undefined,
         manifestUrl:
           "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/master/manifest.json?v=1.0.2"
+      },
+      {
+        key: "huggingface",
+        available: true,
+        disabledReason: undefined,
+        manifestUrl:
+          "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/main/manifest.json?v=1.0.2"
       }
     ],
-    defaultModel: undefined,
+    defaultModel:
+      "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/master/manifest.json?v=1.0.2",
     huggingFaceModel:
       "https://huggingface.co/chenmohan/web-sdk-pp-doclayoutv3/resolve/main/manifest.json?v=1.0.2",
     modelScopeModel:
       "https://modelscope.cn/models/chenmohan/web-sdk-pp-doclayoutv3/resolve/master/manifest.json?v=1.0.2"
   });
+  await page.getByLabel("模型来源", { exact: true }).selectOption("huggingface");
+  await expect(page.getByLabel("模型来源", { exact: true })).toHaveValue("huggingface");
 });
 
 test("normalizes active class threshold configuration", async ({ page }) => {
@@ -203,7 +208,7 @@ test("keeps manual choices strict and uses only validated default pairs", async 
 });
 
 test("reports loading before detecting for an in-memory model", async ({ page }) => {
-  await page.route("**/ort-fixture/*.wasm", async (route) => {
+  await page.route("**/ort/*.wasm", async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     await route.continue();
   });
@@ -232,7 +237,7 @@ test("reports loading before detecting for an in-memory model", async ({ page })
   });
 
   const wasmRequest = page.waitForRequest(
-    (request) => request.url().includes("/ort-fixture/") && request.url().endsWith(".wasm")
+    (request) => request.url().includes("/ort/") && request.url().endsWith(".wasm")
   );
   await page.getByRole("button", { name: "开始检测" }).click();
   await wasmRequest;
@@ -259,7 +264,7 @@ test("starts in Chinese and exposes the complete detection workflow", async ({
 }, testInfo) => {
   await page.goto("/?fixture=1");
 
-  const fixtureOrtModule = await page.request.get("/ort-fixture/ort-wasm-simd-threaded.jsep.mjs");
+  const fixtureOrtModule = await page.request.get("/ort/ort-wasm-simd-threaded.jsep.mjs");
   expect(fixtureOrtModule.status()).toBe(200);
   expect(fixtureOrtModule.headers()["content-type"]).toContain("text/javascript");
 

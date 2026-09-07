@@ -2,6 +2,7 @@ import type { Copy } from "./zh-CN";
 
 export const en: Copy = {
   language: "中文",
+  controls: "Run settings",
   backend: "Execution backend",
   modelRepository: "Model source",
   unavailable: "Unavailable",
