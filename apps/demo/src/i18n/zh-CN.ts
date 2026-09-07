@@ -1,5 +1,6 @@
 export const zhCN = {
   language: "English",
+  controls: "运行设置",
   backend: "运行后端",
   modelRepository: "模型来源",
   unavailable: "暂不可用",

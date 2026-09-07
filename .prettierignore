@@ -4,6 +4,8 @@ dist/
 coverage/
 playwright-report/
 test-results/
+work/
+outputs/
 packages/sdk/etc/*.api.md
 docs/superpowers/
 **/.pytest_cache/

@@ -1,0 +1,72 @@
+schemaVersion: "1.1.0"
+id: pp-doclayoutv3
+name: PP-DocLayoutV3
+summary: 在浏览器本地识别文档版面区域、类别与阅读顺序的独立模型 SDK。
+package:
+  name: web-sdk-pp-doclayoutv3
+  version: 1.1.0
+repository: https://github.com/chenmohan123/web-sdk-PP-DocLayoutV3
+demo:
+  url: https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/
+  defaultLanguage: zh-CN
+  framework: react
+  localProcessing: true
+docs:
+  zhCN: docs/zh-CN/quick-start.md
+  en: docs/en/quick-start.md
+runtime:
+  backends: [wasm, webgpu]
+  executionModes: [main, worker]
+  actualBackendReported: true
+  runtimeVersion: onnxruntime-web@1.27.0
+model:
+  id: pp-doclayoutv3
+  version: 1.0.2
+  format: onnx
+  parameterCount: 33175165
+  precision: [fp16, fp32]
+  source: https://huggingface.co/PaddlePaddle/PP-DocLayoutV3_safetensors
+  license: Apache-2.0
+  assets:
+    - id: fp16
+      bytes: 74279796
+      precision: fp16
+      url: https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp16.onnx
+      sha256: 463ba56faa555baf84271b4002b33b0c5fcc50776fe4f39344235eccb72073f2
+    - id: fp32
+      bytes: 142574928
+      precision: fp32
+      url: https://chenmohan123.github.io/web-sdk-PP-DocLayoutV3/models/model-fp32.onnx
+      sha256: 476da6d3892bc6211ec90f53df1f68722626b3cf67af77d1c75bd0bd2ee8d269
+performance:
+  # 缓存读取沿用现有 modelCacheMs；不声明尚未提供的 modelCacheReadMs。
+  timings:
+    [
+      modelDownloadMs,
+      integrityMs,
+      sessionMs,
+      decodeMs,
+      preprocessMs,
+      inferenceMs,
+      postprocessMs,
+      totalMs
+    ]
+  coldStartDefined: true
+  warmRunDefined: true
+cache:
+  storage: [cache-storage, memory]
+  versionedKeys: true
+  # 现有公开清理接口删除 SDK 的全部模型缓存，尚不能仅清理当前模型。
+  clearCurrent: false
+  clearAll: true
+  estimate: false
+examples:
+  vanilla: { status: available, path: examples/vanilla-vite }
+  react: { status: available, path: examples/react }
+  vue: { status: available, path: examples/vue }
+  cdn: { status: available, path: examples/cdn }
+  vite: { status: available, path: examples/vanilla-vite }
+  wechatWebView: { status: available, path: examples/wechat-webview }
+verification:
+  # 此次仅核实声明和部署配置，不扩展浏览器兼容性承诺。
+  environments: []

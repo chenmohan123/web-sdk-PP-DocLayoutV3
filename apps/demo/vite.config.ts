@@ -1,10 +1,10 @@
 import react from "@vitejs/plugin-react";
-import { createReadStream } from "node:fs";
+import { createReadStream, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 
-const fixtureOrtAssetNames = new Set([
+const ortAssetNames = new Set([
   "ort-wasm-simd-threaded.asyncify.mjs",
   "ort-wasm-simd-threaded.asyncify.wasm",
   "ort-wasm-simd-threaded.jsep.mjs",
@@ -15,12 +15,26 @@ const fixtureOrtAssetNames = new Set([
   "ort-wasm-simd-threaded.wasm"
 ]);
 
-function fixtureOrtAssets(): Plugin {
+function ortAssets(): Plugin {
   const require = createRequire(import.meta.url);
-  const ortDist = dirname(require.resolve("onnxruntime-web"));
-  const prefix = "/ort-fixture/";
+  const sdkRequire = createRequire(require.resolve("web-sdk-pp-doclayoutv3"));
+  const ortDist = dirname(sdkRequire.resolve("onnxruntime-web"));
+  let prefix = "/ort/";
 
   return {
+    configResolved(config) {
+      prefix = new URL(`${config.base}ort/`, "http://localhost").pathname;
+    },
+    generateBundle() {
+      // 开发服务器与生产包使用 SDK 依赖的同一版运行时资源。
+      for (const filename of ortAssetNames) {
+        this.emitFile({
+          type: "asset",
+          fileName: `ort/${filename}`,
+          source: readFileSync(join(ortDist, filename))
+        });
+      }
+    },
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
         const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
@@ -30,7 +44,7 @@ function fixtureOrtAssets(): Plugin {
         }
 
         const filename = decodeURIComponent(pathname.slice(prefix.length));
-        if (!fixtureOrtAssetNames.has(filename)) {
+        if (!ortAssetNames.has(filename)) {
           response.statusCode = 404;
           response.end();
           return;
@@ -44,11 +58,11 @@ function fixtureOrtAssets(): Plugin {
         createReadStream(join(ortDist, filename)).on("error", next).pipe(response);
       });
     },
-    name: "fixture-ort-assets"
+    name: "ort-assets"
   };
 }
 
 export default defineConfig({
-  plugins: [fixtureOrtAssets(), react()],
+  plugins: [ortAssets(), react()],
   server: { host: "127.0.0.1", port: 4174 }
 });
