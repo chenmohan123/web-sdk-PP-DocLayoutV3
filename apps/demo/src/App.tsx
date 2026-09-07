@@ -82,7 +82,11 @@ function drawResult(
   result: DocLayoutResult | undefined,
   overlay: Overlay
 ): void {
-  if (source == null || result === undefined) return;
+  if (source == null) return;
+  if (result === undefined) {
+    drawSource(canvas, source);
+    return;
+  }
   const width = source.naturalWidth || result.image.original.width;
   const height = source.naturalHeight || result.image.original.height;
   canvas.width = width;
