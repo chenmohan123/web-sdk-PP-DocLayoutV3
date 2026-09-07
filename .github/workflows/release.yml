@@ -41,21 +41,26 @@ jobs:
         run: npm publish --access public --provenance
       - name: Record published integrity
         shell: bash
+        timeout-minutes: 17
         run: |
           set -o pipefail
           package="web-sdk-pp-doclayoutv3@${GITHUB_REF_NAME#v}"
-          for attempt in {1..5}; do
-            if metadata="$(npm view "$package" version dist.integrity --json)"; then
+          for attempt in {1..21}; do
+            if metadata="$(npm view "$package" version dist.integrity --json --registry=https://registry.npmjs.org --fetch-retries=0 --fetch-timeout=15000)"; then
               {
                 echo '## npm integrity'
                 echo "$metadata"
               } | tee -a "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
-            if (( attempt < 5 )); then
-              echo "npm registry has not exposed $package yet; retrying in 3 seconds..." >&2
-              sleep 3
+            if (( attempt < 21 )); then
+              echo "npm registry 暂未返回 $package 的完整性（第 $attempt/21 次）；30 秒后重试。" >&2
+              sleep 30
             fi
           done
-          echo "Failed to read published integrity for $package after 5 attempts." >&2
+          {
+            echo '## npm 发布后核验未完成'
+            echo "npm publish 已成功返回，但经过 21 次查询仍无法读取 $package 的完整性。"
+            echo '请单独核验 npm registry 和来源证明；不要重跑整个发布作业或重复发布。'
+          } | tee -a "$GITHUB_STEP_SUMMARY" >&2
           exit 1
