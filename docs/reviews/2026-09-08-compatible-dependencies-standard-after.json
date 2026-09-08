@@ -1,0 +1,251 @@
+{
+  "standardVersion": "1.1.0",
+  "repositories": [
+    {
+      "standardVersion": "1.1.0",
+      "repository": "web-sdk-PP-DocLayoutV3",
+      "summary": {
+        "requiredPassed": 18,
+        "requiredFailed": 0,
+        "requiredSkipped": 4,
+        "requiredUnknown": 0,
+        "requiredNotApplicable": 0,
+        "recommendedPassed": 3,
+        "recommendedFailed": 0,
+        "labs": 1,
+        "status": "locally-compliant"
+      },
+      "findings": [
+        {
+          "id": "CACHE-001",
+          "level": "required",
+          "status": "pass",
+          "message": "Cache storage, versioning, estimate, and cleanup are declared",
+          "remediation": "Add cache contract fields and expose cleanup controls in the Demo.",
+          "path": "sdk-manifest.yaml",
+          "evidence": "sdk-manifest.yaml"
+        },
+        {
+          "id": "DEMO-001",
+          "level": "required",
+          "status": "pass",
+          "message": "A runnable standalone Demo entry exists",
+          "remediation": "Add a Demo app with a documented start/build command.",
+          "path": "apps/demo/index.html",
+          "evidence": "apps/demo/index.html"
+        },
+        {
+          "id": "DEMO-002",
+          "level": "required",
+          "status": "pass",
+          "message": "Demo declares Chinese as its initial language",
+          "remediation": "Set lang or default language state to zh-CN.",
+          "path": "apps/demo/index.html",
+          "evidence": "apps/demo/index.html, apps/demo/src/App.tsx, apps/demo/src/i18n/en.ts, apps/demo/src/samples.ts, examples/cdn/index.html, examples/react/index.html, examples/vanilla-vite/index.html, examples/vue/index.html, examples/wechat-webview/index.html"
+        },
+        {
+          "id": "DEMO-003",
+          "level": "required",
+          "status": "pass",
+          "message": "Demo provides an in-page Chinese/English toggle",
+          "remediation": "Add a language toggle that does not alter inference state.",
+          "path": "apps/demo/src/App.tsx",
+          "evidence": "apps/demo/src/App.tsx, apps/demo/src/i18n/en.ts, apps/demo/src/i18n/zh-CN.ts, apps/demo/src/samples.ts, apps/demo/src/styles.css, apps/demo/tests/cache.spec.ts, apps/demo/tests/demo.spec.ts"
+        },
+        {
+          "id": "DEMO-004",
+          "level": "required",
+          "status": "pass",
+          "message": "Demo exposes current-model and global cache cleanup controls",
+          "remediation": "Wire clear-current and clear-all actions to the SDK cache API.",
+          "path": ".github/workflows/ci.yml",
+          "evidence": ".github/workflows/ci.yml"
+        },
+        {
+          "id": "DEMO-005",
+          "level": "required",
+          "status": "pass",
+          "message": "Demo exposes model/runtime/timing information",
+          "remediation": "Render data-sdk-model-info, data-sdk-runtime-info, and data-sdk-timing regions.",
+          "path": ".github/workflows/ci.yml",
+          "evidence": ".github/workflows/ci.yml"
+        },
+        {
+          "id": "DEPLOY-001",
+          "level": "required",
+          "status": "skip",
+          "message": "The live Demo has a reproducible HTTPS deployment from protected source with least-privilege credentials",
+          "remediation": "Configure and verify a deployment that meets standards/v1/repository-governance-contract.md, then record its commit and deployment evidence.",
+          "evidence": "Requires read-only remote-api verification; offline sdk:check did not evaluate this rule."
+        },
+        {
+          "id": "DOC-001",
+          "level": "required",
+          "status": "pass",
+          "message": "Chinese-default and English README files link to one another",
+          "remediation": "Add README.md and README.en.md with reciprocal language links.",
+          "path": ".github/workflows/ci.yml",
+          "evidence": ".github/workflows/ci.yml"
+        },
+        {
+          "id": "DOC-002",
+          "level": "required",
+          "status": "pass",
+          "message": "Chinese and English documentation directories are present",
+          "remediation": "Provide equivalent docs/zh-CN and docs/en quick-start/API guidance.",
+          "path": ".github/workflows/ci.yml",
+          "evidence": ".github/workflows/ci.yml"
+        },
+        {
+          "id": "DOC-003",
+          "level": "required",
+          "status": "pass",
+          "message": "README or package metadata exposes GitHub, npm, and live Demo links",
+          "remediation": "Add repository, package, and Demo URLs to README and manifest.",
+          "path": "README.md",
+          "evidence": "README.md"
+        },
+        {
+          "id": "EXAMPLE-001",
+          "level": "required",
+          "status": "pass",
+          "message": "Vanilla TypeScript/DOM portability example exists",
+          "remediation": "Add examples/vanilla with a runnable README.",
+          "path": "examples/vanilla-vite/README.md",
+          "evidence": "examples/vanilla-vite/README.md"
+        },
+        {
+          "id": "EXAMPLE-002",
+          "level": "required",
+          "status": "pass",
+          "message": "React reference example exists",
+          "remediation": "Add examples/react or explicitly record a migration exception.",
+          "path": "examples/react/README.md",
+          "evidence": "examples/react/README.md"
+        },
+        {
+          "id": "EXAMPLE-003",
+          "level": "recommended",
+          "status": "pass",
+          "message": "Declared target surfaces have runnable examples or explicit unsupported status",
+          "remediation": "Align examples with manifest target surfaces.",
+          "path": "examples/vanilla-vite/README.md",
+          "evidence": "examples/vanilla-vite/README.md, examples/react/README.md, examples/vue/README.md, examples/cdn/README.md, examples/wechat-webview/README.md"
+        },
+        {
+          "id": "GOV-001",
+          "level": "required",
+          "status": "skip",
+          "message": "The default branch has an active least-privilege Ruleset for pull requests, current CI checks, resolved conversations, deletion, and force-push protection",
+          "remediation": "Configure an active default-branch Ruleset using standards/v1/repository-governance-contract.md and capture dated GitHub API evidence.",
+          "evidence": "Requires read-only github-api verification; offline sdk:check did not evaluate this rule."
+        },
+        {
+          "id": "GOV-002",
+          "level": "required",
+          "status": "skip",
+          "message": "Release tags are immutable under an active tag Ruleset",
+          "remediation": "Protect the documented release tag pattern against updates and deletion, minimize bypass, and capture dated GitHub API evidence.",
+          "evidence": "Requires read-only github-api verification; offline sdk:check did not evaluate this rule."
+        },
+        {
+          "id": "LABS-001",
+          "level": "labs",
+          "status": "skip",
+          "message": "Experimental backends and NPU claims have explicit evidence and limits",
+          "remediation": "Mark WebNN/NPU as labs unless a dated verification matrix exists.",
+          "evidence": "Labs rule is informational"
+        },
+        {
+          "id": "META-001",
+          "level": "required",
+          "status": "pass",
+          "message": "SDK manifest is present and declares the v1 contract",
+          "remediation": "Copy standards/v1/templates/sdk-manifest.yaml and fill every required field.",
+          "path": ".github/workflows/ci.yml",
+          "evidence": ".github/workflows/ci.yml"
+        },
+        {
+          "id": "META-002",
+          "level": "required",
+          "status": "pass",
+          "message": "package.json declares a public package identity and version",
+          "remediation": "Add a non-private package with a semver version and repository metadata.",
+          "path": ".github/workflows/ci.yml",
+          "evidence": ".github/workflows/ci.yml"
+        },
+        {
+          "id": "MODEL-001",
+          "level": "required",
+          "status": "pass",
+          "message": "Manifest declares model identity, precision, size, source, license, and checksum",
+          "remediation": "Complete the model and asset fields in sdk-manifest.yaml.",
+          "path": "sdk-manifest.yaml",
+          "evidence": "sdk-manifest.yaml"
+        },
+        {
+          "id": "PAGES-001",
+          "level": "required",
+          "status": "skip",
+          "message": "A GitHub Pages Demo deploys through GitHub Actions with scoped permissions, environment binding, HTTPS, and concurrency control",
+          "remediation": "Configure Pages and its deployment workflow using standards/v1/repository-governance-contract.md and capture dated GitHub API evidence.",
+          "evidence": "Requires read-only github-api verification; offline sdk:check did not evaluate this rule."
+        },
+        {
+          "id": "PERF-001",
+          "level": "required",
+          "status": "pass",
+          "message": "Standard load and inference timing fields are declared",
+          "remediation": "Document download, cache, integrity, session, inference, and total timing.",
+          "path": "sdk-manifest.yaml",
+          "evidence": "sdk-manifest.yaml"
+        },
+        {
+          "id": "RELEASE-001",
+          "level": "required",
+          "status": "pass",
+          "message": "CI workflow runs verification before release",
+          "remediation": "Add .github/workflows/ci.yml with tests, typecheck, and build.",
+          "path": ".github/workflows/ci.yml",
+          "evidence": ".github/workflows/ci.yml"
+        },
+        {
+          "id": "RELEASE-002",
+          "level": "required",
+          "status": "pass",
+          "message": "GitHub Release workflow exists",
+          "remediation": "Add a tag-triggered release workflow and publish notes.",
+          "path": ".github/workflows/release.yml",
+          "evidence": ".github/workflows/release.yml"
+        },
+        {
+          "id": "RELEASE-003",
+          "level": "recommended",
+          "status": "pass",
+          "message": "Changelog documents user-visible SDK and Demo changes",
+          "remediation": "Add CHANGELOG.md with the current release entry.",
+          "path": ".github/workflows/ci.yml",
+          "evidence": ".github/workflows/ci.yml"
+        },
+        {
+          "id": "RUNTIME-001",
+          "level": "required",
+          "status": "pass",
+          "message": "Requested/actual backend and execution mode are declared",
+          "remediation": "Add runtime backends, execution modes, and actual backend reporting.",
+          "path": "sdk-manifest.yaml",
+          "evidence": "sdk-manifest.yaml"
+        },
+        {
+          "id": "UI-001",
+          "level": "recommended",
+          "status": "pass",
+          "message": "Demo styling references the shared token vocabulary",
+          "remediation": "Import or copy standards/v1/ui-tokens.json values without introducing conflicting status colors.",
+          "path": "standards/v1/ui-tokens.json",
+          "evidence": "standards/v1/ui-tokens.json"
+        }
+      ]
+    }
+  ]
+}
