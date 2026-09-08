@@ -1,0 +1,107 @@
+{
+  "verifiedAt": "2026-09-08T07:02:12.454Z",
+  "repository": "chenmohan123/web-sdk-PP-DocLayoutV3",
+  "nodeVersion": "v24.16.0",
+  "platform": "win32",
+  "passed": 14,
+  "cases": [
+    {
+      "ajvVersion": "8.18.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-jqff-g426-hqxp",
+      "test": "编码协议不得引入主机",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.18.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-jqff-g426-hqxp",
+      "test": "解析拒绝编码协议中的结构字符",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.18.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-f65p-4m7j-42xc",
+      "test": "畸形 IPv6 不得截断为其他主机",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.18.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-fph4-wmhf-6fwf",
+      "test": "嵌套百分号不得再次解码",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.18.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-5jgf-p345-68v8",
+      "test": "最终协议参与 IDN 规范化",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.18.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "正常控制",
+      "test": "相对引用继续正确解析",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.18.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "正常控制",
+      "test": "域名大小写继续等价",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.20.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-jqff-g426-hqxp",
+      "test": "编码协议不得引入主机",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.20.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-jqff-g426-hqxp",
+      "test": "解析拒绝编码协议中的结构字符",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.20.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-f65p-4m7j-42xc",
+      "test": "畸形 IPv6 不得截断为其他主机",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.20.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-fph4-wmhf-6fwf",
+      "test": "嵌套百分号不得再次解码",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.20.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "GHSA-5jgf-p345-68v8",
+      "test": "最终协议参与 IDN 规范化",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.20.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "正常控制",
+      "test": "相对引用继续正确解析",
+      "passed": true
+    },
+    {
+      "ajvVersion": "8.20.0",
+      "fastUriVersion": "3.1.6",
+      "finding": "正常控制",
+      "test": "域名大小写继续等价",
+      "passed": true
+    }
+  ]
+}
