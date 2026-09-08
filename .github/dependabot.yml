@@ -6,7 +6,12 @@ updates:
       interval: weekly
     groups:
       workspace-dependencies:
+        # 普通补丁和次版本集中验收；跨主版本升级分别创建 PR。
+        applies-to: version-updates
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+        # 推理运行时的所有升级单独验证真实模型、WASM 和物理 GPU。
+        exclude-patterns: ["onnxruntime-web"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
